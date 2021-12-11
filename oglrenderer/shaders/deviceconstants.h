@@ -2,8 +2,8 @@
 #define DEVICECONSTANTS_H
 
 // uniform binding points
-# define ORTHO_MATRIX  0
-# define SCENE_MVP     1
+# define ORTHO_MATRIX   0
+# define CAMERA_PARAMS  1
 
 // texture binding points
 # define SCREEN_QUAD 0

@@ -4,6 +4,7 @@
 
 #include "glm/glm.hpp"
 
+#include "camera.h"
 #include "quad.h"
 #include "rendertexture.h"
 #include "shader.h"
@@ -28,4 +29,6 @@ private:
     glm::vec2     mResolution;
 
     std::unique_ptr<RenderTexture> mRenderTexture;
+
+    Camera mCamera;
 };

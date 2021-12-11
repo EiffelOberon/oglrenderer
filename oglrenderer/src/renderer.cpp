@@ -1,14 +1,17 @@
 #include "renderer.h"
 
 #include "deviceconstants.h" 
+#include "devicestructs.h"
 #include "freeglut.h"
 #include "glm/gtc/matrix_transform.hpp"
+
 
 Renderer::Renderer()
     : mPrerenderQuadShader("./spv/vert.spv", "./spv/frag.spv")
     , mTexturedQuadShader("./spv/vert.spv", "./spv/texturedQuadFrag.spv")
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mRenderTexture(nullptr)
+    , mCamera()
 {
     // quad initialization
     mQuad.update(0, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(0, 0));
@@ -20,6 +23,18 @@ Renderer::Renderer()
     // initialize uniforms for quad shader
     glm::mat4 orthogonalMatrix = glm::orthoLH(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f);
     mPrerenderQuadShader.addUniform<glm::mat4>(ORTHO_MATRIX, orthogonalMatrix);
+
+    // initialize scene camera
+    glm::vec3 eye = mCamera.getEye();
+    glm::vec3 target = mCamera.getTarget();
+    glm::vec3 up = mCamera.getUp();
+    CameraParams camParams;
+    camParams.mEye = glm::vec4(eye, 0.0f);
+    camParams.mTarget = glm::vec4(target, 0.0f);
+    camParams.mUp = glm::vec4(up, 0.0f);
+    mPrerenderQuadShader.addUniform<CameraParams>(CAMERA_PARAMS, camParams);
+
+    // for final resolution quad
     mTexturedQuadShader.addUniform<glm::mat4>(ORTHO_MATRIX, orthogonalMatrix);
 
     // make render texture
