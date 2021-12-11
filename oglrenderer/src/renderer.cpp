@@ -2,6 +2,7 @@
 #include "freeglut.h"
 
 Renderer::Renderer()
+    : mQuadShader("./spv/vert.spv", "./spv/frag.spv")
 {
 
 }
@@ -17,6 +18,12 @@ void Renderer::resize(
     int height)
 {
 
+}
+
+
+void Renderer::update()
+{
+    render();
 }
 
 

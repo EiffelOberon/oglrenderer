@@ -110,6 +110,7 @@ void APIENTRY debugMessageCallback(
             id, typeString.c_str(), severityString.c_str(), sourceString.c_str(), msg);
 }
 
+
 void resize(
     int width,
     int height)
@@ -120,6 +121,7 @@ void resize(
     }
 }
 
+
 void render()
 {
     if (renderer)
@@ -127,6 +129,16 @@ void render()
         renderer->render();
     }
 }
+
+
+void update()
+{
+    if (renderer)
+    {
+        renderer->update();
+    }
+}
+
 
 int main(
     int     argc, 
@@ -148,6 +160,7 @@ int main(
 
         // register callbacks
         glutDisplayFunc(render);
+        glutIdleFunc(update);
 
         // Here is our new entry in the main function
         glutReshapeFunc(resize);

@@ -22,6 +22,7 @@ private:
     GLuint mId;              // The unique ID / handle for the shader
     GLenum mTypeSource;      // String representation of the shader type (i.e. "Vertex" or such)
     std::string mSource;     // The shader source code (i.e. the GLSL code itself)
+    std::string mName;
 
 public:
     // Constructor
@@ -36,6 +37,7 @@ public:
         // Create the vertex shader id / handle
         // Note: If you segfault here you probably don't have a valid rendering context.
         mId = glCreateShader(type);
+        mName = "";
     }
 
 
@@ -58,10 +60,10 @@ public:
 
 
     // Method to load the shader contents from a string
-    void loadSPIRVFromFile(const string& filename)
+    void loadSPIRVFromFile(const string& fileName)
     {
         // open the file 
-        std::ifstream file(filename, std::ios::binary);
+        std::ifstream file(fileName, std::ios::binary);
 
         // remove new lines in binary mode
         file.unsetf(std::ios::skipws);
@@ -84,6 +86,8 @@ public:
 
         // apply shader binary to gl shader object
         glShaderBinary(1, &mId, GL_SHADER_BINARY_FORMAT_SPIR_V, vec.data(), (GLsizei)vec.size());
+
+        mName = fileName;
     }
 
 
@@ -97,6 +101,21 @@ public:
         GLint shaderStatus;
         glGetShaderiv(mId, GL_COMPILE_STATUS, &shaderStatus);
 
+        std::string shaderType;
+        switch (mTypeSource)
+        {
+        case GL_VERTEX_SHADER:
+            shaderType = "Vertex Shader";
+            break;
+        case GL_FRAGMENT_SHADER:
+            shaderType = "Fragment Shader";
+            break;
+        default:
+            shaderType = "Unknown Shader";
+            __debugbreak();
+            break;
+        }
+
         // If the shader failed to compile, display the info log and quit out
         if (shaderStatus == GL_FALSE)
         {
@@ -106,12 +125,12 @@ public:
             GLchar* strInfoLog = new GLchar[infoLogLength + 1];
             glGetShaderInfoLog(mId, infoLogLength, NULL, strInfoLog);
 
-            std::cout << mTypeSource << " shader compilation failed: " << strInfoLog << std::endl;
+            std::cout << shaderType << ": (" << mName << ") shader compilation failed: " << strInfoLog << std::endl;
             delete[] strInfoLog;
         }
         else
         {
-            cout << mTypeSource << " shader compilation OK" << endl;
+            cout << shaderType << ": (" << mName << ") shader compilation OK" << endl;
         }
     }
 };
