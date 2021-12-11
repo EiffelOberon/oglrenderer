@@ -1,26 +1,28 @@
 #include <iostream>
+#include <memory>
+
 #include "glew.h"
 #include "freeglut.h"
+#include "renderer.h"
+
+std::unique_ptr<Renderer> renderer = nullptr;
 
 void resize(
     int width,
     int height)
 {
-
+    if (renderer)
+    {
+        renderer->resize(width, height);
+    }
 }
 
 void render()
 {
-    glClearColor(1, 1, 1, 1);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glBegin(GL_TRIANGLES);
-    glVertex3f(-0.5, -0.5, 0.0);
-    glVertex3f(0.5, 0.0, 0.0);
-    glVertex3f(0.0, 0.5, 0.0);
-    glEnd();
-
-    glutSwapBuffers();
+    if (renderer)
+    {
+        renderer->render();
+    }
 }
 
 int main(
@@ -39,6 +41,8 @@ int main(
     const GLenum glewStatus = glewInit();
     if (glewStatus == GLEW_OK)
     {
+        renderer = std::make_unique<Renderer>();
+
         // register callbacks
         glutDisplayFunc(render);
 
