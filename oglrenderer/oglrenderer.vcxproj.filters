@@ -38,6 +38,12 @@
     <ClInclude Include="src\quad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="shaders\deviceconstants.h">
+      <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="src\uniformbuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\quad.frag">

@@ -1,5 +1,8 @@
 #include "renderer.h"
+
+#include "deviceconstants.h" 
 #include "freeglut.h"
+#include "glm/gtc/matrix_transform.hpp"
 
 Renderer::Renderer()
     : mQuadShader("./spv/vert.spv", "./spv/frag.spv")
@@ -11,6 +14,10 @@ Renderer::Renderer()
     mQuad.update(2, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(1, 0));
     mQuad.update(3, glm::vec3(1.0f, 1.0f, 0.0f), glm::vec2(1, 1));
     mQuad.upload();
+
+    // initialize uniforms for quad shader
+    glm::mat4 orthogonalMatrix = glm::orthoLH(0, 1, 0, 1, 0, 1);
+    mQuadShader.addUniform<glm::mat4>(QUAD_MVP, orthogonalMatrix);
 }
 
 Renderer::~Renderer()

@@ -88,7 +88,7 @@ public:
     void draw()
     {
         glBindVertexArray(mVao);
-        glDrawArrays(mType, 0, mPositions.size());
+        glDrawArrays(mType, 0, (GLuint) mPositions.size());
     }
 
 

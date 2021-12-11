@@ -6,6 +6,8 @@
 
 #include "glew.h"
 #include "shader.h"
+#include "uniformbuffer.h"
+
 
 class ShaderProgram
 {
@@ -70,15 +72,37 @@ public:
         glDeleteProgram(mProgramId);
     }
 
+
+    template<class UniformType>
+    void addUniform(
+        uint32_t    bindingPt,
+        UniformType &memoryBlock)
+    {
+        size_t lastIdx = mUniforms.size();
+        mUniforms.push_back(std::make_unique<UniformBuffer>(sizeof(UniformType), bindingPt));
+        mUniforms[lastIdx]->upload((void*)&memoryBlock);
+    }
+
+
+    template<class UniformType>
+    void updateUniform(
+        uint32_t     bindingPt,
+        UniformType& memoryBlock)
+    {
+        // TODO
+        __debugbreak();
+    }
+
+
     // Method to enable the shader program
-    void use()
+    void use() const
     {
         glUseProgram(mProgramId);
     }
 
 
     // Method to disable the shader program
-    void disable()
+    void disable() const
     {
         glUseProgram(0);
     }
@@ -115,7 +139,7 @@ private:
     GLuint mProgramId;       // The unique ID / handle for the shader program
     GLuint mShaderCount;     // How many shaders are attached to the shader program
 
-     // List of attached shaders
-    std::vector<std::unique_ptr<Shader>> mAttachedShaders;
-
+     // List of attached shaders and uniforms to the program
+    std::vector<std::unique_ptr<Shader>>        mAttachedShaders;
+    std::vector<std::unique_ptr<UniformBuffer>> mUniforms;
 };
