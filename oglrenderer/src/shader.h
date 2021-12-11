@@ -112,7 +112,7 @@ public:
             break;
         default:
             shaderType = "Unknown Shader";
-            __debugbreak();
+            assert(false);
             break;
         }
 

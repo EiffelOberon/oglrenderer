@@ -5,8 +5,10 @@
 #include "glm/gtc/matrix_transform.hpp"
 
 Renderer::Renderer()
-    : mQuadShader("./spv/vert.spv", "./spv/frag.spv")
+    : mPrerenderQuadShader("./spv/vert.spv", "./spv/frag.spv")
+    , mTexturedQuadShader("./spv/vert.spv", "./spv/texturedQuadFrag.spv")
     , mQuad(GL_TRIANGLE_STRIP, 4)
+    , mRenderTexture(nullptr)
 {
     // quad initialization
     mQuad.update(0, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(0, 0));
@@ -16,8 +18,14 @@ Renderer::Renderer()
     mQuad.upload();
 
     // initialize uniforms for quad shader
-    glm::mat4 orthogonalMatrix = glm::orthoLH(0, 1, 0, 1, 0, 1);
-    mQuadShader.addUniform<glm::mat4>(QUAD_MVP, orthogonalMatrix);
+    glm::mat4 orthogonalMatrix = glm::orthoLH(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f);
+    mPrerenderQuadShader.addUniform<glm::mat4>(PRERENDER_RES_QUAD_MVP, orthogonalMatrix);
+
+    glm::mat4 orthogonalMatrix2 = glm::orthoLH(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f);
+    mTexturedQuadShader.addUniform<glm::mat4>(ORIGINAL_RES_QUAD_MVP, orthogonalMatrix2);
+
+    // make render texture
+    mRenderTexture = std::make_unique<RenderTexture>(1, 400, 225);
 }
 
 Renderer::~Renderer()
@@ -30,7 +38,14 @@ void Renderer::resize(
     int width, 
     int height)
 {
+    if ((std::abs(mResolution.x - width) > 0.1f) || (std::abs(mResolution.y - height) > 0.1f))
+    {
+        // update resolution
+        mResolution = glm::vec2(width, height);
 
+        // reallocate render texture
+        mRenderTexture = std::make_unique<RenderTexture>(1, width * 0.25f, height * 0.25f);
+    }
 }
 
 
@@ -42,12 +57,31 @@ void Renderer::update()
 
 void Renderer::render()
 {
+    if (!mRenderTexture ||
+        mResolution.x <= 0.1f ||
+        mResolution.y <= 0.1f)
+    {
+        return;
+    }
+
+
     glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    mQuadShader.use();
+    // render quarter sized render texture
+    glViewport(0, 0, mResolution.x * 0.25f, mResolution.y * 0.25f);
+    mRenderTexture->bind();
+    mPrerenderQuadShader.use();
     mQuad.draw();
-    mQuadShader.disable();
+    mPrerenderQuadShader.disable();
+    mRenderTexture->unbind();
+
+    // render final quad
+    glViewport(0, 0, mResolution.x, mResolution.y);
+    mTexturedQuadShader.use();
+    mRenderTexture->bindTexture2D(0);
+    mQuad.draw();
+    mTexturedQuadShader.disable();
 
     glutSwapBuffers();
 }

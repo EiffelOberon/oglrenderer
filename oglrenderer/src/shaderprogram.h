@@ -90,7 +90,7 @@ public:
         UniformType& memoryBlock)
     {
         // TODO
-        __debugbreak();
+        assert(false);
     }
 
 

@@ -137,13 +137,16 @@
     <ClInclude Include="shaders\deviceconstants.h" />
     <ClInclude Include="src\quad.h" />
     <ClInclude Include="src\renderer.h" />
+    <ClInclude Include="src\rendertexture.h" />
     <ClInclude Include="src\shader.h" />
     <ClInclude Include="src\shaderprogram.h" />
+    <ClInclude Include="src\texture.h" />
     <ClInclude Include="src\uniformbuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\quad.frag" />
     <None Include="shaders\quad.vert" />
+    <None Include="shaders\texturedQuad.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

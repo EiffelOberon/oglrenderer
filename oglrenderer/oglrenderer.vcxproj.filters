@@ -44,12 +44,21 @@
     <ClInclude Include="src\uniformbuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\rendertexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\texture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\quad.frag">
       <Filter>Shaders</Filter>
     </None>
     <None Include="shaders\quad.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\texturedQuad.frag">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
