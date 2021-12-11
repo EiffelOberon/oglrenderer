@@ -1,5 +1,8 @@
 #pragma once
 
+#include "glm/glm.hpp"
+
+#include "quad.h"
 #include "shader.h"
 #include "shaderprogram.h"
 
@@ -15,4 +18,5 @@ public:
 
 private:
     ShaderProgram mQuadShader;
+    Quad          mQuad;
 };

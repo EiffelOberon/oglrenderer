@@ -50,7 +50,7 @@ public:
         // fragment
         mAttachedShaders.push_back(std::make_unique<Shader>(GL_FRAGMENT_SHADER));
         mShaderCount = (GLuint) mAttachedShaders.size();
-        mAttachedShaders[mShaderCount - 1]->loadSPIRVFromFile(vertPath);
+        mAttachedShaders[mShaderCount - 1]->loadSPIRVFromFile(fragPath);
         mAttachedShaders[mShaderCount - 1]->compile();
         glAttachShader(mProgramId, mAttachedShaders[mShaderCount - 1]->id());
 
