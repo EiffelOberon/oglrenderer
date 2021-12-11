@@ -27,7 +27,6 @@
 *.lib
 
 # Executables
-*.exe
 *.out
 *.app
 oglrenderer/.vs/oglrenderer/v16/.suo
@@ -42,3 +41,5 @@ oglrenderer/.vs/oglrenderer/v16/.suo
 *.user
 *.iobj
 *.ipdb
+oglrenderer/x64/Debug/oglrenderer.exe
+oglrenderer/x64/Release/oglrenderer.exe
