@@ -19,10 +19,8 @@ Renderer::Renderer()
 
     // initialize uniforms for quad shader
     glm::mat4 orthogonalMatrix = glm::orthoLH(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f);
-    mPrerenderQuadShader.addUniform<glm::mat4>(PRERENDER_RES_QUAD_MVP, orthogonalMatrix);
-
-    glm::mat4 orthogonalMatrix2 = glm::orthoLH(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f);
-    mTexturedQuadShader.addUniform<glm::mat4>(ORIGINAL_RES_QUAD_MVP, orthogonalMatrix2);
+    mPrerenderQuadShader.addUniform<glm::mat4>(ORTHO_MATRIX, orthogonalMatrix);
+    mTexturedQuadShader.addUniform<glm::mat4>(ORTHO_MATRIX, orthogonalMatrix);
 
     // make render texture
     mRenderTexture = std::make_unique<RenderTexture>(1, 400, 225);

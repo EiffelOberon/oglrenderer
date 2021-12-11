@@ -5,7 +5,7 @@
 layout(location = 0) in vec3 vertexPos;
 layout(location = 1) in vec3 vertexUV;
 
-layout(std140, binding = 0) uniform Matrices
+layout(std140, binding = ORTHO_MATRIX) uniform Matrices
 {
     mat4 mvp;
 };
