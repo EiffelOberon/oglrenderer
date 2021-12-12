@@ -8,8 +8,10 @@
 Renderer::Renderer()
     : mPrerenderQuadShader("./spv/vert.spv", "./spv/frag.spv")
     , mTexturedQuadShader("./spv/vert.spv", "./spv/texturedQuadFrag.spv")
+    , mNoiseTestQuadShader("./spv/vert.spv", "./spv/noiseTestFrag.spv")
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mRenderTexture(nullptr)
+    , mCloudNoiseRenderTexture(nullptr)
     , mCamera()
     , mShowSkyWindow(true)
 {
@@ -39,6 +41,7 @@ Renderer::Renderer()
 
     // for final resolution quad
     mTexturedQuadShader.addUniform<glm::mat4>(ORTHO_MATRIX, orthogonalMatrix);
+    mNoiseTestQuadShader.addUniform<glm::mat4>(ORTHO_MATRIX, orthogonalMatrix);
 }
 
 Renderer::~Renderer()
@@ -58,6 +61,7 @@ void Renderer::resize(
 
         // reallocate render texture
         mRenderTexture = std::make_unique<RenderTexture>(1, width * 0.25f, height * 0.25f);
+        mCloudNoiseRenderTexture = std::make_unique<RenderTexture>(1, 100, 100);
 
         // update imgui display size
         ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -78,6 +82,14 @@ void Renderer::render()
 
     glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // render quarter sized render texture
+    glViewport(0, 0, 100, 100);
+    mCloudNoiseRenderTexture->bind();
+    mNoiseTestQuadShader.use();
+    mQuad.draw();
+    mNoiseTestQuadShader.disable();
+    mCloudNoiseRenderTexture->unbind();
 
     // render quarter sized render texture
     glViewport(0, 0, mResolution.x * 0.25f, mResolution.y * 0.25f);
@@ -108,6 +120,25 @@ void Renderer::postRender()
         {
             mPrerenderQuadShader.updateUniform<SkyParams>(SKY_PARAMS, mSkyParams);
         }
+
+        // test
+        ImTextureID my_tex_id = (ImTextureID) mCloudNoiseRenderTexture->getTextureId(0);
+        float my_tex_w = 100;
+        float my_tex_h = 100;
+        ImGui::Text("Clouds: %.0fx%.0f", my_tex_w, my_tex_h);
+        {
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImVec2 uv_min = ImVec2(0.0f, 0.0f);                 // Top-left
+            ImVec2 uv_max = ImVec2(1.0f, 1.0f);                 // Lower-right
+            ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+            ImVec4 border_col = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+            ImGui::Image(my_tex_id, ImVec2(my_tex_w, my_tex_h), uv_min, uv_max, tint_col, border_col);
+        }
+
         ImGui::End();
+
     }
+
+    bool test = true;
+    ImGui::ShowDemoWindow(&test);
 }

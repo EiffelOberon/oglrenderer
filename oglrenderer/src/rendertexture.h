@@ -85,6 +85,13 @@ public:
     }
 
 
+    GLuint getTextureId(
+        const uint32_t slot) const
+    {
+        return mTex[slot];
+    }
+
+
     void bind()
     {
         glBindFramebuffer(GL_FRAMEBUFFER, mFbo);

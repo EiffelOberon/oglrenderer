@@ -124,5 +124,8 @@
     <None Include="shaders\texturedQuad.frag">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\noiseTest.frag">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

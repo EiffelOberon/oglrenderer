@@ -26,11 +26,13 @@ public:
 private:
     ShaderProgram mPrerenderQuadShader;
     ShaderProgram mTexturedQuadShader;
+    ShaderProgram mNoiseTestQuadShader;
     Quad          mQuad;
 
     glm::vec2     mResolution;
 
     std::unique_ptr<RenderTexture> mRenderTexture;
+    std::unique_ptr<RenderTexture> mCloudNoiseRenderTexture;
 
     Camera mCamera;
     CameraParams mCamParams;
