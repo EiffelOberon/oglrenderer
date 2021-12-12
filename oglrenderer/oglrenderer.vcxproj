@@ -135,6 +135,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shaders\deviceconstants.h" />
+    <ClInclude Include="shaders\nishita.h" />
     <ClInclude Include="src\camera.h" />
     <ClInclude Include="src\devicestructs.h" />
     <ClInclude Include="src\quad.h" />

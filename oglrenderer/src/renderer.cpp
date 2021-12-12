@@ -36,9 +36,6 @@ Renderer::Renderer()
 
     // for final resolution quad
     mTexturedQuadShader.addUniform<glm::mat4>(ORTHO_MATRIX, orthogonalMatrix);
-
-    // make render texture
-    mRenderTexture = std::make_unique<RenderTexture>(1, 400, 225);
 }
 
 Renderer::~Renderer()

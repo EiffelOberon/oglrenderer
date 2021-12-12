@@ -56,6 +56,9 @@
     <ClInclude Include="src\devicestructs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="shaders\nishita.h">
+      <Filter>Shaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\quad.frag">

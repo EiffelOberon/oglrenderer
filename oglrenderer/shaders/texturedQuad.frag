@@ -10,7 +10,8 @@ layout(location = 1) in vec2 uv;
 
 void main()
 {
-	// floating point texture, nothing to worry about
+	// floating point texture -> display sRGB so need to convert
 	vec3 texResult = texture(mainTexture, uv).xyz;
+	texResult = pow(texResult, vec3(1.0f / 2.2f));
 	c = vec4(texResult, 1.0f);
 }
