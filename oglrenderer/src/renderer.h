@@ -17,8 +17,8 @@ public:
     Renderer();
     ~Renderer();
 
-    void update();
     void render();
+    void postRender();
     void resize(int width, int height);
 
 private:

@@ -3,6 +3,9 @@
 
 #include "glew.h"
 #include "freeglut.h"
+#include "imgui.h"
+#include "imgui_impl_glut.h"
+#include "imgui_impl_opengl3.h"
 #include "renderer.h"
 
 std::unique_ptr<Renderer> renderer = nullptr;
@@ -127,16 +130,29 @@ void render()
     if (renderer)
     {
         renderer->render();
+
+        // start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGLUT_NewFrame();
+
+        // render gui
+        renderer->postRender();
+
+        // imgui rendering
+        ImGui::Render();
+        ImGuiIO& io = ImGui::GetIO(); (void)io;
+        glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        // swap buffers
+        glutSwapBuffers();
     }
 }
 
 
 void update()
 {
-    if (renderer)
-    {
-        renderer->update();
-    }
+    render();
 }
 
 
@@ -156,6 +172,20 @@ int main(
     const GLenum glewStatus = glewInit();
     if (glewStatus == GLEW_OK)
     {
+        // Setup Dear ImGui context
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO(); (void)io;
+        io.DisplaySize = ImVec2(1600, 900);
+
+        // Setup Dear ImGui style
+        ImGui::StyleColorsDark();
+
+        // Setup Platform/Renderer backends
+        ImGui_ImplGLUT_Init();
+        ImGui_ImplGLUT_InstallFuncs();
+        ImGui_ImplOpenGL3_Init();
+
         renderer = std::make_unique<Renderer>();
 
         // register callbacks
@@ -173,6 +203,10 @@ int main(
 
         // enter GLUT event processing cycle
         glutMainLoop();
+
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplGLUT_Shutdown();
+        ImGui::DestroyContext();
     }
     else
     {

@@ -4,6 +4,7 @@
 #include "devicestructs.h"
 #include "freeglut.h"
 #include "glm/gtc/matrix_transform.hpp"
+#include "imgui.h"
 
 
 Renderer::Renderer()
@@ -55,13 +56,11 @@ void Renderer::resize(
 
         // reallocate render texture
         mRenderTexture = std::make_unique<RenderTexture>(1, width * 0.25f, height * 0.25f);
+
+        // update imgui display size
+        ImGuiIO& io = ImGui::GetIO(); (void)io;
+        io.DisplaySize = ImVec2(width, height);
     }
-}
-
-
-void Renderer::update()
-{
-    render();
 }
 
 
@@ -92,6 +91,10 @@ void Renderer::render()
     mRenderTexture->bindTexture2D(0);
     mQuad.draw();
     mTexturedQuadShader.disable();
+}
 
-    glutSwapBuffers();
+
+void Renderer::postRender()
+{
+
 }
