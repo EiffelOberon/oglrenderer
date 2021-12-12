@@ -113,6 +113,12 @@
     <ClInclude Include="shaders\devicestructs.h">
       <Filter>Shaders</Filter>
     </ClInclude>
+    <ClInclude Include="shaders\fbm.h">
+      <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="shaders\worley.h">
+      <Filter>Shaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\quad.frag">
@@ -124,7 +130,10 @@
     <None Include="shaders\texturedQuad.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="shaders\noiseTest.frag">
+    <None Include="shaders\fbmnoise.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\worleynoise.frag">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

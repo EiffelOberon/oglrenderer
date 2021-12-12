@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <memory.h>
 
 #include "glm/glm.hpp"
@@ -26,19 +27,29 @@ public:
 private:
     ShaderProgram mPrerenderQuadShader;
     ShaderProgram mTexturedQuadShader;
-    ShaderProgram mNoiseTestQuadShader;
+    ShaderProgram mFBMNoiseQuadShader;
+    ShaderProgram mWorleyNoiseQuadShader;
     Quad          mQuad;
 
     glm::vec2     mResolution;
 
     std::unique_ptr<RenderTexture> mRenderTexture;
-    std::unique_ptr<RenderTexture> mCloudNoiseRenderTexture;
+    std::unique_ptr<RenderTexture> mFBMNoiseRenderTexture;
+    std::unique_ptr<RenderTexture> mWorleyNoiseRenderTexture;
 
     Camera mCamera;
     CameraParams mCamParams;
-
+    RendererParams mRenderParams;
     SkyParams mSkyParams;
 
+    // noise 
+    NoiseParams mFBMNoiseParams;
+    NoiseParams mWorleyNoiseParams;
+
     // gui
+    bool mShowPerformanceWindow;
     bool mShowSkyWindow;
+
+    float mDeltaTime;
+    float mTime;
 };

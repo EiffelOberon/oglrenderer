@@ -40,6 +40,17 @@ public:
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
 
+
+    void upload(
+        GLuint offsetInBytes,
+        GLuint sizeInBytes,
+        void* data)
+    {
+        glBindBuffer(GL_UNIFORM_BUFFER, mUBO);
+        glBufferSubData(GL_UNIFORM_BUFFER, offsetInBytes, sizeInBytes, data);
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    }
+
 private:
     GLuint      mUBO;
     size_t      mSizeInBytes;

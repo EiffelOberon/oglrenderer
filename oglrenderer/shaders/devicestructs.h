@@ -4,6 +4,8 @@
 #ifndef GLSL_SHADER
 # include "glm/glm.hpp"
 # define vec4 glm::vec4
+# define vec3 glm::vec3
+# define uint uint32_t
 #endif
 
 struct CameraParams
@@ -20,8 +22,26 @@ struct SkyParams
 };
 
 
+struct RendererParams
+{
+    float mTime;
+    vec3  __padding__;
+};
+
+
+struct NoiseParams
+{
+    // x: width, y: height, z: empty, w: empty
+    vec4 mSettings;
+    int  mNoiseOctaves;
+    vec3 __padding__;
+};
+
+
 #ifndef GLSL_SHADER
 # undef vec4
+# undef vec3
+# undef uint
 #endif
 
 #endif

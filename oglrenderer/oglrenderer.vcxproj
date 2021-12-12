@@ -69,7 +69,12 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <CustomBuildBeforeTargets>BuildCompile</CustomBuildBeforeTargets>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <CustomBuildBeforeTargets>BuildCompile</CustomBuildBeforeTargets>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -97,6 +102,8 @@
     </Link>
     <CustomBuildStep>
       <Command>call "$(ProjectDir)compileshaders.sh" </Command>
+      <TreatOutputAsContent>false</TreatOutputAsContent>
+      <Outputs>compileshaders.log</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -133,6 +140,8 @@
     </Link>
     <CustomBuildStep>
       <Command>call "$(ProjectDir)compileshaders.sh" </Command>
+      <TreatOutputAsContent>false</TreatOutputAsContent>
+      <Outputs>compileshaders.log</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -159,7 +168,9 @@
     <ClInclude Include="include\imgui\imstb_truetype.h" />
     <ClInclude Include="shaders\deviceconstants.h" />
     <ClInclude Include="shaders\devicestructs.h" />
+    <ClInclude Include="shaders\fbm.h" />
     <ClInclude Include="shaders\nishita.h" />
+    <ClInclude Include="shaders\worley.h" />
     <ClInclude Include="src\camera.h" />
     <ClInclude Include="src\quad.h" />
     <ClInclude Include="src\renderer.h" />
@@ -170,10 +181,11 @@
     <ClInclude Include="src\uniformbuffer.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\noiseTest.frag" />
+    <None Include="shaders\fbmnoise.frag" />
     <None Include="shaders\quad.frag" />
     <None Include="shaders\quad.vert" />
     <None Include="shaders\texturedQuad.frag" />
+    <None Include="shaders\worleynoise.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

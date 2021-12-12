@@ -100,6 +100,17 @@ public:
     }
 
 
+    template<class UniformType>
+    void updateUniform(
+        uint32_t     bindingPt,
+        uint32_t     offsetInBytes,
+        uint32_t     sizeInBytes,
+        UniformType& memoryBlock)
+    {
+        mUniforms[bindingPt]->upload(offsetInBytes, sizeInBytes, (void*)&memoryBlock);
+    }
+
+
     // Method to enable the shader program
     void use() const
     {
