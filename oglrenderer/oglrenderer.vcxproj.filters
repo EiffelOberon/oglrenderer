@@ -119,6 +119,9 @@
     <ClInclude Include="shaders\worley.h">
       <Filter>Shaders</Filter>
     </ClInclude>
+    <ClInclude Include="shaders\random.h">
+      <Filter>Shaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\quad.frag">

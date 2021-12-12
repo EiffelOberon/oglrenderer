@@ -170,6 +170,7 @@
     <ClInclude Include="shaders\devicestructs.h" />
     <ClInclude Include="shaders\fbm.h" />
     <ClInclude Include="shaders\nishita.h" />
+    <ClInclude Include="shaders\random.h" />
     <ClInclude Include="shaders\worley.h" />
     <ClInclude Include="src\camera.h" />
     <ClInclude Include="src\quad.h" />
