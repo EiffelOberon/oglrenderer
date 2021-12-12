@@ -80,9 +80,6 @@
     <ClInclude Include="src\camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\devicestructs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="shaders\nishita.h">
       <Filter>Shaders</Filter>
     </ClInclude>
@@ -112,6 +109,9 @@
     </ClInclude>
     <ClInclude Include="include\imgui\imgui.h">
       <Filter>Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="shaders\devicestructs.h">
+      <Filter>Shaders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

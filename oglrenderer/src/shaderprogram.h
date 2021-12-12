@@ -78,9 +78,16 @@ public:
         uint32_t    bindingPt,
         UniformType &memoryBlock)
     {
-        size_t lastIdx = mUniforms.size();
-        mUniforms.push_back(std::make_unique<UniformBuffer>(sizeof(UniformType), bindingPt));
-        mUniforms[lastIdx]->upload((void*)&memoryBlock);
+        if (mUniforms.find(bindingPt) == mUniforms.end())
+        {
+            mUniforms[bindingPt] = std::make_unique<UniformBuffer>(sizeof(UniformType), bindingPt);
+            mUniforms[bindingPt]->upload((void*)&memoryBlock);
+        }
+        else
+        {
+            // should not be adding multiple uniforms to the same binding point
+            assert(false);
+        }
     }
 
 
@@ -89,8 +96,7 @@ public:
         uint32_t     bindingPt,
         UniformType& memoryBlock)
     {
-        // TODO
-        assert(false);
+        mUniforms[bindingPt]->upload((void*)&memoryBlock);
     }
 
 
@@ -140,6 +146,6 @@ private:
     GLuint mShaderCount;     // How many shaders are attached to the shader program
 
      // List of attached shaders and uniforms to the program
-    std::vector<std::unique_ptr<Shader>>        mAttachedShaders;
-    std::vector<std::unique_ptr<UniformBuffer>> mUniforms;
+    std::vector<std::unique_ptr<Shader>>               mAttachedShaders;
+    std::map<uint32_t, std::unique_ptr<UniformBuffer>> mUniforms;
 };

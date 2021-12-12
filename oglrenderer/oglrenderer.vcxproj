@@ -95,6 +95,9 @@
       <AdditionalLibraryDirectories>$(ProjectDir)\lib\freeglut;$(ProjectDir)\lib\glew;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;freeglut.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CustomBuildStep>
+      <Command>call "$(ProjectDir)compileshaders.sh" </Command>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -128,6 +131,9 @@
       <AdditionalLibraryDirectories>$(ProjectDir)\lib\freeglut;$(ProjectDir)\lib\glew;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;freeglut.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CustomBuildStep>
+      <Command>call "$(ProjectDir)compileshaders.sh" </Command>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="include\imgui\imgui.cpp" />
@@ -152,9 +158,9 @@
     <ClInclude Include="include\imgui\imstb_textedit.h" />
     <ClInclude Include="include\imgui\imstb_truetype.h" />
     <ClInclude Include="shaders\deviceconstants.h" />
+    <ClInclude Include="shaders\devicestructs.h" />
     <ClInclude Include="shaders\nishita.h" />
     <ClInclude Include="src\camera.h" />
-    <ClInclude Include="src\devicestructs.h" />
     <ClInclude Include="src\quad.h" />
     <ClInclude Include="src\renderer.h" />
     <ClInclude Include="src\rendertexture.h" />

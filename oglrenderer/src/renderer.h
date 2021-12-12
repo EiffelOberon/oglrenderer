@@ -5,6 +5,8 @@
 #include "glm/glm.hpp"
 
 #include "camera.h"
+#include "deviceconstants.h" 
+#include "devicestructs.h"
 #include "quad.h"
 #include "rendertexture.h"
 #include "shader.h"
@@ -31,4 +33,10 @@ private:
     std::unique_ptr<RenderTexture> mRenderTexture;
 
     Camera mCamera;
+    CameraParams mCamParams;
+
+    SkyParams mSkyParams;
+
+    // gui
+    bool mShowSkyWindow;
 };

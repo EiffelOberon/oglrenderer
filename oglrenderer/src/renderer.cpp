@@ -1,7 +1,5 @@
 #include "renderer.h"
 
-#include "deviceconstants.h" 
-#include "devicestructs.h"
 #include "freeglut.h"
 #include "glm/gtc/matrix_transform.hpp"
 #include "imgui.h"
@@ -13,6 +11,7 @@ Renderer::Renderer()
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mRenderTexture(nullptr)
     , mCamera()
+    , mShowSkyWindow(true)
 {
     // quad initialization
     mQuad.update(0, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(0, 0));
@@ -29,11 +28,14 @@ Renderer::Renderer()
     glm::vec3 eye = mCamera.getEye();
     glm::vec3 target = mCamera.getTarget();
     glm::vec3 up = mCamera.getUp();
-    CameraParams camParams;
-    camParams.mEye = glm::vec4(eye, 0.0f);
-    camParams.mTarget = glm::vec4(target, 0.0f);
-    camParams.mUp = glm::vec4(up, 0.0f);
-    mPrerenderQuadShader.addUniform<CameraParams>(CAMERA_PARAMS, camParams);
+    mCamParams.mEye = glm::vec4(eye, 0.0f);
+    mCamParams.mTarget = glm::vec4(target, 0.0f);
+    mCamParams.mUp = glm::vec4(up, 0.0f);
+    mPrerenderQuadShader.addUniform<CameraParams>(CAMERA_PARAMS, mCamParams);
+
+    // initialize sun
+    mSkyParams.mSunDir = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
+    mPrerenderQuadShader.addUniform<SkyParams>(SKY_PARAMS, mSkyParams);
 
     // for final resolution quad
     mTexturedQuadShader.addUniform<glm::mat4>(ORTHO_MATRIX, orthogonalMatrix);
@@ -96,5 +98,16 @@ void Renderer::render()
 
 void Renderer::postRender()
 {
-
+    if (mShowSkyWindow)
+    {
+        ImGui::Begin("Sky", &mShowSkyWindow);
+        ImGui::Text("Sun Direction");
+        if (ImGui::SliderFloat("x", &mSkyParams.mSunDir.x, -1.0f, 1.0f) ||
+            ImGui::SliderFloat("y", &mSkyParams.mSunDir.y, 0.0f, 1.0f) ||
+            ImGui::SliderFloat("z", &mSkyParams.mSunDir.z, -1.0f, 1.0f))
+        {
+            mPrerenderQuadShader.updateUniform<SkyParams>(SKY_PARAMS, mSkyParams);
+        }
+        ImGui::End();
+    }
 }

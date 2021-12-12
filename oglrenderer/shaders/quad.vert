@@ -1,4 +1,5 @@
 #version 450 core
+#define GLSL_SHADER
 
 #include "deviceconstants.h"
 
