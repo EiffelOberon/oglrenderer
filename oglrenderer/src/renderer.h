@@ -23,8 +23,10 @@ public:
     void updateCamera(const int deltaX, 
                       const int deltaY);
 
+    void preRender();
     void render();
     void postRender();
+    void renderGUI();
     void resize(int width, 
                 int height);
 
@@ -97,6 +99,9 @@ private:
 
     float mDeltaTime;
     float mTime;
+    std::chrono::steady_clock::time_point mRenderStartTime;
+    std::chrono::steady_clock::time_point mRenderEndTime;
 
     std::map<uint32_t, std::unique_ptr<UniformBuffer>> mUniforms;
+
 };

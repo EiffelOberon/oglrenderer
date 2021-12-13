@@ -23,6 +23,6 @@ layout(location = 0) out vec4 c;
 void main()
 {	
     const vec3 st = vec3(uv, 0.0f);
-	const float noise = perlinFBM(st, renderParams.mSettings.x, noiseParams.mSettings.z, noiseParams.mNoiseOctaves);
+	const float noise = perlinFBM(st, renderParams.mSettings.x * renderParams.mCloudSettings.y, noiseParams.mSettings.z, noiseParams.mNoiseOctaves);
 	c = vec4(noise, noise, noise, 1.0f);
 }

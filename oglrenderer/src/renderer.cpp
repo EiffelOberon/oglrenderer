@@ -55,7 +55,7 @@ Renderer::Renderer()
     mRenderParams.mSettings.x = 0.0f;
     mRenderParams.mSettings.y = (1600.0f / 900.0f);
     mRenderParams.mCloudSettings.x = 0.4f;
-    mRenderParams.mCloudSettings.y = 1.0f;
+    mRenderParams.mCloudSettings.y = 0.01f;
     addUniform(RENDERER_PARAMS, mRenderParams);
 
     mTime = 0.0f;
@@ -104,6 +104,12 @@ void Renderer::resize(
 }
 
 
+void Renderer::preRender()
+{
+    mRenderStartTime = std::chrono::high_resolution_clock::now();
+}
+
+
 void Renderer::render()
 {
     if (!mRenderTexture ||
@@ -113,13 +119,6 @@ void Renderer::render()
         return;
     }
 
-    const auto start = std::chrono::high_resolution_clock::now();
-
-    mTime += (mDeltaTime);
-    if (mTime > 60000.0f)
-    {
-        mTime = fmodf(mTime, 60000.0f);
-    }
     mRenderParams.mSettings.x = mTime * 0.001f;
     updateUniform(RENDERER_PARAMS, 0, sizeof(float), mRenderParams);
 
@@ -162,14 +161,24 @@ void Renderer::render()
     mRenderTexture->bindTexture2D(0);
     mQuad.draw();
     mTexturedQuadShader.disable();
-
-    const auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<float, std::milli> elapsed = (end - start);
-    mDeltaTime = elapsed.count();
 }
 
 
 void Renderer::postRender()
+{
+    mRenderEndTime = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float, std::milli> elapsed = (mRenderEndTime - mRenderStartTime);
+    mDeltaTime = elapsed.count();
+
+    mTime += (mDeltaTime);
+    if (mTime > 60000.0f)
+    {
+        mTime = fmodf(mTime, 60000.0f);
+    }
+}
+
+
+void Renderer::renderGUI()
 {
     if (mShowPerformanceWindow)
     {
@@ -254,7 +263,7 @@ void Renderer::postRender()
         {
             updateUniform(RENDERER_PARAMS, mRenderParams);
         }
-        if (ImGui::SliderFloat("Cloud speed", &mRenderParams.mCloudSettings.y, 1.0f, 100.0f))
+        if (ImGui::SliderFloat("Cloud speed", &mRenderParams.mCloudSettings.y, 0.0f, 1.0f))
         {
             updateUniform(RENDERER_PARAMS, mRenderParams);
         }

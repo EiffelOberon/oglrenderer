@@ -23,6 +23,6 @@ layout(location = 0) out vec4 c;
 void main()
 {	
     const vec3 st = vec3(uv, 0.0f);
-	const float noise = worleyFBM(st, renderParams.mSettings.x, 1.0f, noiseParams.mInvert);
+	const float noise = worleyFBM(st, renderParams.mSettings.x * renderParams.mCloudSettings.y, 1.0f, noiseParams.mInvert);
 	c = vec4(vec3(noise), 1.0f);
 }

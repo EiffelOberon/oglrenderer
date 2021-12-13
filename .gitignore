@@ -46,3 +46,6 @@ oglrenderer/.vs/oglrenderer/v16/Browse.VC.db-shm
 oglrenderer/x64/Debug/oglrenderer.vcxproj.FileListAbsolute.txt
 oglrenderer/x64/Debug/vc142.ib_pdb_index
 oglrenderer/x64/Debug/oglrenderer.exe.recipe
+oglrenderer/x64/Release/oglrenderer.exe.recipe
+oglrenderer/x64/Release/oglrenderer.vcxproj.FileListAbsolute.txt
+oglrenderer/x64/Release/vc142.ib_pdb_index

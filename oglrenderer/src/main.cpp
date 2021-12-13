@@ -187,7 +187,7 @@ void render()
         ImGui_ImplGLUT_NewFrame();
 
         // render gui
-        renderer->postRender();
+        renderer->renderGUI();
 
         // imgui rendering
         ImGui::Render();
@@ -203,7 +203,9 @@ void render()
 
 void update()
 {
+    renderer->preRender();
     render();
+    renderer->postRender();
 }
 
 
