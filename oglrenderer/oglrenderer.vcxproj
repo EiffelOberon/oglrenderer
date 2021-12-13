@@ -170,6 +170,7 @@
     <ClInclude Include="shaders\devicestructs.h" />
     <ClInclude Include="shaders\fbm.h" />
     <ClInclude Include="shaders\nishita.h" />
+    <ClInclude Include="shaders\perlin.h" />
     <ClInclude Include="shaders\random.h" />
     <ClInclude Include="shaders\worley.h" />
     <ClInclude Include="src\camera.h" />
@@ -183,6 +184,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\fbmnoise.frag" />
+    <None Include="shaders\perlinnoise.frag" />
     <None Include="shaders\quad.frag" />
     <None Include="shaders\quad.vert" />
     <None Include="shaders\texturedQuad.frag" />

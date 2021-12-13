@@ -3,14 +3,14 @@
 
 #include "deviceconstants.h"
 #include "devicestructs.h"
-#include "worley.h"
+#include "perlin.h"
 
 layout(location = 1) in vec2 uv;
 layout(std140, binding = RENDERER_PARAMS) uniform RendererParamsUniform
 {
 	RendererParams renderParams;
 };
-layout(std140, binding = WORLEY_PARAMS) uniform NoiseParamsUniform
+layout(std140, binding = PERLIN_PARAMS) uniform PerlinParamsUniform
 {
 	NoiseParams noiseParams;
 };
@@ -21,8 +21,6 @@ layout(location = 0) out vec4 c;
 void main()
 {	
     const vec2 st = uv * noiseParams.mSettings.xy;
-	const float minDist = worley(st, renderParams.mTime, noiseParams.mInvert);
-
-	vec3 color = vec3(minDist);
-	c = vec4(color.xyz, 1.0f);
+	float noise = perlin3D2(vec3(st, renderParams.mTime));
+	c = vec4(noise, noise, noise, 1.0f);
 }

@@ -2,6 +2,7 @@
 #define FBM_H
 
 #include "random.h"
+#include "worley.h"
 
 // Based on Morgan McGuire @morgan3d
 // https://www.shadertoy.com/view/4dS3Wd
@@ -37,6 +38,28 @@ float fbm(
     for (int i = 0; i < octaves; i++)
     {
         value += amplitude * noise(st);
+        st *= 2.;
+        amplitude *= .5;
+    }
+    return value;
+}
+
+
+float fbmWorley(
+    uint  octaves,
+    vec2  st,
+    float time,
+    bool  invert)
+{
+    // Initial values
+    float value = 0.0;
+    float amplitude = .5;
+    float frequency = 0.;
+    //
+    // Loop of octaves
+    for (int i = 0; i < octaves; i++)
+    {
+        value += amplitude * worley(st, time, invert);
         st *= 2.;
         amplitude *= .5;
     }

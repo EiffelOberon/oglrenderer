@@ -29,6 +29,7 @@ private:
     ShaderProgram mTexturedQuadShader;
     ShaderProgram mFBMNoiseQuadShader;
     ShaderProgram mWorleyNoiseQuadShader;
+    ShaderProgram mPerlinNoiseQuadShader;
     Quad          mQuad;
 
     glm::vec2     mResolution;
@@ -36,6 +37,7 @@ private:
     std::unique_ptr<RenderTexture> mRenderTexture;
     std::unique_ptr<RenderTexture> mFBMNoiseRenderTexture;
     std::unique_ptr<RenderTexture> mWorleyNoiseRenderTexture;
+    std::unique_ptr<RenderTexture> mPerlinNoiseRenderTexture;
 
     Camera mCamera;
     CameraParams mCamParams;
@@ -45,6 +47,7 @@ private:
     // noise 
     NoiseParams mFBMNoiseParams;
     NoiseParams mWorleyNoiseParams;
+    NoiseParams mPerlinNoiseParams;
 
     // gui
     bool mShowPerformanceWindow;

@@ -4,14 +4,18 @@
 #include "random.h"
 
 float worley(
-    const vec2 iUV,
-    const vec2 fUV,
-    const float time)
+    const vec2  uv,
+    const float time,
+    const bool  invert)
 {
+    const vec2 iUV = floor(uv);
+    const vec2 fUV = fract(uv);
     // minimum distance
     float minDist = 1.0f;
-    for (int y = -1; y <= 1; y++) {
-        for (int x = -1; x <= 1; x++) {
+    for (int y = -1; y <= 1; y++) 
+    {
+        for (int x = -1; x <= 1; x++) 
+        {
             // Neighbor place in the grid
             const vec2 neighbor = vec2(float(x), float(y));
 
@@ -31,6 +35,13 @@ float worley(
             minDist = min(minDist, dist);
         }
     }
+
+    if (invert)
+    {
+        minDist = 1.0f - minDist;
+        minDist = clamp(minDist, 0.0f, 1.0f);
+    }
+
     return minDist;
 }
 

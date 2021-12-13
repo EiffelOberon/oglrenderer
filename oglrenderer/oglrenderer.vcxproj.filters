@@ -122,6 +122,9 @@
     <ClInclude Include="shaders\random.h">
       <Filter>Shaders</Filter>
     </ClInclude>
+    <ClInclude Include="shaders\perlin.h">
+      <Filter>Shaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\quad.frag">
@@ -137,6 +140,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="shaders\worleynoise.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\perlinnoise.frag">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

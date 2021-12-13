@@ -124,7 +124,6 @@ void nishita_sky(
 	float Hr = 7994.0f; // Rayleigh scale height
 	float Hm = 1200.0f; // Mie scale height
 	float g = 0.76f;    // Anisotropy term for Mie scattering.
-	float PI = 3.1415926f;
 
 	vec3 BetaR = vec3(5.8e-6, 13.0e-6, 22.4e-6);
 	vec3 BetaM_max = vec3(9.73e-6);

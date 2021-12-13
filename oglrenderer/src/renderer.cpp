@@ -9,6 +9,7 @@ Renderer::Renderer()
     : mPrerenderQuadShader("./spv/vert.spv", "./spv/frag.spv")
     , mTexturedQuadShader("./spv/vert.spv", "./spv/texturedQuadFrag.spv")
     , mFBMNoiseQuadShader("./spv/vert.spv", "./spv/fbmnoisefrag.spv")
+    , mPerlinNoiseQuadShader("./spv/vert.spv", "./spv/perlinnoisefrag.spv")
     , mWorleyNoiseQuadShader("./spv/vert.spv", "./spv/worleynoisefrag.spv")
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mRenderTexture(nullptr)
@@ -49,7 +50,12 @@ Renderer::Renderer()
     mFBMNoiseParams.mSettings = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
     mFBMNoiseParams.mNoiseOctaves = 1;
     mFBMNoiseQuadShader.addUniform(FBM_PARAMS, mFBMNoiseParams);
-    mWorleyNoiseParams.mSettings = glm::vec4(3.0f, 3.0f, 0.0f, 1.0f);
+    mFBMNoiseQuadShader.addUniform(RENDERER_PARAMS, mRenderParams);
+    mPerlinNoiseParams.mSettings = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+    mPerlinNoiseQuadShader.addUniform(PERLIN_PARAMS, mPerlinNoiseParams);
+    mPerlinNoiseQuadShader.addUniform(RENDERER_PARAMS, mRenderParams);
+    mWorleyNoiseParams.mSettings = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+    mWorleyNoiseParams.mInvert   = true;
     mWorleyNoiseQuadShader.addUniform(WORLEY_PARAMS, mWorleyNoiseParams);
     mWorleyNoiseQuadShader.addUniform(RENDERER_PARAMS, mRenderParams);
 
@@ -81,6 +87,7 @@ void Renderer::resize(
         mRenderTexture = std::make_unique<RenderTexture>(1, width * 0.25f, height * 0.25f);
         mFBMNoiseRenderTexture = std::make_unique<RenderTexture>(1, 100, 100);
         mWorleyNoiseRenderTexture = std::make_unique<RenderTexture>(1, 100, 100);
+        mPerlinNoiseRenderTexture = std::make_unique<RenderTexture>(1, 100, 100);
 
         // update imgui display size
         ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -119,6 +126,12 @@ void Renderer::render()
         mQuad.draw();
         mFBMNoiseQuadShader.disable();
         mFBMNoiseRenderTexture->unbind();
+
+        mPerlinNoiseRenderTexture->bind();
+        mPerlinNoiseQuadShader.use();
+        mQuad.draw();
+        mPerlinNoiseQuadShader.disable();
+        mPerlinNoiseRenderTexture->unbind();
 
         mWorleyNoiseRenderTexture->bind();
         mWorleyNoiseQuadShader.use();
@@ -177,36 +190,15 @@ void Renderer::postRender()
         {
             mPrerenderQuadShader.updateUniform<SkyParams>(SKY_PARAMS, mSkyParams);
         }
-
         // FBM
         ImTextureID fbmNoiseId = (ImTextureID) mFBMNoiseRenderTexture->getTextureId(0);
         float my_tex_w = 100;
         float my_tex_h = 100;
-        ImGui::Text("Cloud noise (FBM): %.0fx%.0f", my_tex_w, my_tex_h);
-        {
-            ImVec2 pos = ImGui::GetCursorScreenPos();
-            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-            ImGui::Image(fbmNoiseId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
-        }
-        if (ImGui::SliderFloat("FBM width", &mFBMNoiseParams.mSettings.x, 0.1f, 4.0f))
-        {
-            mFBMNoiseQuadShader.updateUniform<NoiseParams>(FBM_PARAMS, mFBMNoiseParams);
-        }
-        if (ImGui::SliderFloat("FBM height", &mFBMNoiseParams.mSettings.y, 0.1f, 4.0f))
-        {
-            mFBMNoiseQuadShader.updateUniform<NoiseParams>(FBM_PARAMS, mFBMNoiseParams);
-        }
-        if (ImGui::SliderInt("octaves", &mFBMNoiseParams.mNoiseOctaves, 1, 8))
-        {
-            mFBMNoiseQuadShader.updateUniform<NoiseParams>(FBM_PARAMS, mFBMNoiseParams);
-        }
+
+        ImGui::Text("Cloud Noise: %.0fx%.0f", my_tex_w, my_tex_h);
 
         // Worley
         ImTextureID worleyNoiseId = (ImTextureID)mWorleyNoiseRenderTexture->getTextureId(0);
-        ImGui::Text("Cloud noise (Worley): %.0fx%.0f", my_tex_w, my_tex_h);
         {
             ImVec2 pos = ImGui::GetCursorScreenPos();
             ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
@@ -215,13 +207,47 @@ void Renderer::postRender()
             ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
             ImGui::Image(worleyNoiseId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
         }
-        if (ImGui::SliderFloat("Worley width", &mWorleyNoiseParams.mSettings.x, 1.0f, 10.0f))
+        ImGui::SameLine();
+
+        ImTextureID perlinNoiseId = (ImTextureID)mPerlinNoiseRenderTexture->getTextureId(0);
+        {
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+            ImGui::Image(perlinNoiseId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
+        }
+        ImGui::SameLine();
+
+        {
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+            ImGui::Image(fbmNoiseId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
+        }
+        if (ImGui::SliderFloat("Noise size", &mWorleyNoiseParams.mSettings.x, 1.0f, 10.0f))
+        {
+            mWorleyNoiseParams.mSettings.y = mWorleyNoiseParams.mSettings.x;
+            mWorleyNoiseQuadShader.updateUniform<NoiseParams>(WORLEY_PARAMS, mWorleyNoiseParams);
+
+            mFBMNoiseParams.mSettings.x = mWorleyNoiseParams.mSettings.x;
+            mFBMNoiseParams.mSettings.y = mFBMNoiseParams.mSettings.x;
+            mFBMNoiseQuadShader.updateUniform<NoiseParams>(FBM_PARAMS, mFBMNoiseParams);
+
+            mPerlinNoiseParams.mSettings.x = mWorleyNoiseParams.mSettings.x;
+            mPerlinNoiseParams.mSettings.y = mPerlinNoiseParams.mSettings.x;
+            mPerlinNoiseQuadShader.updateUniform<NoiseParams>(PERLIN_PARAMS, mPerlinNoiseParams);
+        }
+        if (ImGui::Checkbox("Worley invert", &mWorleyNoiseParams.mInvert))
         {
             mWorleyNoiseQuadShader.updateUniform<NoiseParams>(WORLEY_PARAMS, mWorleyNoiseParams);
         }
-        if (ImGui::SliderFloat("Worley height", &mWorleyNoiseParams.mSettings.y, 1.0f, 10.0f))
+        if (ImGui::SliderInt("FBM octaves", &mFBMNoiseParams.mNoiseOctaves, 1, 8))
         {
-            mWorleyNoiseQuadShader.updateUniform<NoiseParams>(WORLEY_PARAMS, mWorleyNoiseParams);
+            mFBMNoiseQuadShader.updateUniform<NoiseParams>(FBM_PARAMS, mFBMNoiseParams);
         }
         ImGui::End();
 

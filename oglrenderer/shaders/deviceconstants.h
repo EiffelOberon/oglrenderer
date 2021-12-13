@@ -8,8 +8,11 @@
 # define RENDERER_PARAMS 3
 # define FBM_PARAMS      4
 # define WORLEY_PARAMS   5
+# define PERLIN_PARAMS   6
 
 // texture binding points
 # define SCREEN_QUAD 0
+
+#define PI (3.1415926f)
 
 #endif

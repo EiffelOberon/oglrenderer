@@ -6,6 +6,10 @@
 #include "fbm.h"
 
 layout(location = 1) in vec2 uv;
+layout(std140, binding = RENDERER_PARAMS) uniform RendererParamsUniform
+{
+	RendererParams renderParams;
+};
 layout(std140, binding = FBM_PARAMS) uniform NoiseParamsUniform
 {
 	NoiseParams noiseParams;
@@ -18,6 +22,6 @@ void main()
 {	
     vec2 st = uv * noiseParams.mSettings.xy;
 
-    const float noise = fbm(noiseParams.mNoiseOctaves, st*3.0);
+    const float noise = fbmWorley(noiseParams.mNoiseOctaves, st, renderParams.mTime, true);
 	c = vec4(noise, noise, noise, 1.0f);
 }
