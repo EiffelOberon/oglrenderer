@@ -80,6 +80,7 @@ bool intersect(
     {
         tmin = tymin; 
     }
+    if (tymax < tmax) 
     {
         tmax = tymax; 
     }
