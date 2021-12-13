@@ -3,6 +3,7 @@
 
 #include "deviceconstants.h"
 #include "devicestructs.h"
+#include "cloud.h"
 #include "perlin.h"
 
 layout(location = 1) in vec2 uv;
@@ -20,7 +21,7 @@ layout(location = 0) out vec4 c;
 
 void main()
 {	
-    const vec2 st = uv * noiseParams.mSettings.xy;
-	float noise = perlin3D2(vec3(st, renderParams.mTime));
+    const vec3 st = vec3(uv, 0.0f);
+	const float noise = perlinFBM(st, renderParams.mTime, noiseParams.mSettings.z, noiseParams.mNoiseOctaves);
 	c = vec4(noise, noise, noise, 1.0f);
 }

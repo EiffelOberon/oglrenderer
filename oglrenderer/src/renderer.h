@@ -66,7 +66,6 @@ private:
 
     ShaderProgram mPrerenderQuadShader;
     ShaderProgram mTexturedQuadShader;
-    ShaderProgram mFBMNoiseQuadShader;
     ShaderProgram mWorleyNoiseQuadShader;
     ShaderProgram mPerlinNoiseQuadShader;
     ShaderProgram mCloudNoiseQuadShader;
@@ -75,7 +74,6 @@ private:
     glm::vec2     mResolution;
 
     std::unique_ptr<RenderTexture> mRenderTexture;
-    std::unique_ptr<RenderTexture> mFBMNoiseRenderTexture;
     std::unique_ptr<RenderTexture> mWorleyNoiseRenderTexture;
     std::unique_ptr<RenderTexture> mPerlinNoiseRenderTexture;
     std::unique_ptr<RenderTexture> mCloudNoiseRenderTexture;
@@ -86,7 +84,6 @@ private:
     SkyParams mSkyParams;
 
     // noise 
-    NoiseParams mFBMNoiseParams;
     NoiseParams mWorleyNoiseParams;
     NoiseParams mPerlinNoiseParams;
 

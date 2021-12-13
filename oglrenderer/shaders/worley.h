@@ -47,10 +47,12 @@ float worley(
 
 
 float worley3D(
-    const vec3 iUV,
-    const vec3 fUV,
-    const float time)
+    const vec3  uv,
+    const float time,
+    const bool  invert)
 {
+    const vec3 iUV = floor(uv);
+    const vec3 fUV = fract(uv);
     // minimum distance
     float minDist = 1.0f;
     for (int z = -1; z <= 1; z++)
@@ -78,6 +80,11 @@ float worley3D(
                 minDist = min(minDist, dist);
             }
         }
+    }
+    if (invert)
+    {
+        minDist = 1.0f - minDist;
+        minDist = clamp(minDist, 0.0f, 1.0f);
     }
     return minDist;
 }

@@ -3,6 +3,7 @@
 
 #include "deviceconstants.h"
 #include "devicestructs.h"
+#include "cloud.h"
 #include "fbm.h"
 #include "perlin.h"
 #include "worley.h"
@@ -29,7 +30,11 @@ layout(location = 0) out vec4 c;
 
 void main()
 {	
-    const vec2 st = uv * fbmParams.mSettings.xy;
-	//float noise = perlin3D2(vec3(st, renderParams.mTime));
-	c = vec4(st.xy, 0.0f, 1.0f);
+    const vec3 st = vec3(uv, 0.0f);
+	float noise = perlinWorley3D(st, renderParams.mTime * renderParams.mCloudSpeed, perlinParams.mSettings.z, perlinParams.mNoiseOctaves, true);
+	
+
+    // fake cloud coverage
+    noise = remap(noise, renderParams.mCloudCutoff, 1.0f, 0.0f, 1.0f);
+	c = vec4(noise, noise, noise, 1.0f);
 }

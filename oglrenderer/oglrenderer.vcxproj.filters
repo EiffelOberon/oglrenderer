@@ -125,6 +125,9 @@
     <ClInclude Include="shaders\perlin.h">
       <Filter>Shaders</Filter>
     </ClInclude>
+    <ClInclude Include="shaders\cloud.h">
+      <Filter>Shaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\quad.frag">

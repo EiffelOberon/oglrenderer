@@ -26,13 +26,15 @@ struct SkyParams
 struct RendererParams
 {
     float mTime;
-    vec3  __padding__;
+    float mCloudCutoff;
+    float mCloudSpeed;
+    float __padding__;
 };
 
 
 struct NoiseParams
 {
-    // x: width, y: height, z: empty, w: empty
+    // x: width, y: height, z: frequency, w: empty
     vec4 mSettings;
     int  mNoiseOctaves;
     bool mInvert;

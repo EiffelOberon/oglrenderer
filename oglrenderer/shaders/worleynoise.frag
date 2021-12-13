@@ -3,6 +3,7 @@
 
 #include "deviceconstants.h"
 #include "devicestructs.h"
+#include "cloud.h"
 #include "worley.h"
 
 layout(location = 1) in vec2 uv;
@@ -20,9 +21,7 @@ layout(location = 0) out vec4 c;
 
 void main()
 {	
-    const vec2 st = uv * noiseParams.mSettings.xy;
-	const float minDist = worley(st, renderParams.mTime, noiseParams.mInvert);
-
-	vec3 color = vec3(minDist);
-	c = vec4(color.xyz, 1.0f);
+    const vec3 st = vec3(uv, 0.0f);
+	const float noise = worleyFBM(st, renderParams.mTime, 1.0f, noiseParams.mInvert);
+	c = vec4(vec3(noise), 1.0f);
 }

@@ -20,7 +20,7 @@ layout(location = 0) out vec4 c;
 
 void main()
 {	
-    vec2 st = uv * noiseParams.mSettings.xy;
+    vec2 st = uv;
 
     const float noise = fbmWorley(noiseParams.mNoiseOctaves, st, renderParams.mTime, true);
 	c = vec4(noise, noise, noise, 1.0f);
