@@ -159,7 +159,7 @@ void Renderer::render()
     // render final quad
     glViewport(0, 0, mResolution.x, mResolution.y);
     mTexturedQuadShader.use();
-    mRenderTexture->bindTexture2D(0);
+    mRenderTexture->bindTexture(0);
     mQuad.draw();
     mTexturedQuadShader.disable();
 }

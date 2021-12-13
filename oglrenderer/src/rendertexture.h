@@ -78,7 +78,7 @@ public:
     }
 
 
-    void bindTexture2D(
+    virtual void bindTexture(
         const uint32_t slot) const
     {
         glBindTexture(GL_TEXTURE_2D, mTex[slot]);
@@ -115,7 +115,12 @@ public:
         return mHeight;
     }
 
-private:
+protected:
+    RenderTexture()
+    {
+
+    }
+
     GLuint mFbo;
     std::vector<GLuint> mTex;
     GLuint mRbo;
