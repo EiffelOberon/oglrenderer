@@ -25,11 +25,51 @@ public:
     void resize(int width, int height);
 
 private:
+
+    template<class UniformType>
+    void addUniform(
+        uint32_t    bindingPt,
+        UniformType& memoryBlock)
+    {
+        if (mUniforms.find(bindingPt) == mUniforms.end())
+        {
+            mUniforms[bindingPt] = std::make_unique<UniformBuffer>(sizeof(UniformType), bindingPt);
+            mUniforms[bindingPt]->upload((void*)&memoryBlock);
+        }
+        else
+        {
+            // should not be adding multiple uniforms to the same binding point
+            assert(false);
+        }
+    }
+
+
+    template<class UniformType>
+    void updateUniform(
+        uint32_t     bindingPt,
+        UniformType& memoryBlock)
+    {
+        mUniforms[bindingPt]->upload((void*)&memoryBlock);
+    }
+
+
+    template<class UniformType>
+    void updateUniform(
+        uint32_t     bindingPt,
+        uint32_t     offsetInBytes,
+        uint32_t     sizeInBytes,
+        UniformType& memoryBlock)
+    {
+        mUniforms[bindingPt]->upload(offsetInBytes, sizeInBytes, (void*)&memoryBlock);
+    }
+
+
     ShaderProgram mPrerenderQuadShader;
     ShaderProgram mTexturedQuadShader;
     ShaderProgram mFBMNoiseQuadShader;
     ShaderProgram mWorleyNoiseQuadShader;
     ShaderProgram mPerlinNoiseQuadShader;
+    ShaderProgram mCloudNoiseQuadShader;
     Quad          mQuad;
 
     glm::vec2     mResolution;
@@ -38,6 +78,7 @@ private:
     std::unique_ptr<RenderTexture> mFBMNoiseRenderTexture;
     std::unique_ptr<RenderTexture> mWorleyNoiseRenderTexture;
     std::unique_ptr<RenderTexture> mPerlinNoiseRenderTexture;
+    std::unique_ptr<RenderTexture> mCloudNoiseRenderTexture;
 
     Camera mCamera;
     CameraParams mCamParams;
@@ -55,4 +96,6 @@ private:
 
     float mDeltaTime;
     float mTime;
+
+    std::map<uint32_t, std::unique_ptr<UniformBuffer>> mUniforms;
 };

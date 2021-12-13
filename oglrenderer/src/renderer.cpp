@@ -8,11 +8,13 @@
 Renderer::Renderer()
     : mPrerenderQuadShader("./spv/vert.spv", "./spv/frag.spv")
     , mTexturedQuadShader("./spv/vert.spv", "./spv/texturedQuadFrag.spv")
+    , mCloudNoiseQuadShader("./spv/vert.spv", "./spv/cloudnoisefrag.spv")
     , mFBMNoiseQuadShader("./spv/vert.spv", "./spv/fbmnoisefrag.spv")
     , mPerlinNoiseQuadShader("./spv/vert.spv", "./spv/perlinnoisefrag.spv")
     , mWorleyNoiseQuadShader("./spv/vert.spv", "./spv/worleynoisefrag.spv")
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mRenderTexture(nullptr)
+    , mCloudNoiseRenderTexture(nullptr)
     , mFBMNoiseRenderTexture(nullptr)
     , mWorleyNoiseRenderTexture(nullptr)
     , mCamera()
@@ -28,7 +30,7 @@ Renderer::Renderer()
 
     // initialize uniforms for quad shader
     glm::mat4 orthogonalMatrix = glm::orthoLH(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f);
-    mPrerenderQuadShader.addUniform(ORTHO_MATRIX, orthogonalMatrix);
+    addUniform(ORTHO_MATRIX, orthogonalMatrix);
 
     // initialize scene camera
     glm::vec3 eye = mCamera.getEye();
@@ -37,32 +39,25 @@ Renderer::Renderer()
     mCamParams.mEye = glm::vec4(eye, 0.0f);
     mCamParams.mTarget = glm::vec4(target, 0.0f);
     mCamParams.mUp = glm::vec4(up, 0.0f);
-    mPrerenderQuadShader.addUniform(CAMERA_PARAMS, mCamParams);
+    addUniform(CAMERA_PARAMS, mCamParams);
 
     // initialize sun
     mSkyParams.mSunDir = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
-    mPrerenderQuadShader.addUniform(SKY_PARAMS, mSkyParams);
-
-    // initialize renderer
-    mRenderParams.mTime = 0.0f;
+    addUniform(SKY_PARAMS, mSkyParams);
 
     // initialize noise
     mFBMNoiseParams.mSettings = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
     mFBMNoiseParams.mNoiseOctaves = 1;
-    mFBMNoiseQuadShader.addUniform(FBM_PARAMS, mFBMNoiseParams);
-    mFBMNoiseQuadShader.addUniform(RENDERER_PARAMS, mRenderParams);
+    addUniform(FBM_PARAMS, mFBMNoiseParams);
     mPerlinNoiseParams.mSettings = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
-    mPerlinNoiseQuadShader.addUniform(PERLIN_PARAMS, mPerlinNoiseParams);
-    mPerlinNoiseQuadShader.addUniform(RENDERER_PARAMS, mRenderParams);
+    addUniform(PERLIN_PARAMS, mPerlinNoiseParams);
     mWorleyNoiseParams.mSettings = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
     mWorleyNoiseParams.mInvert   = true;
-    mWorleyNoiseQuadShader.addUniform(WORLEY_PARAMS, mWorleyNoiseParams);
-    mWorleyNoiseQuadShader.addUniform(RENDERER_PARAMS, mRenderParams);
+    addUniform(WORLEY_PARAMS, mWorleyNoiseParams);
 
-    // for final resolution quad
-    mTexturedQuadShader.addUniform(ORTHO_MATRIX, orthogonalMatrix);
-    mFBMNoiseQuadShader.addUniform(ORTHO_MATRIX, orthogonalMatrix);
-    mWorleyNoiseQuadShader.addUniform(ORTHO_MATRIX, orthogonalMatrix);
+    // initialize render params
+    mRenderParams.mTime = 0.0f;
+    addUniform(RENDERER_PARAMS, mRenderParams);
 
     mTime = 0.0f;
     mDeltaTime = 0.0f;
@@ -85,6 +80,7 @@ void Renderer::resize(
 
         // reallocate render texture
         mRenderTexture = std::make_unique<RenderTexture>(1, width * 0.25f, height * 0.25f);
+        mCloudNoiseRenderTexture = std::make_unique<RenderTexture>(1, 100, 100);
         mFBMNoiseRenderTexture = std::make_unique<RenderTexture>(1, 100, 100);
         mWorleyNoiseRenderTexture = std::make_unique<RenderTexture>(1, 100, 100);
         mPerlinNoiseRenderTexture = std::make_unique<RenderTexture>(1, 100, 100);
@@ -113,7 +109,7 @@ void Renderer::render()
         mTime = fmodf(mTime, 60000.0f);
     }
     mRenderParams.mTime = mTime;
-    mWorleyNoiseQuadShader.updateUniform(RENDERER_PARAMS, 0, sizeof(float), mRenderParams);
+    updateUniform(RENDERER_PARAMS, 0, sizeof(float), mRenderParams);
 
     glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -138,6 +134,12 @@ void Renderer::render()
         mQuad.draw();
         mWorleyNoiseQuadShader.disable();
         mWorleyNoiseRenderTexture->unbind();
+
+        mCloudNoiseRenderTexture->bind();
+        mCloudNoiseQuadShader.use();
+        mQuad.draw();
+        mCloudNoiseQuadShader.disable();
+        mCloudNoiseRenderTexture->unbind();
     }
 
     // render quarter sized render texture
@@ -167,7 +169,7 @@ void Renderer::postRender()
     {
         ImGui::Begin("Performance", &mShowPerformanceWindow);
         ImGui::Text("Frame time: %f ms", mDeltaTime);
-        ImGui::Text("Frames per sec: %f fps", (1.0f / mDeltaTime));
+        ImGui::Text("Frames per sec: %f fps", (1.0f / (mDeltaTime * 0.001f)));
         ImGui::End();
     }
 
@@ -178,17 +180,17 @@ void Renderer::postRender()
         ImGui::Text("Sun Direction");
         if (ImGui::SliderFloat("x", &mSkyParams.mSunDir.x, -1.0f, 1.0f))
         {
-            mPrerenderQuadShader.updateUniform<SkyParams>(SKY_PARAMS, mSkyParams);
+            updateUniform<SkyParams>(SKY_PARAMS, mSkyParams);
         }
 
         if (ImGui::SliderFloat("y", &mSkyParams.mSunDir.y, 0.0f, 1.0f))
         {
-            mPrerenderQuadShader.updateUniform<SkyParams>(SKY_PARAMS, mSkyParams);
+            updateUniform<SkyParams>(SKY_PARAMS, mSkyParams);
         }
 
         if (ImGui::SliderFloat("z", &mSkyParams.mSunDir.z, -1.0f, 1.0f))
         {
-            mPrerenderQuadShader.updateUniform<SkyParams>(SKY_PARAMS, mSkyParams);
+            updateUniform<SkyParams>(SKY_PARAMS, mSkyParams);
         }
         // FBM
         ImTextureID fbmNoiseId = (ImTextureID) mFBMNoiseRenderTexture->getTextureId(0);
@@ -231,24 +233,38 @@ void Renderer::postRender()
         if (ImGui::SliderFloat("Noise size", &mWorleyNoiseParams.mSettings.x, 1.0f, 10.0f))
         {
             mWorleyNoiseParams.mSettings.y = mWorleyNoiseParams.mSettings.x;
-            mWorleyNoiseQuadShader.updateUniform<NoiseParams>(WORLEY_PARAMS, mWorleyNoiseParams);
+            updateUniform(WORLEY_PARAMS, mWorleyNoiseParams);
 
             mFBMNoiseParams.mSettings.x = mWorleyNoiseParams.mSettings.x;
             mFBMNoiseParams.mSettings.y = mFBMNoiseParams.mSettings.x;
-            mFBMNoiseQuadShader.updateUniform<NoiseParams>(FBM_PARAMS, mFBMNoiseParams);
+            updateUniform(FBM_PARAMS, mFBMNoiseParams);
 
             mPerlinNoiseParams.mSettings.x = mWorleyNoiseParams.mSettings.x;
             mPerlinNoiseParams.mSettings.y = mPerlinNoiseParams.mSettings.x;
-            mPerlinNoiseQuadShader.updateUniform<NoiseParams>(PERLIN_PARAMS, mPerlinNoiseParams);
+            updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
         }
         if (ImGui::Checkbox("Worley invert", &mWorleyNoiseParams.mInvert))
         {
-            mWorleyNoiseQuadShader.updateUniform<NoiseParams>(WORLEY_PARAMS, mWorleyNoiseParams);
+            updateUniform(WORLEY_PARAMS, mWorleyNoiseParams);
         }
         if (ImGui::SliderInt("FBM octaves", &mFBMNoiseParams.mNoiseOctaves, 1, 8))
         {
-            mFBMNoiseQuadShader.updateUniform<NoiseParams>(FBM_PARAMS, mFBMNoiseParams);
+            updateUniform(FBM_PARAMS, mFBMNoiseParams);
         }
+
+        ImGui::Text("Final Noise: %.0fx%.0f", my_tex_w, my_tex_h);
+
+        // Cloud
+        ImTextureID cloudyNoiseId = (ImTextureID)mCloudNoiseRenderTexture->getTextureId(0);
+        {
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+            ImGui::Image(cloudyNoiseId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
+        }
+
         ImGui::End();
 
     }

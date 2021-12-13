@@ -73,44 +73,6 @@ public:
     }
 
 
-    template<class UniformType>
-    void addUniform(
-        uint32_t    bindingPt,
-        UniformType &memoryBlock)
-    {
-        if (mUniforms.find(bindingPt) == mUniforms.end())
-        {
-            mUniforms[bindingPt] = std::make_unique<UniformBuffer>(sizeof(UniformType), bindingPt);
-            mUniforms[bindingPt]->upload((void*)&memoryBlock);
-        }
-        else
-        {
-            // should not be adding multiple uniforms to the same binding point
-            assert(false);
-        }
-    }
-
-
-    template<class UniformType>
-    void updateUniform(
-        uint32_t     bindingPt,
-        UniformType& memoryBlock)
-    {
-        mUniforms[bindingPt]->upload((void*)&memoryBlock);
-    }
-
-
-    template<class UniformType>
-    void updateUniform(
-        uint32_t     bindingPt,
-        uint32_t     offsetInBytes,
-        uint32_t     sizeInBytes,
-        UniformType& memoryBlock)
-    {
-        mUniforms[bindingPt]->upload(offsetInBytes, sizeInBytes, (void*)&memoryBlock);
-    }
-
-
     // Method to enable the shader program
     void use() const
     {
@@ -158,5 +120,4 @@ private:
 
      // List of attached shaders and uniforms to the program
     std::vector<std::unique_ptr<Shader>>               mAttachedShaders;
-    std::map<uint32_t, std::unique_ptr<UniformBuffer>> mUniforms;
 };
