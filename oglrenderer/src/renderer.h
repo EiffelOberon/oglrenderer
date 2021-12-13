@@ -20,9 +20,13 @@ public:
     Renderer();
     ~Renderer();
 
+    void updateCamera(const int deltaX, 
+                      const int deltaY);
+
     void render();
     void postRender();
-    void resize(int width, int height);
+    void resize(int width, 
+                int height);
 
 private:
 

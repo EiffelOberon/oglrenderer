@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include <stack>
 
 #include "glew.h"
 #include "freeglut.h"
@@ -8,7 +9,15 @@
 #include "imgui_impl_opengl3.h"
 #include "renderer.h"
 
+struct MouseState
+{
+    int mButton;
+    int mX;
+    int mY;
+};
+
 std::unique_ptr<Renderer> renderer = nullptr;
+std::stack<MouseState> mouseStates;
 
 void APIENTRY debugMessageCallback(
     const GLenum  source, 
@@ -114,6 +123,48 @@ void APIENTRY debugMessageCallback(
 }
 
 
+void mouseClick(
+    const int button, 
+    const int state,
+    const int x, 
+    const int y)
+{
+    if (state == GLUT_DOWN)
+    {
+        mouseStates.push(MouseState{button, x, y});
+    }
+    else if (state == GLUT_UP)
+    {
+        assert(mouseStates.size() > 0);
+        mouseStates.pop();
+    }
+    ImGui_ImplGLUT_MouseFunc(button, state, x, y);
+}
+
+
+void mouseMotion(
+    const int x,
+    const int y)
+{
+    MouseState newState = mouseStates.top();
+
+    const float deltaX = x - newState.mX;
+    const float deltaY = y - newState.mY;
+
+    if (newState.mButton == GLUT_RIGHT_BUTTON)
+    {
+        renderer->updateCamera(deltaX, deltaY);
+    }
+
+    newState.mX = x;
+    newState.mY = y;
+
+    mouseStates.pop();
+    mouseStates.push(newState);
+    ImGui_ImplGLUT_MotionFunc(x, y);
+}
+
+
 void resize(
     int width,
     int height)
@@ -191,6 +242,8 @@ int main(
         // register callbacks
         glutDisplayFunc(render);
         glutIdleFunc(update);
+        glutMouseFunc(mouseClick);
+        glutMotionFunc(mouseMotion);
 
         // Here is our new entry in the main function
         glutReshapeFunc(resize);

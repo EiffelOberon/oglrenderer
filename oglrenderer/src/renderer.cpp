@@ -52,9 +52,10 @@ Renderer::Renderer()
     addUniform(WORLEY_PARAMS, mWorleyNoiseParams);
 
     // initialize render params
-    mRenderParams.mTime = 0.0f;
-    mRenderParams.mCloudCutoff = 0.4f;
-    mRenderParams.mCloudSpeed = 1.0f;
+    mRenderParams.mSettings.x = 0.0f;
+    mRenderParams.mSettings.y = (1600.0f / 900.0f);
+    mRenderParams.mCloudSettings.x = 0.4f;
+    mRenderParams.mCloudSettings.y = 1.0f;
     addUniform(RENDERER_PARAMS, mRenderParams);
 
     mTime = 0.0f;
@@ -67,6 +68,18 @@ Renderer::~Renderer()
 }
 
 
+void Renderer::updateCamera(
+    const int deltaX, 
+    const int deltaY)
+{
+    mCamera.update(deltaX, deltaY);
+    mCamParams.mEye = glm::vec4(mCamera.getEye(), 0.0f);
+    mCamParams.mTarget = glm::vec4(mCamera.getTarget(), 0.0f);
+    mCamParams.mUp = glm::vec4(mCamera.getUp(), 0.0f);
+    updateUniform(CAMERA_PARAMS, mCamParams);
+}
+
+
 void Renderer::resize(
     int width, 
     int height)
@@ -75,6 +88,8 @@ void Renderer::resize(
     {
         // update resolution
         mResolution = glm::vec2(width, height);
+        mRenderParams.mSettings.y = (mResolution.x / mResolution.y);
+        updateUniform(RENDERER_PARAMS, mRenderParams);
 
         // reallocate render texture
         mRenderTexture = std::make_unique<RenderTexture>(1, width * 0.25f, height * 0.25f);
@@ -105,7 +120,7 @@ void Renderer::render()
     {
         mTime = fmodf(mTime, 60000.0f);
     }
-    mRenderParams.mTime = mTime * 0.001f;
+    mRenderParams.mSettings.x = mTime * 0.001f;
     updateUniform(RENDERER_PARAMS, 0, sizeof(float), mRenderParams);
 
     glClearColor(1, 1, 1, 1);
@@ -235,11 +250,11 @@ void Renderer::postRender()
         {
             updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
         }
-        if (ImGui::SliderFloat("Cloud cutoff", &mRenderParams.mCloudCutoff, 0.0f, 1.0f))
+        if (ImGui::SliderFloat("Cloud cutoff", &mRenderParams.mCloudSettings.x, 0.0f, 1.0f))
         {
             updateUniform(RENDERER_PARAMS, mRenderParams);
         }
-        if (ImGui::SliderFloat("Cloud speed", &mRenderParams.mCloudSpeed, 1.0f, 100.0f))
+        if (ImGui::SliderFloat("Cloud speed", &mRenderParams.mCloudSettings.y, 1.0f, 100.0f))
         {
             updateUniform(RENDERER_PARAMS, mRenderParams);
         }

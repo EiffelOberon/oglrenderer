@@ -1,5 +1,6 @@
 #version 450 core
 #define GLSL_SHADER
+#extension GL_EXT_scalar_block_layout : require
 
 #include "deviceconstants.h"
 

@@ -25,10 +25,10 @@ struct SkyParams
 
 struct RendererParams
 {
-    float mTime;
-    float mCloudCutoff;
-    float mCloudSpeed;
-    float __padding__;
+    // x = time, y = aspect ratio, z = empty, w = empty;
+    vec4 mSettings;
+    // x = cut off, y = speed, z = empty, w = empty;
+    vec4 mCloudSettings;
 };
 
 
