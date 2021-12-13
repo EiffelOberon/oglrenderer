@@ -56,6 +56,7 @@ Renderer::Renderer()
     mRenderParams.mSettings.y = (1600.0f / 900.0f);
     mRenderParams.mCloudSettings.x = 0.4f;
     mRenderParams.mCloudSettings.y = 0.01f;
+    mRenderParams.mCloudSettings.z = 1.0f;
     addUniform(RENDERER_PARAMS, mRenderParams);
 
     mTime = 0.0f;
@@ -171,9 +172,9 @@ void Renderer::postRender()
     mDeltaTime = elapsed.count();
 
     mTime += (mDeltaTime);
-    if (mTime > 60000.0f)
+    if (mTime > 3600000.0f)
     {
-        mTime = fmodf(mTime, 60000.0f);
+        mTime = fmodf(mTime, 3600000.0f);
     }
 }
 
@@ -267,6 +268,11 @@ void Renderer::renderGUI()
         {
             updateUniform(RENDERER_PARAMS, mRenderParams);
         }
+        if (ImGui::SliderFloat("Cloud density", &mRenderParams.mCloudSettings.z, 0.1f, 100.0f))
+        {
+            updateUniform(RENDERER_PARAMS, mRenderParams);
+        }
+
 
         ImGui::End();
 
