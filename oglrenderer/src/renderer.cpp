@@ -6,11 +6,13 @@
 
 
 Renderer::Renderer()
-    : mPrerenderQuadShader("./spv/vert.spv", "./spv/frag.spv")
+    : mPrecomputeCloudShader("./spv/precomputecloud.spv")
+    , mPrerenderQuadShader("./spv/vert.spv", "./spv/frag.spv")
     , mTexturedQuadShader("./spv/vert.spv", "./spv/texturedQuadFrag.spv")
     , mCloudNoiseQuadShader("./spv/vert.spv", "./spv/cloudnoisefrag.spv")
     , mPerlinNoiseQuadShader("./spv/vert.spv", "./spv/perlinnoisefrag.spv")
     , mWorleyNoiseQuadShader("./spv/vert.spv", "./spv/worleynoisefrag.spv")
+    , mCloudTexture(256, 256, 256, 32, false, CLOUD_TEXTURE)
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mRenderTexture(nullptr)
     , mCloudNoiseRenderTexture(nullptr)
@@ -18,6 +20,9 @@ Renderer::Renderer()
     , mCamera()
     , mShowPerformanceWindow(true)
     , mShowSkyWindow(true)
+    , mDeltaTime(0.0f)
+    , mTime(0.0f)
+    , mFrameCount(0)
 {
     // quad initialization
     mQuad.update(0, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(0, 0));
@@ -58,9 +63,6 @@ Renderer::Renderer()
     mRenderParams.mCloudSettings.y = 0.01f;
     mRenderParams.mCloudSettings.z = 1.0f;
     addUniform(RENDERER_PARAMS, mRenderParams);
-
-    mTime = 0.0f;
-    mDeltaTime = 0.0f;
 }
 
 Renderer::~Renderer()
@@ -108,6 +110,13 @@ void Renderer::resize(
 void Renderer::preRender()
 {
     mRenderStartTime = std::chrono::high_resolution_clock::now();
+
+    if (mFrameCount % 16 == 0)
+    {
+        mCloudTexture.bind(false);
+        const float workGroupSize = float(CLOUD_RESOLUTION) / float(PRECOMPUTE_CLOUD_LOCAL_SIZE);
+        mPrecomputeCloudShader.dispatch(true, workGroupSize, workGroupSize, workGroupSize);
+    }
 }
 
 
@@ -151,6 +160,7 @@ void Renderer::render()
     // render quarter sized render texture
     glViewport(0, 0, mResolution.x * 0.25f, mResolution.y * 0.25f);
     mRenderTexture->bind();
+    mCloudTexture.bind();
     mPrerenderQuadShader.use();
     mQuad.draw();
     mPrerenderQuadShader.disable();
@@ -175,6 +185,12 @@ void Renderer::postRender()
     if (mTime > 3600000.0f)
     {
         mTime = fmodf(mTime, 3600000.0f);
+    }
+
+    ++mFrameCount;
+    if (mFrameCount >= 1000000)
+    {
+        mFrameCount = 0;
     }
 }
 

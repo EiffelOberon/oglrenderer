@@ -118,8 +118,13 @@ void APIENTRY debugMessageCallback(
         break;
     }
 
-    printf("%d: %s of %s severity, raised from %s: %s\n",
+    if (severity == GL_DEBUG_SEVERITY_HIGH ||
+        severity == GL_DEBUG_SEVERITY_MEDIUM ||
+        severity == GL_DEBUG_SEVERITY_LOW)
+    {
+        printf("%d: %s of %s severity, raised from %s: %s\n",
             id, typeString.c_str(), severityString.c_str(), sourceString.c_str(), msg);
+    }
 }
 
 
@@ -252,8 +257,12 @@ int main(
 
 #ifdef _DEBUG
         // GL_DEBUG_OUTPUT / GL_DEBUG_OUTPUT_SYNCHRONUS
+        glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         glDebugMessageCallback(debugMessageCallback, NULL);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+        glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_MARKER, 0,
+            GL_DEBUG_SEVERITY_NOTIFICATION, -1, "Started debugging");
 #endif
 
         // enter GLUT event processing cycle

@@ -60,6 +60,31 @@ public:
     }
 
 
+    // Compute constructor
+    ShaderProgram(
+        const std::string& computePath)
+    {
+        // Generate a unique Id / handle for the shader program
+        // Note: We MUST have a valid rendering context before generating
+        // the programId or it causes a segfault!
+        mProgramId = glCreateProgram();
+
+        // Initially, we have zero shaders attached to the program
+        mShaderCount = 0;
+
+        // reserve for compute
+        mAttachedShaders.reserve(1);
+
+        // vertex
+        mAttachedShaders.push_back(std::make_unique<Shader>(GL_COMPUTE_SHADER));
+        mShaderCount = (GLuint)mAttachedShaders.size();
+        mAttachedShaders[mShaderCount - 1]->loadSPIRVFromFile(computePath);
+        mAttachedShaders[mShaderCount - 1]->compile();
+        glAttachShader(mProgramId, mAttachedShaders[mShaderCount - 1]->id());
+        linkProgram();
+    }
+
+
     // Destructor
     ~ShaderProgram()
     {
@@ -84,6 +109,22 @@ public:
     void disable() const
     {
         glUseProgram(0);
+    }
+
+    
+    void dispatch(
+        const bool     insertImageBarrier,
+        const uint32_t workGroupX,
+        const uint32_t workGroupY,
+        const uint32_t workGroupZ)
+    {
+        assert(mAttachedShaders.size() == 1);
+        assert(mAttachedShaders[0]->type() == GL_COMPUTE_SHADER);
+
+        use();
+        glDispatchCompute(workGroupX, workGroupY, workGroupZ);
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
+        disable();
     }
 
 
@@ -119,5 +160,5 @@ private:
     GLuint mShaderCount;     // How many shaders are attached to the shader program
 
      // List of attached shaders and uniforms to the program
-    std::vector<std::unique_ptr<Shader>>               mAttachedShaders;
+    std::vector<std::unique_ptr<Shader>> mAttachedShaders;
 };

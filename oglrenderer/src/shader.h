@@ -110,6 +110,9 @@ public:
         case GL_FRAGMENT_SHADER:
             shaderType = "Fragment Shader";
             break;
+        case GL_COMPUTE_SHADER:
+            shaderType = "Compute Shader";
+            break;
         default:
             shaderType = "Unknown Shader";
             assert(false);

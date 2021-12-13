@@ -151,5 +151,8 @@
     <None Include="shaders\cloudnoise.frag">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\precomputecloud.comp">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

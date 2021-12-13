@@ -3,6 +3,7 @@
 #include "GL/glew.h"
 #include "glm/glm.hpp"
 
+
 class Texture
 {
 public:
@@ -44,7 +45,7 @@ public:
     }
 
 
-    void bind(
+    virtual void bind(
         bool readOnly = true)
     {
         // TODO: read from unit 0 for now
@@ -115,7 +116,8 @@ public:
         }
     }
 
-private:
+protected:
+    Texture(){}
 
     GLuint mTexUnit;
     GLuint mTex;
@@ -123,4 +125,66 @@ private:
 
     int mWidth;
     int mHeight;
+};
+
+
+class Texture3D : public Texture
+{
+public:
+    Texture3D(
+        int          width,
+        int          height,
+        int          depth,
+        const int    bitsPerChannel = 8,
+        const bool   greyScale = false,
+        const GLuint texUnit = 0)
+    {
+        mWidth          = width;
+        mHeight         = height;
+        mDepth          = depth;
+        mInternalFormat = GL_RGBA8;
+        mTexUnit        = texUnit;
+
+        glGenTextures(1, &mTex);
+        glBindTexture(GL_TEXTURE_3D, mTex);
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+        assert(bitsPerChannel == 8 || bitsPerChannel == 32);
+
+        switch (bitsPerChannel)
+        {
+        case 8:  mInternalFormat = greyScale ? GL_R8 : GL_RGBA8; break;
+        case 32: mInternalFormat = greyScale ? GL_R32F : GL_RGBA32F; break;
+        default: assert(false);
+        }
+
+        glTexImage3D(GL_TEXTURE_3D, 0, mInternalFormat, width, height, depth, 0, greyScale ? GL_R : GL_RGBA, GL_FLOAT, 0);
+        glBindTexture(GL_TEXTURE_3D, 0);
+    }
+
+    ~Texture3D()
+    {
+        glBindTexture(GL_TEXTURE_3D, 0);
+        glDeleteTextures(1, &mTex);
+    }
+
+    void bind(
+        bool readOnly = true) override
+    {
+        // TODO: read from unit 0 for now
+        if (readOnly)
+        {
+            glBindTextureUnit(mTexUnit, mTex);
+        }
+        else
+        {
+            glBindImageTexture(mTexUnit, mTex, 0, GL_TRUE, 0, GL_WRITE_ONLY, mInternalFormat);
+        }
+    }
+private:
+    int mDepth;
 };

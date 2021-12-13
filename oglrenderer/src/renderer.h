@@ -69,7 +69,9 @@ private:
         mUniforms[bindingPt]->upload(offsetInBytes, sizeInBytes, (void*)&memoryBlock);
     }
 
+    Texture3D mCloudTexture;
 
+    ShaderProgram mPrecomputeCloudShader;
     ShaderProgram mPrerenderQuadShader;
     ShaderProgram mTexturedQuadShader;
     ShaderProgram mWorleyNoiseQuadShader;
@@ -99,6 +101,7 @@ private:
 
     float mDeltaTime;
     float mTime;
+    uint32_t mFrameCount;
     std::chrono::steady_clock::time_point mRenderStartTime;
     std::chrono::steady_clock::time_point mRenderEndTime;
 

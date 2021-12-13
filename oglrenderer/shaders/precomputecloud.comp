@@ -1,0 +1,40 @@
+#version 450 core
+#define GLSL_SHADER
+#extension GL_EXT_scalar_block_layout : require
+
+#include "deviceconstants.h"
+#include "devicestructs.h"
+#include "cloud.h"
+
+layout(local_size_x = PRECOMPUTE_CLOUD_LOCAL_SIZE, local_size_y = PRECOMPUTE_CLOUD_LOCAL_SIZE, local_size_z = PRECOMPUTE_CLOUD_LOCAL_SIZE) in;
+layout(std430, binding = RENDERER_PARAMS) uniform RendererParamsUniform
+{
+	RendererParams renderParams;
+};
+layout(std430, binding = FBM_PARAMS) uniform FBMParamsUniform
+{
+	NoiseParams fbmParams;
+};
+layout(std430, binding = PERLIN_PARAMS) uniform PerlinParamsUniform
+{
+	NoiseParams perlinParams;
+};
+layout(std430, binding = WORLEY_PARAMS) uniform WorleyParamsUniform
+{
+	NoiseParams worleyParams;
+};
+layout (binding = CLOUD_TEXTURE, rgba32f) uniform image3D cloudTexture;
+
+void main()
+{
+	if (gl_GlobalInvocationID.x > 255 || gl_GlobalInvocationID.y > 255 || gl_GlobalInvocationID.z > 255)
+	{
+		return;
+	}
+
+    vec3 uvw = gl_GlobalInvocationID.xyz / vec3(256.0f, 256.0f, 256.0f);
+
+    float noise = perlinWorley3D(uvw, renderParams.mSettings.x * renderParams.mCloudSettings.y, perlinParams.mSettings.z, perlinParams.mNoiseOctaves, true);
+    imageStore(cloudTexture, ivec3(gl_GlobalInvocationID.xyz), vec4(noise, noise, noise, noise));
+
+}

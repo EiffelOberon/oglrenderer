@@ -34,7 +34,7 @@ layout(std430, binding = WORLEY_PARAMS) uniform WorleyParamsUniform
 {
 	NoiseParams worleyParams;
 };
-
+layout (binding = CLOUD_TEXTURE) uniform sampler3D cloudTexture;
 
 layout(location = 0) out vec4 c;
 
@@ -149,11 +149,11 @@ void main()
     vec4 transmittance = vec4(1.0f);
     for(int i = 0; i < 1024; ++i)
     {   
-        const vec3 uvw = vec3(r.mOrigin);
-	    float noise = perlinWorley3D(uvw, renderParams.mSettings.x * renderParams.mCloudSettings.y, perlinParams.mSettings.z, perlinParams.mNoiseOctaves, true);
+        vec3 uvw = (r.mOrigin - b.mMin) / (b.mMax - b.mMin);
+        float noise = texture(cloudTexture, fract(uvw)).x;
         // fake cloud coverage
         noise = remap(noise, renderParams.mCloudSettings.x, 1.0f, 0.0f, 1.0f);
-        
+
         transmittance *= exp(-stepLength * noise * renderParams.mCloudSettings.z);
         if(length(transmittance) < 0.05f)
         {
