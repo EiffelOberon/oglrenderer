@@ -27,7 +27,7 @@ struct RendererParams
 {
     // x = time, y = aspect ratio, z = empty, w = empty;
     vec4 mSettings;
-    // x = cut off, y = speed, z = empty, w = empty;
+    // x = cut off, y = speed, z = density, w = empty;
     vec4 mCloudSettings;
 };
 

@@ -154,7 +154,7 @@ void main()
         // fake cloud coverage
         noise = remap(noise, renderParams.mCloudSettings.x, 1.0f, 0.0f, 1.0f);
         
-        transmittance *= exp(-stepLength * noise);
+        transmittance *= exp(-stepLength * noise * renderParams.mCloudSettings.z);
         if(length(transmittance) < 0.05f)
         {
             break;
