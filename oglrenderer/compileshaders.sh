@@ -5,4 +5,5 @@
 ./shaderc/glslc.exe ./shaders/perlinnoise.frag -o ./spv/perlinnoisefrag.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 ./shaderc/glslc.exe ./shaders/worleynoise.frag -o ./spv/worleynoisefrag.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 ./shaderc/glslc.exe ./shaders/cloudnoise.frag -o ./spv/cloudnoisefrag.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
+./shaderc/glslc.exe ./shaders/perlinworleynoise.frag -o ./spv/perlinworleynoisefrag.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 ./shaderc/glslc.exe ./shaders/precomputecloud.comp -o ./spv/precomputecloud.spv --target-env=opengl -std=450core -I "./" -I "./shaders"

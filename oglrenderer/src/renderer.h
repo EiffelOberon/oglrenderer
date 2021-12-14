@@ -84,10 +84,11 @@ private:
 
     glm::vec2     mResolution;
 
+    // 2D textures to display
     std::unique_ptr<RenderTexture> mRenderTexture;
     std::unique_ptr<RenderTexture> mWorleyNoiseRenderTexture;
     std::unique_ptr<RenderTexture> mPerlinNoiseRenderTexture;
-    std::unique_ptr<RenderTexture> mCloudNoiseRenderTexture;
+    std::unique_ptr<RenderTexture> mCloudNoiseRenderTexture[4];
 
     Camera mCamera;
     CameraParams mCamParams;

@@ -26,21 +26,16 @@ layout(std430, binding = WORLEY_PARAMS) uniform WorleyParamsUniform
 {
 	NoiseParams worleyParams;
 };
-layout (binding = CLOUD_TEXTURE) uniform sampler3D cloudTexture;
 
 layout(location = 0) out vec4 c;
 
 void main()
 {	
     const vec3 st = vec3(uv, 0.0f);
-	vec4 noise = texture(cloudTexture, st);
-	float result = 0.0f;
-	switch(worleyParams.mTextureIdx)
-	{
-	case 0:	result = noise.x; break;
-	case 1:	result = noise.y; break;
-	case 2:	result = noise.z; break;
-	case 3: result = noise.w; break;
-	}
-	c = vec4(result, result, result, 1.0f);
+	float noise = perlinWorley3D(st, renderParams.mSettings.x * renderParams.mCloudSettings.y, perlinParams.mSettings.z, perlinParams.mNoiseOctaves, true);
+	
+
+    // fake cloud coverage
+    noise = remap(noise, renderParams.mCloudSettings.x, 1.0f, 0.0f, 1.0f);
+	c = vec4(noise, noise, noise, 1.0f);
 }

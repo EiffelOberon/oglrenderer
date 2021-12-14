@@ -16,7 +16,6 @@ Renderer::Renderer()
     , mCloudTexture(256, 256, 256, 32, false, CLOUD_TEXTURE)
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mRenderTexture(nullptr)
-    , mCloudNoiseRenderTexture(nullptr)
     , mWorleyNoiseRenderTexture(nullptr)
     , mCamera()
     , mShowPerformanceWindow(true)
@@ -25,6 +24,11 @@ Renderer::Renderer()
     , mTime(0.0f)
     , mFrameCount(0)
 {
+    mCloudNoiseRenderTexture[0] = nullptr;
+    mCloudNoiseRenderTexture[1] = nullptr;
+    mCloudNoiseRenderTexture[2] = nullptr;
+    mCloudNoiseRenderTexture[3] = nullptr;
+
     // quad initialization
     mQuad.update(0, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(0, 0));
     mQuad.update(1, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0, 1));
@@ -101,7 +105,10 @@ void Renderer::resize(
 
         // reallocate render texture
         mRenderTexture = std::make_unique<RenderTexture>(1, width * 0.25f, height * 0.25f);
-        mCloudNoiseRenderTexture = std::make_unique<RenderTexture>(1, 100, 100);
+        mCloudNoiseRenderTexture[0] = std::make_unique<RenderTexture>(1, 100, 100);
+        mCloudNoiseRenderTexture[1] = std::make_unique<RenderTexture>(1, 100, 100);
+        mCloudNoiseRenderTexture[2] = std::make_unique<RenderTexture>(1, 100, 100);
+        mCloudNoiseRenderTexture[3] = std::make_unique<RenderTexture>(1, 100, 100);
         mWorleyNoiseRenderTexture = std::make_unique<RenderTexture>(1, 100, 100);
         mPerlinNoiseRenderTexture = std::make_unique<RenderTexture>(1, 100, 100);
 
@@ -137,11 +144,17 @@ void Renderer::preRender()
             mWorleyNoiseQuadShader.disable();
             mWorleyNoiseRenderTexture->unbind();
 
-            mCloudNoiseRenderTexture->bind();
-            mCloudNoiseQuadShader.use();
-            mQuad.draw();
-            mCloudNoiseQuadShader.disable();
-            mCloudNoiseRenderTexture->unbind();
+            for (int i = 0; i < 4; ++i)
+            {
+                mWorleyNoiseParams.mTextureIdx = i;
+                updateUniform(WORLEY_PARAMS, mWorleyNoiseParams);
+
+                mCloudNoiseRenderTexture[i]->bind();
+                mCloudNoiseQuadShader.use();
+                mQuad.draw();
+                mCloudNoiseQuadShader.disable();
+                mCloudNoiseRenderTexture[i]->unbind();
+            }
         }
     }
 }
@@ -259,30 +272,40 @@ void Renderer::renderGUI()
         ImGui::Text("Cloud Noise: %.0fx%.0f", my_tex_w, my_tex_h);
 
         // Worley
-        ImTextureID worleyNoiseId = (ImTextureID)mWorleyNoiseRenderTexture->getTextureId(0);
+        ImTextureID cloudyNoiseId = (ImTextureID)mCloudNoiseRenderTexture[0]->getTextureId(0);
         {
             ImVec2 pos = ImGui::GetCursorScreenPos();
             ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
             ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
             ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
             ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-            ImGui::Image(worleyNoiseId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
+            ImGui::Image(cloudyNoiseId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
+        }
+
+        cloudyNoiseId = (ImTextureID)mCloudNoiseRenderTexture[1]->getTextureId(0);
+        {
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+            ImGui::Image(cloudyNoiseId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
         }
         ImGui::SameLine();
 
-        ImTextureID perlinNoiseId = (ImTextureID)mPerlinNoiseRenderTexture->getTextureId(0);
+        cloudyNoiseId = (ImTextureID)mCloudNoiseRenderTexture[2]->getTextureId(0);
         {
             ImVec2 pos = ImGui::GetCursorScreenPos();
             ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
             ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
             ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
             ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-            ImGui::Image(perlinNoiseId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
+            ImGui::Image(cloudyNoiseId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
         }
         ImGui::SameLine();
 
         // Cloud (perlin worley)
-        ImTextureID cloudyNoiseId = (ImTextureID)mCloudNoiseRenderTexture->getTextureId(0);
+        cloudyNoiseId = (ImTextureID)mCloudNoiseRenderTexture[3]->getTextureId(0);
         {
             ImVec2 pos = ImGui::GetCursorScreenPos();
             ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left

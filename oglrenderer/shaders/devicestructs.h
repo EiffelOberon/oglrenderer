@@ -39,8 +39,9 @@ struct NoiseParams
     // x: width, y: height, z: frequency, w: empty
     vec4 mSettings;
     int  mNoiseOctaves;
+    int  mTextureIdx;
+    int  __padding__;
     bool mInvert;
-    vec2 __padding__;
 };
 
 
