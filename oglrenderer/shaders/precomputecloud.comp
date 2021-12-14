@@ -37,9 +37,9 @@ void main()
     const float perlinWorley = perlinWorley3D(
 		uvw, renderParams.mSettings.x * renderParams.mCloudSettings.y, perlinParams.mSettings.z, perlinParams.mNoiseOctaves, true);
 
-    const float worley1 = worleyFBM(uvw * perlinParams.mSettings.z, renderParams.mSettings.x * renderParams.mCloudSettings.y * perlinParams.mSettings.z, 1.0f, true);
-    const float worley2 = worleyFBM(uvw * 2 * perlinParams.mSettings.z, renderParams.mSettings.x * 2 * renderParams.mCloudSettings.y * perlinParams.mSettings.z, 1.0f, true);
-    const float worley3 = worleyFBM(uvw * 4 * perlinParams.mSettings.z, renderParams.mSettings.x * 4 * renderParams.mCloudSettings.y * perlinParams.mSettings.z, 1.0f, true);
+    const float worley1 = worley3D(uvw * perlinParams.mSettings.z, renderParams.mSettings.x * renderParams.mCloudSettings.y * perlinParams.mSettings.z, true);
+    const float worley2 = worley3D(uvw * 2 * perlinParams.mSettings.z, renderParams.mSettings.x * 2 * renderParams.mCloudSettings.y * perlinParams.mSettings.z, true);
+    const float worley3 = worley3D(uvw * 4 * perlinParams.mSettings.z, renderParams.mSettings.x * 4 * renderParams.mCloudSettings.y * perlinParams.mSettings.z, true);
 
     imageStore(cloudTexture, ivec3(gl_GlobalInvocationID.xyz), vec4(perlinWorley, worley1, worley2, worley3));
 

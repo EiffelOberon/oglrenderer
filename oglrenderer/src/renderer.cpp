@@ -21,7 +21,7 @@ Renderer::Renderer()
     , mShowPerformanceWindow(true)
     , mShowSkyWindow(true)
     , mDeltaTime(0.0f)
-    , mLowResFactor(0.25f)
+    , mLowResFactor(0.5f)
     , mTime(0.0f)
     , mFrameCount(0)
 {
