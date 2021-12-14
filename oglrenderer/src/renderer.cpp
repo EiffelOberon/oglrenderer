@@ -21,6 +21,7 @@ Renderer::Renderer()
     , mShowPerformanceWindow(true)
     , mShowSkyWindow(true)
     , mDeltaTime(0.0f)
+    , mLowResFactor(0.25f)
     , mTime(0.0f)
     , mFrameCount(0)
 {
@@ -67,8 +68,11 @@ Renderer::Renderer()
     mRenderParams.mCloudSettings.x = 0.4f;
     mRenderParams.mCloudSettings.y = 0.01f;
     mRenderParams.mCloudSettings.z = 1.0f;
+    mRenderParams.mCloudSettings.w = 10000.0f;
     mRenderParams.mCloudMapping.x = 4.0f;
     mRenderParams.mCloudMapping.y = 4.0f;
+    mRenderParams.mSteps.x = 1024;
+    mRenderParams.mSteps.y = 8;
     addUniform(RENDERER_PARAMS, mRenderParams);
 
     loadStates();
@@ -104,7 +108,7 @@ void Renderer::resize(
         updateUniform(RENDERER_PARAMS, mRenderParams);
 
         // reallocate render texture
-        mRenderTexture = std::make_unique<RenderTexture>(1, width * 0.25f, height * 0.25f);
+        mRenderTexture = std::make_unique<RenderTexture>(1, width * mLowResFactor, height * mLowResFactor);
         mCloudNoiseRenderTexture[0] = std::make_unique<RenderTexture>(1, 100, 100);
         mCloudNoiseRenderTexture[1] = std::make_unique<RenderTexture>(1, 100, 100);
         mCloudNoiseRenderTexture[2] = std::make_unique<RenderTexture>(1, 100, 100);
@@ -176,7 +180,7 @@ void Renderer::render()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // render quarter sized render texture
-    glViewport(0, 0, mResolution.x * 0.25f, mResolution.y * 0.25f);
+    glViewport(0, 0, mResolution.x * mLowResFactor, mResolution.y * mLowResFactor);
     mRenderTexture->bind();
     mCloudTexture.bind();
     mPrerenderQuadShader.use();
@@ -339,6 +343,10 @@ void Renderer::renderGUI()
         {
             updateUniform(RENDERER_PARAMS, mRenderParams);
         }
+        if (ImGui::SliderFloat("Cloud BBox height", &mRenderParams.mCloudSettings.w, 100.0f, 100000.0f))
+        {
+            updateUniform(RENDERER_PARAMS, mRenderParams);
+        }
         if (ImGui::SliderFloat("Cloud UV width", &mRenderParams.mCloudMapping.x, 1.0f, 1000.0f))
         {
             updateUniform(RENDERER_PARAMS, mRenderParams);
@@ -347,6 +355,16 @@ void Renderer::renderGUI()
         {
             updateUniform(RENDERER_PARAMS, mRenderParams);
         }
+        if (ImGui::SliderInt("Max steps", &mRenderParams.mSteps.x, 4.0f, 1024.0f))
+        {
+            updateUniform(RENDERER_PARAMS, mRenderParams);
+        }
+
+        if (ImGui::SliderInt("Max shadow steps", &mRenderParams.mSteps.y, 2.0f, 32.0f))
+        {
+            updateUniform(RENDERER_PARAMS, mRenderParams);
+        }
+
 
         ImGui::End();
 
@@ -370,8 +388,11 @@ void Renderer::saveStates()
     ini["renderparams"]["cutoff"] = std::to_string(mRenderParams.mCloudSettings.x);
     ini["renderparams"]["speed"] = std::to_string(mRenderParams.mCloudSettings.y);
     ini["renderparams"]["density"] = std::to_string(mRenderParams.mCloudSettings.z);
+    ini["renderparams"]["height"] = std::to_string(mRenderParams.mCloudSettings.w);
     ini["renderparams"]["cloudu"] = std::to_string(mRenderParams.mCloudMapping.x);
     ini["renderparams"]["cloudv"] = std::to_string(mRenderParams.mCloudMapping.y);
+    ini["renderparams"]["maxsteps"] = std::to_string(mRenderParams.mSteps.x);
+    ini["renderparams"]["maxshadowsteps"] = std::to_string(mRenderParams.mSteps.y);
 
     ini["perlinparams"]["frequency"] = std::to_string(mPerlinNoiseParams.mSettings.z);
     ini["perlinparams"]["octaves"] = std::to_string(mPerlinNoiseParams.mNoiseOctaves);
@@ -400,8 +421,12 @@ void Renderer::loadStates()
         mRenderParams.mCloudSettings.x = std::stof(ini["renderparams"]["cutoff"]);
         mRenderParams.mCloudSettings.y = std::stof(ini["renderparams"]["speed"]);
         mRenderParams.mCloudSettings.z = std::stof(ini["renderparams"]["density"]);
+        mRenderParams.mCloudSettings.w = std::stof(ini["renderparams"]["height"]);
         mRenderParams.mCloudMapping.x = std::stof(ini["renderparams"]["cloudu"]);
         mRenderParams.mCloudMapping.y = std::stof(ini["renderparams"]["cloudv"]);
+
+        mRenderParams.mSteps.x = std::stoi(ini["renderparams"]["maxsteps"]);
+        mRenderParams.mSteps.y = std::stoi(ini["renderparams"]["maxshadowsteps"]);
 
         updateUniform(RENDERER_PARAMS, mRenderParams);
 

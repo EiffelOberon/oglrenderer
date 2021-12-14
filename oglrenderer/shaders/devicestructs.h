@@ -7,6 +7,7 @@
 # define vec3 glm::vec3
 # define vec2 glm::vec2
 # define uint uint32_t
+# define ivec4 glm::ivec4
 #endif
 
 struct CameraParams
@@ -27,10 +28,12 @@ struct RendererParams
 {
     // x = time, y = aspect ratio, z = empty, w = empty;
     vec4 mSettings;
-    // x = cut off, y = speed, z = density, w = empty;
+    // x = cut off, y = speed, z = density, w = height;
     vec4 mCloudSettings;
     // x = u, y = v, z = empty, w = empty;
     vec4 mCloudMapping;
+    // x = max steps, y = shadow max steps, z = empty, w = empty;
+    ivec4 mSteps;
 };
 
 
@@ -50,6 +53,7 @@ struct NoiseParams
 # undef vec3
 # undef vec2
 # undef uint
+# undef ivec4
 #endif
 
 #endif

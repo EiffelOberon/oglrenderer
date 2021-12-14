@@ -83,6 +83,7 @@ private:
     Quad          mQuad;
 
     glm::vec2     mResolution;
+    float         mLowResFactor;
 
     // 2D textures to display
     std::unique_ptr<RenderTexture> mRenderTexture;

@@ -133,7 +133,7 @@ void main()
 
     Box b; 
     float width = 1000000.0f;
-    float height = 10000.0f;
+    float height = renderParams.mCloudSettings.w;
     b.mMin = vec3(0.0f, 8000.0f, 0.0f) + vec3(-width, 0, -width);
     b.mMax = vec3(0.0f, 8000.0f, 0.0f) + vec3(width, height, width);
 
@@ -148,10 +148,11 @@ void main()
     const float stepLength = ((tMax - tMin) / 1024.0f);
     r.mOrigin = r.mOrigin + r.mDir * tMin;
 
+    vec4 cloudColor = vec4(0.0f);
     vec4 transmittance = vec4(1.0f);
     if(foundIntersection && tMin > 0 && tMax > tMin)
     {
-        for(int i = 0; i < 1024; ++i)
+        for(int i = 0; i < renderParams.mSteps.x; ++i)
         {   
             vec3 uvw = (r.mOrigin - b.mMin) / (b.mMax - b.mMin);
             uvw.xz *= renderParams.mCloudMapping.xy;
@@ -161,6 +162,13 @@ void main()
             float base = remap(noise.x, -(1.0f - lowFreqFBM), 1.0f, 0.0f, 1.0f);
             base = remap(base, renderParams.mCloudSettings.x, 1.0f, 0.0f, 1.0f);
             transmittance *= exp(-stepLength * base * 0.01f*  renderParams.mCloudSettings.z);
+
+            //for(int j = 0; j < renderParams.mSteps.y; ++j)
+            //{
+            //    const float stepLength = 1 / float(renderParams.mSteps.y);
+            //
+            //}
+
             if(length(transmittance) < 0.05f)
             {
                 break;
