@@ -128,6 +128,9 @@
     <ClInclude Include="shaders\cloud.h">
       <Filter>Shaders</Filter>
     </ClInclude>
+    <ClInclude Include="src\ini.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\quad.frag">

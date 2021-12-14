@@ -175,6 +175,7 @@
     <ClInclude Include="shaders\random.h" />
     <ClInclude Include="shaders\worley.h" />
     <ClInclude Include="src\camera.h" />
+    <ClInclude Include="src\ini.h" />
     <ClInclude Include="src\quad.h" />
     <ClInclude Include="src\renderer.h" />
     <ClInclude Include="src\rendertexture.h" />

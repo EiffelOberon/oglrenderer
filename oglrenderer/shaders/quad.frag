@@ -131,9 +131,11 @@ void main()
 	
 	nishita_sky(max(1.0f, camParams.mEye.y), 20.0f, sunDir, rayDir.xyz,  rayleigh, mie, sky);
 
-    Box b;
-    b.mMin = vec3(0.0f, 0.0f, -1.0f) + vec3(-1.0f, -1.0f, -1.0f);
-    b.mMax = vec3(0.0f, 0.0f, -1.0f) + vec3(1.0f, 1.0f, 1.0f);
+    Box b; 
+    float width = 100000.0f;
+    float height = 100000.0f;
+    b.mMin = vec3(0.0f, 8000.0f, 0.0f) + vec3(-width, 0, -width);
+    b.mMax = vec3(0.0f, 8000.0f, 0.0f) + vec3(width, height, width);
 
     Ray r;
     r.mOrigin = camParams.mEye.xyz;
@@ -147,20 +149,24 @@ void main()
     r.mOrigin = r.mOrigin + r.mDir * tMin;
 
     vec4 transmittance = vec4(1.0f);
-    for(int i = 0; i < 1024; ++i)
-    {   
-        vec3 uvw = (r.mOrigin - b.mMin) / (b.mMax - b.mMin);
-        float noise = texture(cloudTexture, fract(uvw)).x;
-        // fake cloud coverage
-        noise = remap(noise, renderParams.mCloudSettings.x, 1.0f, 0.0f, 1.0f);
+    if(foundIntersection && tMin > 0 && tMax > tMin)
+    {
+        for(int i = 0; i < 1024; ++i)
+        {   
+            vec3 uvw = (r.mOrigin - b.mMin) / (b.mMax - b.mMin);
+            uvw.xz *= renderParams.mCloudMapping.xy;
+            float noise = texture(cloudTexture, uvw).x;
+            // fake cloud coverage
+            noise = remap(noise, renderParams.mCloudSettings.x, 1.0f, 0.0f, 1.0f);
 
-        transmittance *= exp(-stepLength * noise * renderParams.mCloudSettings.z);
-        if(length(transmittance) < 0.05f)
-        {
-            break;
+            transmittance *= exp(-stepLength * noise * renderParams.mCloudSettings.z);
+            if(length(transmittance) < 0.05f)
+            {
+                break;
+            }
+
+            r.mOrigin = r.mOrigin + r.mDir * stepLength;
         }
-
-        r.mOrigin = r.mOrigin + r.mDir * stepLength;
     }
 
     transmittance = clamp(transmittance, 0.0f, 1.0f);
@@ -171,7 +177,7 @@ void main()
     density = max(density, 0.0f);
     if(foundIntersection)
     {
-        c = mix(vec4(sky, 1.0f), vec4(1.0f), 1-transmittance);
+        c = mix(vec4(1.0f), vec4(sky, 1.0f), transmittance);
     }
     else
     {

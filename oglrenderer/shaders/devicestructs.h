@@ -29,6 +29,8 @@ struct RendererParams
     vec4 mSettings;
     // x = cut off, y = speed, z = density, w = empty;
     vec4 mCloudSettings;
+    // x = u, y = v, z = empty, w = empty;
+    vec4 mCloudMapping;
 };
 
 

@@ -69,6 +69,9 @@ private:
         mUniforms[bindingPt]->upload(offsetInBytes, sizeInBytes, (void*)&memoryBlock);
     }
 
+    void saveStates();
+    void loadStates();
+
     Texture3D mCloudTexture;
 
     ShaderProgram mPrecomputeCloudShader;
@@ -106,5 +109,4 @@ private:
     std::chrono::steady_clock::time_point mRenderEndTime;
 
     std::map<uint32_t, std::unique_ptr<UniformBuffer>> mUniforms;
-
 };

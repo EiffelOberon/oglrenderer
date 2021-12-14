@@ -34,7 +34,13 @@ void main()
 
     vec3 uvw = gl_GlobalInvocationID.xyz / vec3(256.0f, 256.0f, 256.0f);
 
-    float noise = perlinWorley3D(uvw, renderParams.mSettings.x * renderParams.mCloudSettings.y, perlinParams.mSettings.z, perlinParams.mNoiseOctaves, true);
-    imageStore(cloudTexture, ivec3(gl_GlobalInvocationID.xyz), vec4(noise, noise, noise, noise));
+    const float perlinWorley = perlinWorley3D(
+		uvw, renderParams.mSettings.x * renderParams.mCloudSettings.y, perlinParams.mSettings.z, perlinParams.mNoiseOctaves, true);
+
+    const float worley1 = worley3D(uvw * perlinParams.mSettings.z, renderParams.mSettings.x * perlinParams.mSettings.z, true);
+    const float worley2 = worley3D(uvw * 2 * perlinParams.mSettings.z, renderParams.mSettings.x * 2 * perlinParams.mSettings.z, true);
+    const float worley3 = worley3D(uvw * 4 * perlinParams.mSettings.z, renderParams.mSettings.x * 4 * perlinParams.mSettings.z, true);
+
+    imageStore(cloudTexture, ivec3(gl_GlobalInvocationID.xyz), vec4(perlinWorley, worley1, worley2, worley3));
 
 }

@@ -3,6 +3,7 @@
 #include "freeglut.h"
 #include "glm/gtc/matrix_transform.hpp"
 #include "imgui.h"
+#include "ini.h"
 
 
 Renderer::Renderer()
@@ -62,6 +63,8 @@ Renderer::Renderer()
     mRenderParams.mCloudSettings.x = 0.4f;
     mRenderParams.mCloudSettings.y = 0.01f;
     mRenderParams.mCloudSettings.z = 1.0f;
+    mRenderParams.mCloudMapping.x = 4.0f;
+    mRenderParams.mCloudMapping.y = 4.0f;
     addUniform(RENDERER_PARAMS, mRenderParams);
 }
 
@@ -116,6 +119,28 @@ void Renderer::preRender()
         mCloudTexture.bind(false);
         const float workGroupSize = float(CLOUD_RESOLUTION) / float(PRECOMPUTE_CLOUD_LOCAL_SIZE);
         mPrecomputeCloudShader.dispatch(true, workGroupSize, workGroupSize, workGroupSize);
+
+        // render quarter sized render texture
+        glViewport(0, 0, 100, 100);
+        {
+            mPerlinNoiseRenderTexture->bind();
+            mPerlinNoiseQuadShader.use();
+            mQuad.draw();
+            mPerlinNoiseQuadShader.disable();
+            mPerlinNoiseRenderTexture->unbind();
+
+            mWorleyNoiseRenderTexture->bind();
+            mWorleyNoiseQuadShader.use();
+            mQuad.draw();
+            mWorleyNoiseQuadShader.disable();
+            mWorleyNoiseRenderTexture->unbind();
+
+            mCloudNoiseRenderTexture->bind();
+            mCloudNoiseQuadShader.use();
+            mQuad.draw();
+            mCloudNoiseQuadShader.disable();
+            mCloudNoiseRenderTexture->unbind();
+        }
     }
 }
 
@@ -134,28 +159,6 @@ void Renderer::render()
 
     glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // render quarter sized render texture
-    glViewport(0, 0, 100, 100);
-    {
-        mPerlinNoiseRenderTexture->bind();
-        mPerlinNoiseQuadShader.use();
-        mQuad.draw();
-        mPerlinNoiseQuadShader.disable();
-        mPerlinNoiseRenderTexture->unbind();
-
-        mWorleyNoiseRenderTexture->bind();
-        mWorleyNoiseQuadShader.use();
-        mQuad.draw();
-        mWorleyNoiseQuadShader.disable();
-        mWorleyNoiseRenderTexture->unbind();
-
-        mCloudNoiseRenderTexture->bind();
-        mCloudNoiseQuadShader.use();
-        mQuad.draw();
-        mCloudNoiseQuadShader.disable();
-        mCloudNoiseRenderTexture->unbind();
-    }
 
     // render quarter sized render texture
     glViewport(0, 0, mResolution.x * 0.25f, mResolution.y * 0.25f);
@@ -197,6 +200,29 @@ void Renderer::postRender()
 
 void Renderer::renderGUI()
 {
+    if (ImGui::BeginMainMenuBar())
+    {
+        if (ImGui::BeginMenu("Main"))
+        {
+            if (ImGui::MenuItem("Load Settings"))
+            {
+                loadStates();
+            }
+            if (ImGui::MenuItem("Save Settings"))
+            {
+                saveStates();
+            }
+            if (ImGui::MenuItem("Exit"))
+            {
+                exit(0);
+                return;
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+
+
     if (mShowPerformanceWindow)
     {
         ImGui::Begin("Performance", &mShowPerformanceWindow);
@@ -272,7 +298,7 @@ void Renderer::renderGUI()
             updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
         }
 
-        if (ImGui::SliderFloat("Perlin freq", &mPerlinNoiseParams.mSettings.z, 0.0f, 1.0f))
+        if (ImGui::SliderFloat("Perlin freq", &mPerlinNoiseParams.mSettings.z, 0.0f, 10.0f))
         {
             updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
         }
@@ -284,11 +310,18 @@ void Renderer::renderGUI()
         {
             updateUniform(RENDERER_PARAMS, mRenderParams);
         }
-        if (ImGui::SliderFloat("Cloud density", &mRenderParams.mCloudSettings.z, 0.1f, 100.0f))
+        if (ImGui::SliderFloat("Cloud density", &mRenderParams.mCloudSettings.z, 0.00001f, 0.1))
         {
             updateUniform(RENDERER_PARAMS, mRenderParams);
         }
-
+        if (ImGui::SliderFloat("Cloud UV width", &mRenderParams.mCloudMapping.x, 1.0f, 1000.0f))
+        {
+            updateUniform(RENDERER_PARAMS, mRenderParams);
+        }
+        if (ImGui::SliderFloat("Cloud UV height", &mRenderParams.mCloudMapping.y, 1.0f, 1000.0f))
+        {
+            updateUniform(RENDERER_PARAMS, mRenderParams);
+        }
 
         ImGui::End();
 
@@ -296,4 +329,63 @@ void Renderer::renderGUI()
 
     bool test = true;
     ImGui::ShowDemoWindow(&test);
+}
+
+
+void Renderer::saveStates()
+{
+    // create a file instance
+    mINI::INIFile file("oglrenderer.ini");
+    mINI::INIStructure ini;
+
+    ini["skyparams"]["x"] = std::to_string(mSkyParams.mSunDir.x);
+    ini["skyparams"]["y"] = std::to_string(mSkyParams.mSunDir.y);
+    ini["skyparams"]["z"] = std::to_string(mSkyParams.mSunDir.z);
+
+    ini["renderparams"]["cutoff"] = std::to_string(mRenderParams.mCloudSettings.x);
+    ini["renderparams"]["speed"] = std::to_string(mRenderParams.mCloudSettings.y);
+    ini["renderparams"]["density"] = std::to_string(mRenderParams.mCloudSettings.z);
+    ini["renderparams"]["cloudu"] = std::to_string(mRenderParams.mCloudMapping.x);
+    ini["renderparams"]["cloudv"] = std::to_string(mRenderParams.mCloudMapping.y);
+
+    ini["perlinparams"]["frequency"] = std::to_string(mPerlinNoiseParams.mSettings.z);
+    ini["perlinparams"]["octaves"] = std::to_string(mPerlinNoiseParams.mNoiseOctaves);
+    ini["worleyparams"]["invert"] = std::to_string(mWorleyNoiseParams.mInvert);
+
+    // generate an INI file (overwrites any previous file)
+    file.generate(ini);
+}
+
+
+void Renderer::loadStates()
+{
+    // read file into struct
+    mINI::INIFile file("oglrenderer.ini");
+    mINI::INIStructure ini;
+    file.read(ini);
+
+    // read a value
+    std::string& amountOfApples = ini["fruits"]["apples"];
+    mSkyParams.mSunDir.x = std::stof(ini["skyparams"]["x"]);
+    mSkyParams.mSunDir.y = std::stof(ini["skyparams"]["y"]);
+    mSkyParams.mSunDir.z = std::stof(ini["skyparams"]["z"]);
+
+    updateUniform(SKY_PARAMS, mSkyParams);
+
+    mRenderParams.mCloudSettings.x = std::stof(ini["renderparams"]["cutoff"]);
+    mRenderParams.mCloudSettings.y = std::stof(ini["renderparams"]["speed"]);
+    mRenderParams.mCloudSettings.z = std::stof(ini["renderparams"]["density"]);
+    mRenderParams.mCloudMapping.x  = std::stof(ini["renderparams"]["cloudu"]);
+    mRenderParams.mCloudMapping.y  = std::stof(ini["renderparams"]["cloudv"]);
+
+    updateUniform(RENDERER_PARAMS, mRenderParams);
+
+    mWorleyNoiseParams.mInvert = bool(std::stoi(ini["worleyparams"]["invert"]));
+
+    updateUniform(WORLEY_PARAMS, mWorleyNoiseParams);
+
+    mPerlinNoiseParams.mNoiseOctaves = std::stoi(ini["perlinparams"]["octaves"]);
+    mPerlinNoiseParams.mSettings.z = std::stof(ini["perlinparams"]["frequency"]);
+
+    updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
 }
