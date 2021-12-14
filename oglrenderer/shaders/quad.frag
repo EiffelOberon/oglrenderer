@@ -132,8 +132,8 @@ void main()
 	nishita_sky(max(1.0f, camParams.mEye.y), 20.0f, sunDir, rayDir.xyz,  rayleigh, mie, sky);
 
     Box b; 
-    float width = 100000.0f;
-    float height = 100000.0f;
+    float width = 1000000.0f;
+    float height = 10000.0f;
     b.mMin = vec3(0.0f, 8000.0f, 0.0f) + vec3(-width, 0, -width);
     b.mMax = vec3(0.0f, 8000.0f, 0.0f) + vec3(width, height, width);
 
@@ -155,11 +155,12 @@ void main()
         {   
             vec3 uvw = (r.mOrigin - b.mMin) / (b.mMax - b.mMin);
             uvw.xz *= renderParams.mCloudMapping.xy;
-            float noise = texture(cloudTexture, uvw).x;
-            // fake cloud coverage
-            noise = remap(noise, renderParams.mCloudSettings.x, 1.0f, 0.0f, 1.0f);
-
-            transmittance *= exp(-stepLength * noise * renderParams.mCloudSettings.z);
+            
+            vec4 noise = texture(cloudTexture, uvw);
+            float lowFreqFBM = noise.y * 0.625f + noise.z * 0.25f + noise.w * 0.125f;
+            float base = remap(noise.x, -(1.0f - lowFreqFBM), 1.0f, 0.0f, 1.0f);
+            base = remap(base, renderParams.mCloudSettings.x, 1.0f, 0.0f, 1.0f);
+            transmittance *= exp(-stepLength * base * 0.01f*  renderParams.mCloudSettings.z);
             if(length(transmittance) < 0.05f)
             {
                 break;

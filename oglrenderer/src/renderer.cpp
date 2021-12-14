@@ -66,6 +66,8 @@ Renderer::Renderer()
     mRenderParams.mCloudMapping.x = 4.0f;
     mRenderParams.mCloudMapping.y = 4.0f;
     addUniform(RENDERER_PARAMS, mRenderParams);
+
+    loadStates();
 }
 
 Renderer::~Renderer()
@@ -279,7 +281,7 @@ void Renderer::renderGUI()
         }
         ImGui::SameLine();
 
-        // Cloud
+        // Cloud (perlin worley)
         ImTextureID cloudyNoiseId = (ImTextureID)mCloudNoiseRenderTexture->getTextureId(0);
         {
             ImVec2 pos = ImGui::GetCursorScreenPos();
@@ -362,30 +364,31 @@ void Renderer::loadStates()
     // read file into struct
     mINI::INIFile file("oglrenderer.ini");
     mINI::INIStructure ini;
-    file.read(ini);
+    if (file.read(ini))
+    {
+        // read a value
+        std::string& amountOfApples = ini["fruits"]["apples"];
+        mSkyParams.mSunDir.x = std::stof(ini["skyparams"]["x"]);
+        mSkyParams.mSunDir.y = std::stof(ini["skyparams"]["y"]);
+        mSkyParams.mSunDir.z = std::stof(ini["skyparams"]["z"]);
 
-    // read a value
-    std::string& amountOfApples = ini["fruits"]["apples"];
-    mSkyParams.mSunDir.x = std::stof(ini["skyparams"]["x"]);
-    mSkyParams.mSunDir.y = std::stof(ini["skyparams"]["y"]);
-    mSkyParams.mSunDir.z = std::stof(ini["skyparams"]["z"]);
+        updateUniform(SKY_PARAMS, mSkyParams);
 
-    updateUniform(SKY_PARAMS, mSkyParams);
+        mRenderParams.mCloudSettings.x = std::stof(ini["renderparams"]["cutoff"]);
+        mRenderParams.mCloudSettings.y = std::stof(ini["renderparams"]["speed"]);
+        mRenderParams.mCloudSettings.z = std::stof(ini["renderparams"]["density"]);
+        mRenderParams.mCloudMapping.x = std::stof(ini["renderparams"]["cloudu"]);
+        mRenderParams.mCloudMapping.y = std::stof(ini["renderparams"]["cloudv"]);
 
-    mRenderParams.mCloudSettings.x = std::stof(ini["renderparams"]["cutoff"]);
-    mRenderParams.mCloudSettings.y = std::stof(ini["renderparams"]["speed"]);
-    mRenderParams.mCloudSettings.z = std::stof(ini["renderparams"]["density"]);
-    mRenderParams.mCloudMapping.x  = std::stof(ini["renderparams"]["cloudu"]);
-    mRenderParams.mCloudMapping.y  = std::stof(ini["renderparams"]["cloudv"]);
+        updateUniform(RENDERER_PARAMS, mRenderParams);
 
-    updateUniform(RENDERER_PARAMS, mRenderParams);
+        mWorleyNoiseParams.mInvert = bool(std::stoi(ini["worleyparams"]["invert"]));
 
-    mWorleyNoiseParams.mInvert = bool(std::stoi(ini["worleyparams"]["invert"]));
+        updateUniform(WORLEY_PARAMS, mWorleyNoiseParams);
 
-    updateUniform(WORLEY_PARAMS, mWorleyNoiseParams);
+        mPerlinNoiseParams.mNoiseOctaves = std::stoi(ini["perlinparams"]["octaves"]);
+        mPerlinNoiseParams.mSettings.z = std::stof(ini["perlinparams"]["frequency"]);
 
-    mPerlinNoiseParams.mNoiseOctaves = std::stoi(ini["perlinparams"]["octaves"]);
-    mPerlinNoiseParams.mSettings.z = std::stof(ini["perlinparams"]["frequency"]);
-
-    updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
+        updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
+    }
 }

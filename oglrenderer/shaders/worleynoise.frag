@@ -16,6 +16,10 @@ layout(std430, binding = WORLEY_PARAMS) uniform NoiseParamsUniform
 {
 	NoiseParams noiseParams;
 };
+layout(std430, binding = PERLIN_PARAMS) uniform PerlinParamsUniform
+{
+	NoiseParams perlinParams;
+};
 
 layout(location = 3) uniform vec3 color;
 layout(location = 0) out vec4 c;
@@ -23,6 +27,8 @@ layout(location = 0) out vec4 c;
 void main()
 {	
     const vec3 st = vec3(uv, 0.0f);
-	const float noise = worleyFBM(st, renderParams.mSettings.x * renderParams.mCloudSettings.y, 1.0f, noiseParams.mInvert);
+	const float noise = worleyFBM(st * perlinParams.mSettings.z, renderParams.mSettings.x * renderParams.mCloudSettings.y  * perlinParams.mSettings.z, 1.0f, noiseParams.mInvert);
+	
+    //const float noise = worley3D(st * perlinParams.mSettings.z, renderParams.mSettings.x * renderParams.mCloudSettings.y * perlinParams.mSettings.z, true);
 	c = vec4(vec3(noise), 1.0f);
 }
