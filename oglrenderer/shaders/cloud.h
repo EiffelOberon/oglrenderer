@@ -59,7 +59,8 @@ float perlinWorley3D(
 {
     const float perlinNoise = perlinFBM(st, time, freq, octaves);
     const float worleyNoise = worleyFBM(st, time, freq, invert);
-    const float noise = remap(perlinNoise, 0.0f, 1.0f, worleyNoise, 1.0f);
+    float noise = remap(abs(perlinNoise * 2 - 1), (1 - worleyNoise), 1.0f, 0.0f, 1.0f);
+    noise = remap(noise, 0.0f, 1.0f, 0.0f, 1.0f);
     return noise;
 }
 

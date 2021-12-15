@@ -129,14 +129,14 @@ void main()
     vec3 sky = texture(environmentTexture, rayDir.xyz).xyz;
 
     Box b; 
-    //float width = 1000000.0f;
-    //float height = renderParams.mCloudSettings.w;
-    //b.mMin = vec3(0.0f, 8000.0f, 0.0f) + vec3(-width, 0, -width);
-    //b.mMax = vec3(0.0f, 8000.0f, 0.0f) + vec3(width, height, width);
-    float width = 2.0f;
+    float width = 30000.0f;
     float height = renderParams.mCloudSettings.w;
-    b.mMin = vec3(0.0f, 0.0f, -2.0f) + vec3(-width, 0, -width);
-    b.mMax = vec3(0.0f, 0.0f, -2.0f) + vec3(width, 2, width);
+    b.mMin = vec3(0.0f, 2000.0f, 0.0f) + vec3(-width, 0, -width);
+    b.mMax = vec3(0.0f, 2000.0f, 0.0f) + vec3(width, height, width);
+    //float width = 2.0f;
+    //float height = renderParams.mCloudSettings.w;
+    //b.mMin = vec3(0.0f, 0.0f, -2.0f) + vec3(-width, 0, -width);
+    //b.mMax = vec3(0.0f, 0.0f, -2.0f) + vec3(width, 2, width);
 
     Ray r;
     r.mOrigin = camParams.mEye.xyz;
@@ -149,9 +149,10 @@ void main()
     const float stepLength = ((tMax - tMin) / float(renderParams.mSteps.x));
     r.mOrigin = r.mOrigin + r.mDir * tMin;
 
+    bool hasClouds = false;
     vec4 cloudColor = vec4(0.0f);
-    vec4 transmittance = vec4(1.0f);
-    float densityScale = renderParams.mCloudSettings.z;
+    float transmittance = 1.0f;
+    float densityScale = renderParams.mCloudSettings.z * 0.001f;
     if(foundIntersection && tMin > 0 && tMax > tMin)
     {
         for(int i = 0; i < renderParams.mSteps.x; ++i)
@@ -159,40 +160,40 @@ void main()
             vec3 uvw = (r.mOrigin - b.mMin) / (b.mMax - b.mMin);
             uvw.xz *= renderParams.mCloudMapping.xy;
             
-            vec4 noise = clamp(texture(cloudTexture, uvw), 0.0f, 1.0f);
+            vec4 noise = texture(cloudTexture, uvw);
             float lowFreqFBM = noise.y * 0.625f + noise.z * 0.25f + noise.w * 0.125f;
-            float base = remap(noise.x, (1.0f - lowFreqFBM), 1.0f, 0.0f, 1.0f);
+            float base = remap(noise.x, (lowFreqFBM - 1), 1.0f, 0.0f, 1.0f);
             transmittance *= exp(-stepLength * base * densityScale);
 
-            Ray shadowRay;
-            shadowRay.mOrigin = r.mOrigin;
-            shadowRay.mDir = sunDir;
-            vec4 lightTransmittance = vec4(1.0f);
-            for(int j = 0; j < renderParams.mSteps.y; ++j)
-            {
-                float shadowtMin = 0.0f;
-                float shadowtMax = 0.0f;
-                const bool foundIntersection = intersect(b, shadowRay, shadowtMin, shadowtMax);
-                const float shadowStepLength = (length(b.mMax - b.mMin) / float(renderParams.mSteps.y));
-                if(foundIntersection)
-                {
-                    vec3 shadowUVW = (shadowRay.mOrigin - b.mMin) / (b.mMax - b.mMin);
-                    shadowUVW.xz *= renderParams.mCloudMapping.xy;
-                    
-                    vec4 noise = texture(cloudTexture, shadowUVW);
-                    float lowFreqFBM = noise.y * 0.625f + noise.z * 0.25f + noise.w * 0.125f;
-                    float base = remap(noise.x, (1.0f - lowFreqFBM), 1.0f, 0.0f, 1.0f);
-                    lightTransmittance *= exp(-shadowStepLength * base * densityScale);
-                }
-                else
-                {
-                    break;
-                }
-                shadowRay.mOrigin = shadowRay.mOrigin + shadowStepLength * shadowRay.mDir;
-            }
-            
-            vec4 sunLight = texture(environmentTexture, sunDir.xyz);
-            cloudColor += sunLight * clamp(dot(shadowRay.mDir, r.mDir), 0.0f, 1.0f) * lightTransmittance * transmittance;
+            //Ray shadowRay;
+            //shadowRay.mOrigin = r.mOrigin;
+            //shadowRay.mDir = sunDir;
+            //vec4 lightTransmittance = vec4(1.0f);
+            //for(int j = 0; j < renderParams.mSteps.y; ++j)
+            //{
+            //    float shadowtMin = 0.0f;
+            //    float shadowtMax = 0.0f;
+            //    const bool foundIntersection = intersect(b, shadowRay, shadowtMin, shadowtMax);
+            //    const float shadowStepLength = (height * 0.5f / float(renderParams.mSteps.y));
+            //    if(foundIntersection)
+            //    {
+            //        vec3 shadowUVW = (shadowRay.mOrigin - b.mMin) / (b.mMax - b.mMin);
+            //        shadowUVW.xz *= renderParams.mCloudMapping.xy;
+            //        
+            //        vec4 noise = texture(cloudTexture, shadowUVW);
+            //        float lowFreqFBM = noise.y * 0.625f + noise.z * 0.25f + noise.w * 0.125f;
+            //        float base = remap(noise.x, (1.0f - lowFreqFBM), 1.0f, 0.0f, 1.0f);
+            //        lightTransmittance *= exp(-shadowStepLength * base * densityScale);
+            //    }
+            //    else
+            //    {
+            //        break;
+            //    }
+            //    shadowRay.mOrigin = shadowRay.mOrigin + shadowStepLength * shadowRay.mDir;
+            //}
+            //
+            //vec4 sunLight = texture(environmentTexture, sunDir.xyz);
+            //cloudColor += sunLight * clamp(dot(shadowRay.mDir, r.mDir), 0.0f, 1.0f) * lightTransmittance * transmittance;
 
             if(length(transmittance) < 0.05f)
             {
@@ -202,12 +203,17 @@ void main()
             r.mOrigin = r.mOrigin + r.mDir * stepLength;
         }
     }
+
     transmittance = clamp(transmittance, 0.0f, 1.0f);
+    if(transmittance < 1.0f)
+    {
+        hasClouds = true;
+    }
 
     float t = 0.0f;
-    if(foundIntersection)
+    if(foundIntersection && hasClouds)
     {
-        c = vec4(mix(cloudColor.xyz, sky, transmittance.xyz), 1.0f);
+        c = vec4(mix(vec3(1.0f), sky.xyz, transmittance), 1.0f);//vec4(sky.xyz * (1-transmittance.xyz), 1.0f);//vec4(mix(cloudColor.xyz, sky, transmittance.xyz), 1.0f);
     }
     else
     {

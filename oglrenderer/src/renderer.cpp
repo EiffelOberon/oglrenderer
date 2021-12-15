@@ -355,7 +355,7 @@ void Renderer::renderGUI()
             updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
         }
 
-        if (ImGui::SliderFloat("Perlin freq", &mPerlinNoiseParams.mSettings.z, 0.0f, 10.0f))
+        if (ImGui::SliderFloat("Perlin freq", &mPerlinNoiseParams.mSettings.z, 0.0f, 100.0f, " %.3f", ImGuiSliderFlags_Logarithmic))
         {
             updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
         }
@@ -367,7 +367,7 @@ void Renderer::renderGUI()
         {
             updateUniform(RENDERER_PARAMS, mRenderParams);
         }
-        if (ImGui::SliderFloat("Cloud density", &mRenderParams.mCloudSettings.z, 0.00001f, 1.0f, "%.3f", ImGuiSliderFlags_Logarithmic))
+        if (ImGui::SliderFloat("Cloud density", &mRenderParams.mCloudSettings.z, 0.0001f, 100.0f, "%.3f", ImGuiSliderFlags_Logarithmic))
         {
             updateUniform(RENDERER_PARAMS, mRenderParams);
         }
