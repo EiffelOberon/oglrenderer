@@ -35,6 +35,7 @@ layout(std430, binding = WORLEY_PARAMS) uniform WorleyParamsUniform
 	NoiseParams worleyParams;
 };
 layout (binding = CLOUD_TEXTURE) uniform sampler3D cloudTexture;
+layout (binding = ENVIRONMENT_TEXTURE) uniform samplerCube environmentTexture;
 
 layout(location = 0) out vec4 c;
 
@@ -125,11 +126,7 @@ void main()
     vec3 rayDir = normalize(d.x*U + d.y*V + W);
     vec3 sunDir = length(skyParams.mSunDir.xyz) > 0 ? normalize(skyParams.mSunDir.xyz) : vec3(0, 1, 0);
 
-	vec3 rayleigh;
-	vec3 mie;
-	vec3 sky;
-	
-	nishita_sky(max(1.0f, camParams.mEye.y), 20.0f, sunDir, rayDir.xyz,  rayleigh, mie, sky);
+    vec3 sky = texture(environmentTexture, rayDir.xyz).xyz;
 
     Box b; 
     //float width = 1000000.0f;
@@ -186,14 +183,16 @@ void main()
                     float lowFreqFBM = noise.y * 0.625f + noise.z * 0.25f + noise.w * 0.125f;
                     float base = remap(noise.x, (1.0f - lowFreqFBM), 1.0f, 0.0f, 1.0f);
                     lightTransmittance *= exp(-shadowStepLength * base * densityScale);
-                    shadowRay.mOrigin = shadowRay.mOrigin + shadowStepLength * shadowRay.mDir;
                 }
                 else
                 {
                     break;
                 }
+                shadowRay.mOrigin = shadowRay.mOrigin + shadowStepLength * shadowRay.mDir;
             }
-            cloudColor += vec4(1.0f, 1.0f, 1.0f, 1.0f) * clamp(dot(shadowRay.mDir, r.mDir), 0.0f, 1.0f) * lightTransmittance;
+            
+            vec4 sunLight = texture(environmentTexture, sunDir.xyz);
+            cloudColor += sunLight * clamp(dot(shadowRay.mDir, r.mDir), 0.0f, 1.0f) * lightTransmittance * transmittance;
 
             if(length(transmittance) < 0.05f)
             {

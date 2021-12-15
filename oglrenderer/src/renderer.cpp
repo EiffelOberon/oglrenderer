@@ -8,18 +8,22 @@
 
 Renderer::Renderer()
     : mPrecomputeCloudShader("./spv/precomputecloud.spv")
+    , mPrecomputeEnvironmentShader("./spv/vert.spv", "./spv/precomputeenvironment.spv")
     , mPrerenderQuadShader("./spv/vert.spv", "./spv/frag.spv")
     , mTexturedQuadShader("./spv/vert.spv", "./spv/texturedQuadFrag.spv")
     , mCloudNoiseQuadShader("./spv/vert.spv", "./spv/cloudnoisefrag.spv")
     , mPerlinNoiseQuadShader("./spv/vert.spv", "./spv/perlinnoisefrag.spv")
     , mWorleyNoiseQuadShader("./spv/vert.spv", "./spv/worleynoisefrag.spv")
     , mCloudTexture(256, 256, 256, 32, false, CLOUD_TEXTURE)
+    , mEnvironmentResolution(2048.0f, 2048.0f)
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mRenderTexture(nullptr)
+    , mRenderCubemapTexture(nullptr)
     , mWorleyNoiseRenderTexture(nullptr)
     , mCamera()
     , mShowPerformanceWindow(true)
     , mShowSkyWindow(true)
+    , mUpdateEnvironment(true)
     , mDeltaTime(0.0f)
     , mLowResFactor(0.5f)
     , mTime(0.0f)
@@ -52,6 +56,7 @@ Renderer::Renderer()
 
     // initialize sun
     mSkyParams.mSunDir = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
+    mSkyParams.mPrecomputeSettings.x = 0;
     addUniform(SKY_PARAMS, mSkyParams);
 
     // initialize noise
@@ -76,6 +81,9 @@ Renderer::Renderer()
     addUniform(RENDERER_PARAMS, mRenderParams);
 
     loadStates();
+
+    // cubemap environment
+    mRenderCubemapTexture = std::make_unique<RenderCubemapTexture>(ENVIRONMENT_TEXTURE, mEnvironmentResolution.x);
 }
 
 Renderer::~Renderer()
@@ -118,7 +126,7 @@ void Renderer::resize(
 
         // update imgui display size
         ImGuiIO& io = ImGui::GetIO(); (void)io;
-        io.DisplaySize = ImVec2(width, height);
+        io.DisplaySize = ImVec2(float(width), float(height));
     }
 }
 
@@ -130,7 +138,7 @@ void Renderer::preRender()
     if (mFrameCount % 16 == 0)
     {
         mCloudTexture.bind(false);
-        const float workGroupSize = float(CLOUD_RESOLUTION) / float(PRECOMPUTE_CLOUD_LOCAL_SIZE);
+        const int workGroupSize = int(float(CLOUD_RESOLUTION) / float(PRECOMPUTE_CLOUD_LOCAL_SIZE));
         mPrecomputeCloudShader.dispatch(true, workGroupSize, workGroupSize, workGroupSize);
 
         // render quarter sized render texture
@@ -161,6 +169,25 @@ void Renderer::preRender()
             }
         }
     }
+
+
+    // render quarter sized render texture
+    if (mUpdateEnvironment)
+    {
+        glViewport(0, 0, int(mEnvironmentResolution.x), int(mEnvironmentResolution.y));
+        mPrecomputeEnvironmentShader.use();
+        for (int i = 0; i < 6; ++i)
+        {
+            mSkyParams.mPrecomputeSettings.x = i;
+            updateUniform(SKY_PARAMS, mSkyParams);
+
+            mRenderCubemapTexture->bind(i);
+            mQuad.draw();
+        }
+        mPrecomputeEnvironmentShader.disable();
+        mRenderCubemapTexture->unbind();
+        mUpdateEnvironment = false;
+    }
 }
 
 
@@ -183,13 +210,14 @@ void Renderer::render()
     glViewport(0, 0, mResolution.x * mLowResFactor, mResolution.y * mLowResFactor);
     mRenderTexture->bind();
     mCloudTexture.bind();
+    mRenderCubemapTexture->bindTexture(0);
     mPrerenderQuadShader.use();
     mQuad.draw();
     mPrerenderQuadShader.disable();
     mRenderTexture->unbind();
 
     // render final quad
-    glViewport(0, 0, mResolution.x, mResolution.y);
+    glViewport(0, 0, int(mResolution.x), int(mResolution.y));
     mTexturedQuadShader.use();
     mRenderTexture->bindTexture(0);
     mQuad.draw();
@@ -257,17 +285,17 @@ void Renderer::renderGUI()
         ImGui::Text("Sun Direction");
         if (ImGui::SliderFloat("x", &mSkyParams.mSunDir.x, -1.0f, 1.0f))
         {
-            updateUniform<SkyParams>(SKY_PARAMS, mSkyParams);
+            mUpdateEnvironment = true;
         }
 
         if (ImGui::SliderFloat("y", &mSkyParams.mSunDir.y, 0.0f, 1.0f))
         {
-            updateUniform<SkyParams>(SKY_PARAMS, mSkyParams);
+            mUpdateEnvironment = true;
         }
 
         if (ImGui::SliderFloat("z", &mSkyParams.mSunDir.z, -1.0f, 1.0f))
         {
-            updateUniform<SkyParams>(SKY_PARAMS, mSkyParams);
+            mUpdateEnvironment = true;
         }
         // FBM
         float my_tex_w = 100;
@@ -339,7 +367,7 @@ void Renderer::renderGUI()
         {
             updateUniform(RENDERER_PARAMS, mRenderParams);
         }
-        if (ImGui::SliderFloat("Cloud density", &mRenderParams.mCloudSettings.z, 0.00001f, 0.1))
+        if (ImGui::SliderFloat("Cloud density", &mRenderParams.mCloudSettings.z, 0.00001f, 1.0f, "%.3f", ImGuiSliderFlags_Logarithmic))
         {
             updateUniform(RENDERER_PARAMS, mRenderParams);
         }
@@ -355,12 +383,12 @@ void Renderer::renderGUI()
         {
             updateUniform(RENDERER_PARAMS, mRenderParams);
         }
-        if (ImGui::SliderInt("Max steps", &mRenderParams.mSteps.x, 4.0f, 1024.0f))
+        if (ImGui::SliderInt("Max steps", &mRenderParams.mSteps.x, 4, 1024))
         {
             updateUniform(RENDERER_PARAMS, mRenderParams);
         }
 
-        if (ImGui::SliderInt("Max shadow steps", &mRenderParams.mSteps.y, 2.0f, 32.0f))
+        if (ImGui::SliderInt("Max shadow steps", &mRenderParams.mSteps.y, 2, 32))
         {
             updateUniform(RENDERER_PARAMS, mRenderParams);
         }

@@ -157,5 +157,8 @@
     <None Include="shaders\precomputecloud.comp">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\precomputeenvironment.frag">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

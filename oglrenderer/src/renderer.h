@@ -74,16 +74,23 @@ private:
 
     Texture3D mCloudTexture;
 
+    // shaders
+    ShaderProgram mPrecomputeEnvironmentShader;
     ShaderProgram mPrecomputeCloudShader;
     ShaderProgram mPrerenderQuadShader;
     ShaderProgram mTexturedQuadShader;
     ShaderProgram mWorleyNoiseQuadShader;
     ShaderProgram mPerlinNoiseQuadShader;
     ShaderProgram mCloudNoiseQuadShader;
+    
     Quad          mQuad;
 
     glm::vec2     mResolution;
+    glm::vec2     mEnvironmentResolution;
     float         mLowResFactor;
+    
+    // update boolean
+    bool          mUpdateEnvironment;
 
     // 2D textures to display
     std::unique_ptr<RenderTexture> mRenderTexture;
@@ -91,6 +98,10 @@ private:
     std::unique_ptr<RenderTexture> mPerlinNoiseRenderTexture;
     std::unique_ptr<RenderTexture> mCloudNoiseRenderTexture[4];
 
+    // environment cubemap texture
+    std::unique_ptr<RenderCubemapTexture> mRenderCubemapTexture;
+
+    // states
     Camera mCamera;
     CameraParams mCamParams;
     RendererParams mRenderParams;

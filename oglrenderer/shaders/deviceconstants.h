@@ -11,8 +11,9 @@
 # define PERLIN_PARAMS   6
 
 // texture binding points
-# define SCREEN_QUAD   0
-# define CLOUD_TEXTURE 1
+# define SCREEN_QUAD         0
+# define CLOUD_TEXTURE       1
+# define ENVIRONMENT_TEXTURE 2
 
 // cloud noise texture resolution
 # define CLOUD_RESOLUTION 256
