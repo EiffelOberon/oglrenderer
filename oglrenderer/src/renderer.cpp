@@ -450,7 +450,7 @@ void Renderer::renderGUI()
         {
             updateUniform(OCEAN_PARAMS, mOceanParams);
         }
-        if (ImGui::SliderFloat("Wind speed", &mOceanParams.mWaveSettings.y, 0.0f, 8.0f))
+        if (ImGui::SliderFloat("Wind speed", &mOceanParams.mWaveSettings.y, 0.0f, 80.0f))
         {
             updateUniform(OCEAN_PARAMS, mOceanParams);
         }
