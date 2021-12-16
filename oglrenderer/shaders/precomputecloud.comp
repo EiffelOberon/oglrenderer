@@ -32,7 +32,7 @@ void main()
 		return;
 	}
 
-    vec3 uvw = gl_GlobalInvocationID.xyz / vec3(256.0f, 256.0f, 256.0f);
+    vec3 uvw = gl_GlobalInvocationID.xyz / vec3(CLOUD_RESOLUTION, CLOUD_RESOLUTION, CLOUD_RESOLUTION);
 
     const float perlinWorley = perlinWorley3D(
 		uvw, renderParams.mSettings.x * renderParams.mCloudSettings.y, perlinParams.mSettings.z, perlinParams.mNoiseOctaves, true);

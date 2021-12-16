@@ -69,14 +69,19 @@ private:
         mUniforms[bindingPt]->upload(offsetInBytes, sizeInBytes, (void*)&memoryBlock);
     }
 
+    void updateOceanNoiseTexture();
+
     void saveStates();
     void loadStates();
 
     Texture3D mCloudTexture;
+    Texture   mOceanSpectrumTexture;
+    Texture   mOceanNoiseTexture;
 
     // shaders
     ShaderProgram mPrecomputeEnvironmentShader;
     ShaderProgram mPrecomputeCloudShader;
+    ShaderProgram mPrecomputeOceanWaveShader;
     ShaderProgram mPrerenderQuadShader;
     ShaderProgram mTexturedQuadShader;
     ShaderProgram mWorleyNoiseQuadShader;
@@ -106,6 +111,7 @@ private:
     CameraParams mCamParams;
     RendererParams mRenderParams;
     SkyParams mSkyParams;
+    OceanParams mOceanParams;
 
     // noise 
     NoiseParams mWorleyNoiseParams;

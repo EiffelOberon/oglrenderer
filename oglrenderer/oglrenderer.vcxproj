@@ -187,6 +187,7 @@
   <ItemGroup>
     <None Include="shaders\cloudnoise.frag" />
     <None Include="shaders\fbmnoise.frag" />
+    <None Include="shaders\oceanheightfield.comp" />
     <None Include="shaders\perlinnoise.frag" />
     <None Include="shaders\precomputecloud.comp" />
     <None Include="shaders\precomputeenvironment.frag" />

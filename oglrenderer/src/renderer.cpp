@@ -1,5 +1,7 @@
 #include "renderer.h"
 
+#include<random>
+
 #include "freeglut.h"
 #include "glm/gtc/matrix_transform.hpp"
 #include "imgui.h"
@@ -9,12 +11,15 @@
 Renderer::Renderer()
     : mPrecomputeCloudShader("./spv/precomputecloud.spv")
     , mPrecomputeEnvironmentShader("./spv/vert.spv", "./spv/precomputeenvironment.spv")
+    , mPrecomputeOceanWaveShader("./spv/oceanheightfield.spv")
     , mPrerenderQuadShader("./spv/vert.spv", "./spv/frag.spv")
     , mTexturedQuadShader("./spv/vert.spv", "./spv/texturedQuadFrag.spv")
     , mCloudNoiseQuadShader("./spv/vert.spv", "./spv/cloudnoisefrag.spv")
     , mPerlinNoiseQuadShader("./spv/vert.spv", "./spv/perlinnoisefrag.spv")
     , mWorleyNoiseQuadShader("./spv/vert.spv", "./spv/worleynoisefrag.spv")
-    , mCloudTexture(256, 256, 256, 32, false, CLOUD_TEXTURE)
+    , mCloudTexture(CLOUD_RESOLUTION, CLOUD_RESOLUTION, CLOUD_RESOLUTION, 32, false, CLOUD_TEXTURE)
+    , mOceanSpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, H0K_TEXTURE)
+    , mOceanNoiseTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, OCEAN_NOISE)
     , mEnvironmentResolution(2048.0f, 2048.0f)
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mRenderTexture(nullptr)
@@ -80,10 +85,17 @@ Renderer::Renderer()
     mRenderParams.mSteps.y = 8;
     addUniform(RENDERER_PARAMS, mRenderParams);
 
+    // initialize ocean params
+    mOceanParams.mHeightSettings = glm::ivec4(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 0, 0);
+    mOceanParams.mWaveSettings = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    addUniform(OCEAN_PARAMS, mOceanParams);
+
     loadStates();
 
     // cubemap environment
     mRenderCubemapTexture = std::make_unique<RenderCubemapTexture>(ENVIRONMENT_TEXTURE, mEnvironmentResolution.x);
+
+    updateOceanNoiseTexture();
 }
 
 Renderer::~Renderer()
@@ -101,6 +113,24 @@ void Renderer::updateCamera(
     mCamParams.mTarget = glm::vec4(mCamera.getTarget(), 0.0f);
     mCamParams.mUp = glm::vec4(mCamera.getUp(), 0.0f);
     updateUniform(CAMERA_PARAMS, mCamParams);
+}
+
+
+void Renderer::updateOceanNoiseTexture()
+{
+    float randomNumbers[OCEAN_RESOLUTION * OCEAN_RESOLUTION * 4];
+
+    // This generates [a, b), but should be OKAY for our purpose
+    std::random_device randomDevice;
+    std::mt19937 generator(randomDevice());
+    std::uniform_real_distribution<> distribution(0.0, 1.0);
+
+    for (int i = 0; i < OCEAN_RESOLUTION * OCEAN_RESOLUTION * 4; ++i)
+    {
+        randomNumbers[i] = distribution(generator);
+    }
+
+    mOceanNoiseTexture.uploadData(&randomNumbers[0]);
 }
 
 
@@ -123,7 +153,7 @@ void Renderer::resize(
         mCloudNoiseRenderTexture[3] = std::make_unique<RenderTexture>(1, 100, 100);
         mWorleyNoiseRenderTexture = std::make_unique<RenderTexture>(1, 100, 100);
         mPerlinNoiseRenderTexture = std::make_unique<RenderTexture>(1, 100, 100);
-
+        
         // update imgui display size
         ImGuiIO& io = ImGui::GetIO(); (void)io;
         io.DisplaySize = ImVec2(float(width), float(height));
@@ -170,6 +200,13 @@ void Renderer::preRender()
         }
     }
 
+    // ocean waves precomputation
+    {
+        const int workGroupSize = int(float(OCEAN_RESOLUTION) / float(PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE));
+        mOceanSpectrumTexture.bind();
+        mOceanNoiseTexture.bind();
+        mPrecomputeOceanWaveShader.dispatch(true, workGroupSize, workGroupSize, workGroupSize);
+    }
 
     // render quarter sized render texture
     if (mUpdateEnvironment)

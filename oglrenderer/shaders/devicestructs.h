@@ -50,6 +50,15 @@ struct NoiseParams
 };
 
 
+struct OceanParams
+{
+    // x: N, y: L
+    ivec4 mHeightSettings;
+
+    // x: amplitude, y: wind speed z & w: wind direction
+    vec4 mWaveSettings;
+};
+
 #ifndef GLSL_SHADER
 # undef vec4
 # undef vec3

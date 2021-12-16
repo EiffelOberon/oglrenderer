@@ -160,5 +160,8 @@
     <None Include="shaders\precomputeenvironment.frag">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\oceanheightfield.comp">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

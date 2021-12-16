@@ -39,6 +39,25 @@ layout (binding = ENVIRONMENT_TEXTURE) uniform samplerCube environmentTexture;
 
 layout(location = 0) out vec4 c;
 
+
+#define CLOUD_COVERAGE .8
+
+// Hash functions by Dave_Hoskins
+float hash12(vec2 p)
+{
+	uvec2 q = uvec2(ivec2(p)) * uvec2(1597334673U, 3812015801U);
+	uint n = (q.x ^ q.y) * 1597334673U;
+	return float(n) * (1.0 / float(0xffffffffU));
+}
+
+vec2 hash22(vec2 p)
+{
+	uvec2 q = uvec2(ivec2(p))*uvec2(1597334673U, 3812015801U);
+	q = (q.x ^ q.y) * uvec2(1597334673U, 3812015801U);
+	return vec2(q) * (1.0 / float(0xffffffffU));
+}
+
+
 struct Box
 { 
     vec3 mMin;
@@ -161,10 +180,13 @@ void main()
         {   
             vec3 uvw = (r.mOrigin - b.mMin) / (b.mMax - b.mMin);
             uvw.xz *= renderParams.mCloudMapping.xy;
-            
+
             vec4 noise = texture(cloudTexture, uvw);
+            const float coverage = hash12(uvw.xz) * 0.1 + (CLOUD_COVERAGE * .5 + .5);
             float lowFreqFBM = noise.y * 0.625f + noise.z * 0.25f + noise.w * 0.125f;
-            float base = remap(noise.x, (lowFreqFBM - 1), 1.0f, 0.0f, 1.0f);
+            float base = remap(noise.x, 1.0f - coverage, 1.0f, 0.0f, 1.0f) * coverage;
+            base = remap(base, (lowFreqFBM - 1.0f) * 0.64f, 1.0f, 0.0f, 1.0f);
+            base = max(0.0f, base);
             transmittance *= exp(-stepLength * base * densityScale);
 
             Ray shadowRay;
@@ -183,8 +205,11 @@ void main()
                     shadowUVW.xz *= renderParams.mCloudMapping.xy;
                     
                     vec4 noise = texture(cloudTexture, shadowUVW);
+                    const float coverage = hash12(uvw.xz) * 0.1 + (CLOUD_COVERAGE * .5 + .5);
                     float lowFreqFBM = noise.y * 0.625f + noise.z * 0.25f + noise.w * 0.125f;
-                    float base = remap(noise.x, (lowFreqFBM - 1), 1.0f, 0.0f, 1.0f);
+                    float base = remap(noise.x, 1.0f - coverage, 1.0f, 0.0f, 1.0f) * coverage;
+                    base = remap(base, (lowFreqFBM - 1.0f) * 0.64f, 1.0f, 0.0f, 1.0f);
+                    base = max(0.0f, base);
                     lightTransmittance *= exp(-shadowStepLength * base * densityScale);
                 }
                 else
@@ -192,9 +217,14 @@ void main()
                     break;
                 }
                 shadowRay.mOrigin = shadowRay.mOrigin + shadowStepLength * shadowRay.mDir;
+            
+                if(length(lightTransmittance) < 0.05f)
+                {
+                    break;
+                }
             }
             
-            cloudColor *= normalize(texture(environmentTexture, sunDir.xyz)) * clamp(dot(shadowRay.mDir, r.mDir), 0.0f, 1.0f) * lightTransmittance;
+            cloudColor *= lightTransmittance;
 
             if(length(transmittance) < 0.05f)
             {
@@ -205,6 +235,8 @@ void main()
         }
     }
 
+    cloudColor *= texture(environmentTexture, sunDir.xyz);
+    transmittance = clamp(transmittance, 0.0f, 1.0f);
     if(transmittance < 1.0f)
     {
         hasClouds = true;
@@ -213,7 +245,7 @@ void main()
     float t = 0.0f;
     if(foundIntersection && hasClouds)
     {
-        c = vec4(mix(vec3(cloudColor.xyz), sky.xyz, transmittance), 1.0f);//vec4(sky.xyz * (1-transmittance.xyz), 1.0f);//vec4(mix(cloudColor.xyz, sky, transmittance.xyz), 1.0f);
+        c = vec4(mix(vec3(cloudColor.xyz), sky.xyz, transmittance), 1.0f);
     }
     else
     {

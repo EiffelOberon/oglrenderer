@@ -1,0 +1,70 @@
+#version 450 core
+#define GLSL_SHADER
+#extension GL_EXT_scalar_block_layout : require
+
+#include "deviceconstants.h"
+#include "devicestructs.h"
+
+layout(local_size_x = PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE, local_size_y = PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE) in;
+
+layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
+{
+    OceanParams oceanParams;
+};
+
+layout(binding = OCEAN_NOISE) uniform sampler2D noiseTexture;
+layout (binding = H0K_TEXTURE, rgba32f) uniform image2D h0Texture;
+
+
+vec4 gaussRandomNum(
+	const int N)
+{
+	const vec2 uv = vec2(gl_GlobalInvocationID.xy) / N;
+	const vec4 noise = clamp(texture(noiseTexture, uv), 0.001f, 1.0f);
+	const float u0 = 2.0f * PI * noise.x;
+	const float v0 = sqrt(-2.0f * log(noise.y));
+	const float u1 = 2.0f * PI * noise.z;
+	const float v1 = sqrt(-2.0f * log(noise.w));
+
+	return vec4(v0 * cos(u0), v0 * sin(u0), v1 * cos(u1), v1 * sin(u1));
+}
+
+
+float philipSpectrum(
+	const vec2 k)
+{
+    const float kSquared = k.x * k.x + k.y * k.y;
+
+	if (kSquared == 0.0f)
+	{
+		return kSquared;
+	}
+
+    float LSquared = (oceanParams.mWaveSettings.y * oceanParams.mWaveSettings.y) / 9.81f;
+    LSquared *= LSquared;
+
+    float kDotWindSquared = abs(dot(normalize(k), normalize(vec2(oceanParams.mWaveSettings.zw))));
+    kDotWindSquared *= kDotWindSquared;
+
+    float philip = oceanParams.mWaveSettings.x * exp((-1.0f / (kSquared * LSquared))) / (kSquared * kSquared);
+    philip *= kDotWindSquared;
+	return philip;
+}
+
+
+void main()
+{
+    const int N = oceanParams.mHeightSettings.x;
+	if (int(gl_GlobalInvocationID.x) >= N || int(gl_GlobalInvocationID.y) >= N)
+	{
+		return;
+	}
+
+    const vec2 nm = gl_GlobalInvocationID.xy - float(N) / 2.0f;
+    const vec2 k = vec2((2 * PI * nm.x) / oceanParams.mHeightSettings.y,
+                        (2 * PI * nm.y) / oceanParams.mHeightSettings.y);
+	const vec4 gaussRand = gaussRandomNum(N);
+	const vec2 h0PosK = gaussRand.xy * sqrt(philipSpectrum(k) / 2.0f);
+	const vec2 h0NegK = gaussRand.zw * sqrt(philipSpectrum(-k) / 2.0f);
+	imageStore(h0Texture, ivec2(gl_GlobalInvocationID.xy), vec4(h0PosK.xy, h0NegK.xy));
+}

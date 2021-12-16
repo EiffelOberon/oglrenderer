@@ -12,11 +12,13 @@ public:
         int          height,
         const int    bitsPerChannel = 8,
         const bool   greyScale      = false,
-        const GLuint texUnit        = 0)
+        const GLuint texUnit        = 0,
+        const void*  data           = nullptr)
         : mWidth(width)
         , mHeight(height)
         , mInternalFormat(GL_RGBA8)
         , mTexUnit(texUnit)
+        , mIsGreyScale(greyScale)
     {
         glGenTextures(1, &mTex);
         glBindTexture(GL_TEXTURE_2D, mTex);
@@ -34,7 +36,7 @@ public:
         default: assert(false);
         }
 
-        glTexImage2D(GL_TEXTURE_2D, 0, mInternalFormat, width, height, 0, greyScale ? GL_R : GL_RGBA, GL_FLOAT, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, mInternalFormat, width, height, 0, greyScale ? GL_R : GL_RGBA, GL_FLOAT, data);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
@@ -57,6 +59,15 @@ public:
         {
             glBindImageTexture(mTexUnit, mTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, mInternalFormat);
         }
+    }
+
+
+    void uploadData(
+        void * data)
+    {
+        glBindTexture(GL_TEXTURE_2D, mTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, mInternalFormat, mWidth, mHeight, 0, mIsGreyScale ? GL_R : GL_RGBA, GL_FLOAT, data);
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
 
 
@@ -125,6 +136,8 @@ protected:
 
     int mWidth;
     int mHeight;
+
+    bool mIsGreyScale;
 };
 
 
