@@ -193,34 +193,39 @@ void main()
             shadowRay.mOrigin = r.mOrigin;
             shadowRay.mDir = normalize(sunPos - shadowRay.mOrigin);
             vec4 lightTransmittance = vec4(1.0f);
-            for(int j = 0; j < renderParams.mSteps.y; ++j)
+
+            // only do light marching if transmittance is less than 1
+            if(transmittance < 1.0f)
             {
-                float shadowtMin = 0.0f;
-                float shadowtMax = 0.0f;
-                const bool foundIntersection = intersect(b, shadowRay, shadowtMin, shadowtMax);
-                const float shadowStepLength = (height * 0.5f / float(renderParams.mSteps.y));
-                if(foundIntersection)
+                for(int j = 0; j < renderParams.mSteps.y; ++j)
                 {
-                    vec3 shadowUVW = (shadowRay.mOrigin - b.mMin) / (b.mMax - b.mMin);
-                    shadowUVW.xz *= renderParams.mCloudMapping.xy;
+                    float shadowtMin = 0.0f;
+                    float shadowtMax = 0.0f;
+                    const bool foundIntersection = intersect(b, shadowRay, shadowtMin, shadowtMax);
+                    const float shadowStepLength = (height * 0.5f / float(renderParams.mSteps.y));
+                    if(foundIntersection)
+                    {
+                        vec3 shadowUVW = (shadowRay.mOrigin - b.mMin) / (b.mMax - b.mMin);
+                        shadowUVW.xz *= renderParams.mCloudMapping.xy;
                     
-                    vec4 noise = texture(cloudTexture, shadowUVW);
-                    const float coverage = hash12(uvw.xz) * 0.1 + (CLOUD_COVERAGE * .5 + .5);
-                    float lowFreqFBM = noise.y * 0.625f + noise.z * 0.25f + noise.w * 0.125f;
-                    float base = remap(noise.x, 1.0f - coverage, 1.0f, 0.0f, 1.0f) * coverage;
-                    base = remap(base, (lowFreqFBM - 1.0f) * 0.64f, 1.0f, 0.0f, 1.0f);
-                    base = max(0.0f, base);
-                    lightTransmittance *= exp(-shadowStepLength * base * densityScale);
-                }
-                else
-                {
-                    break;
-                }
-                shadowRay.mOrigin = shadowRay.mOrigin + shadowStepLength * shadowRay.mDir;
+                        vec4 noise = texture(cloudTexture, shadowUVW);
+                        const float coverage = hash12(uvw.xz) * 0.1 + (CLOUD_COVERAGE * .5 + .5);
+                        float lowFreqFBM = noise.y * 0.625f + noise.z * 0.25f + noise.w * 0.125f;
+                        float base = remap(noise.x, 1.0f - coverage, 1.0f, 0.0f, 1.0f) * coverage;
+                        base = remap(base, (lowFreqFBM - 1.0f) * 0.64f, 1.0f, 0.0f, 1.0f);
+                        base = max(0.0f, base);
+                        lightTransmittance *= exp(-shadowStepLength * base * densityScale);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                    shadowRay.mOrigin = shadowRay.mOrigin + shadowStepLength * shadowRay.mDir;
             
-                if(length(lightTransmittance) < 0.05f)
-                {
-                    break;
+                    if(length(lightTransmittance) < 0.05f)
+                    {
+                        break;
+                    }
                 }
             }
             
