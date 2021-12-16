@@ -118,6 +118,7 @@ private:
     NoiseParams mPerlinNoiseParams;
 
     // gui
+    bool mShowOceanWindow;
     bool mShowPerformanceWindow;
     bool mShowSkyWindow;
 

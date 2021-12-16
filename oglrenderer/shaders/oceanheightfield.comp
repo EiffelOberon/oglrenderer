@@ -19,7 +19,7 @@ layout (binding = H0K_TEXTURE, rgba32f) uniform image2D h0Texture;
 vec4 gaussRandomNum(
 	const int N)
 {
-	const vec2 uv = vec2(gl_GlobalInvocationID.xy) / N;
+	const vec2 uv = vec2(gl_GlobalInvocationID.xy) / float(N);
 	const vec4 noise = clamp(texture(noiseTexture, uv), 0.001f, 1.0f);
 	const float u0 = 2.0f * PI * noise.x;
 	const float v0 = sqrt(-2.0f * log(noise.y));
@@ -40,12 +40,14 @@ float philipSpectrum(
 		return kSquared;
 	}
 
+	// V^2 / g
     float LSquared = (oceanParams.mWaveSettings.y * oceanParams.mWaveSettings.y) / 9.81f;
     LSquared *= LSquared;
 
     float kDotWindSquared = abs(dot(normalize(k), normalize(vec2(oceanParams.mWaveSettings.zw))));
     kDotWindSquared *= kDotWindSquared;
-
+	
+	// Amplitude * exponent
     float philip = oceanParams.mWaveSettings.x * exp((-1.0f / (kSquared * LSquared))) / (kSquared * kSquared);
     philip *= kDotWindSquared;
 	return philip;
@@ -61,10 +63,10 @@ void main()
 	}
 
     const vec2 nm = gl_GlobalInvocationID.xy - float(N) / 2.0f;
-    const vec2 k = vec2((2 * PI * nm.x) / oceanParams.mHeightSettings.y,
-                        (2 * PI * nm.y) / oceanParams.mHeightSettings.y);
+    const vec2 k = vec2((2 * PI * nm.x) / float(oceanParams.mHeightSettings.y),
+                        (2 * PI * nm.y) / float(oceanParams.mHeightSettings.y));
 	const vec4 gaussRand = gaussRandomNum(N);
 	const vec2 h0PosK = gaussRand.xy * sqrt(philipSpectrum(k) / 2.0f);
 	const vec2 h0NegK = gaussRand.zw * sqrt(philipSpectrum(-k) / 2.0f);
-	imageStore(h0Texture, ivec2(gl_GlobalInvocationID.xy), vec4(h0PosK.xy, h0NegK.xy));
+	imageStore(h0Texture, ivec2(gl_GlobalInvocationID.xy), vec4(h0PosK, h0NegK));
 }

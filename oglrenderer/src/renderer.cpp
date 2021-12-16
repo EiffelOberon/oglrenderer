@@ -26,6 +26,7 @@ Renderer::Renderer()
     , mRenderCubemapTexture(nullptr)
     , mWorleyNoiseRenderTexture(nullptr)
     , mCamera()
+    , mShowOceanWindow(true)
     , mShowPerformanceWindow(true)
     , mShowSkyWindow(true)
     , mUpdateEnvironment(true)
@@ -86,8 +87,8 @@ Renderer::Renderer()
     addUniform(RENDERER_PARAMS, mRenderParams);
 
     // initialize ocean params
-    mOceanParams.mHeightSettings = glm::ivec4(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 0, 0);
-    mOceanParams.mWaveSettings = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    mOceanParams.mHeightSettings = glm::ivec4(OCEAN_RESOLUTION, 1024, 0, 0);
+    mOceanParams.mWaveSettings = glm::vec4(4.0f, 40.0f, 1.0f, 1.0f);
     addUniform(OCEAN_PARAMS, mOceanParams);
 
     loadStates();
@@ -118,7 +119,7 @@ void Renderer::updateCamera(
 
 void Renderer::updateOceanNoiseTexture()
 {
-    float randomNumbers[OCEAN_RESOLUTION * OCEAN_RESOLUTION * 4];
+    float* randomNumbers = new float[OCEAN_RESOLUTION * OCEAN_RESOLUTION * 4];
 
     // This generates [a, b), but should be OKAY for our purpose
     std::random_device randomDevice;
@@ -131,6 +132,7 @@ void Renderer::updateOceanNoiseTexture()
     }
 
     mOceanNoiseTexture.uploadData(&randomNumbers[0]);
+    delete[] randomNumbers;
 }
 
 
@@ -203,9 +205,9 @@ void Renderer::preRender()
     // ocean waves precomputation
     {
         const int workGroupSize = int(float(OCEAN_RESOLUTION) / float(PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE));
-        mOceanSpectrumTexture.bind();
+        mOceanSpectrumTexture.bind(false);
         mOceanNoiseTexture.bind();
-        mPrecomputeOceanWaveShader.dispatch(true, workGroupSize, workGroupSize, workGroupSize);
+        mPrecomputeOceanWaveShader.dispatch(true, workGroupSize, workGroupSize, 1);
     }
 
     // render quarter sized render texture
@@ -434,6 +436,45 @@ void Renderer::renderGUI()
         ImGui::End();
 
     }
+
+    // ocean window
+    if (mShowOceanWindow)
+    {
+        ImGui::Begin("Ocean", &mShowOceanWindow);
+
+        if (ImGui::SliderInt("Patch dimension", &mOceanParams.mHeightSettings.y, 64, 1024))
+        {
+            updateUniform(OCEAN_PARAMS, mOceanParams);
+        }
+        if (ImGui::SliderFloat("Wave amplitude", &mOceanParams.mWaveSettings.x, 0.0f, 8.0f))
+        {
+            updateUniform(OCEAN_PARAMS, mOceanParams);
+        }
+        if (ImGui::SliderFloat("Wind speed", &mOceanParams.mWaveSettings.y, 0.0f, 8.0f))
+        {
+            updateUniform(OCEAN_PARAMS, mOceanParams);
+        }
+        if (ImGui::SliderFloat2("Wind direction", &mOceanParams.mWaveSettings.z, -1.0f, 1.0f))
+        {
+            updateUniform(OCEAN_PARAMS, mOceanParams);
+        }
+
+        float my_tex_w = 100;
+        float my_tex_h = 100;
+        ImGui::Text("Ocean spectrum: %.0fx%.0f", my_tex_w, my_tex_h);
+        ImTextureID oceanSpectrumTexId = (ImTextureID)mOceanSpectrumTexture.texId();
+        {
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+            ImGui::Image(oceanSpectrumTexId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
+        }
+
+        ImGui::End();
+    }
+
 
     bool test = true;
     ImGui::ShowDemoWindow(&test);
