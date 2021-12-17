@@ -151,6 +151,11 @@ void mouseMotion(
     const int x,
     const int y)
 {
+    if (mouseStates.size() == 0)
+    {
+        // this somehow gets triggered when double clicking on title bar
+        return;
+    }
     MouseState newState = mouseStates.top();
 
     const float deltaX = x - newState.mX;
