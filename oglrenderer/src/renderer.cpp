@@ -9,7 +9,8 @@
 
 
 Renderer::Renderer()
-    : mPrecomputeCloudShader("./spv/precomputecloud.spv")
+    : mPrecomputeButterflyTexShader("./spv/precomputebutterfly.spv")
+    , mPrecomputeCloudShader("./spv/precomputecloud.spv")
     , mPrecomputeEnvironmentShader("./spv/vert.spv", "./spv/precomputeenvironment.spv")
     , mPrecomputeOceanH0Shader("./spv/oceanheightfield.spv")
     , mPrecomputeOceanHShader("./spv/oceanhfinal.spv")
@@ -25,6 +26,7 @@ Renderer::Renderer()
     , mOceanHDySpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, H_Y_TEXTURE)
     , mOceanHDzSpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, H_Z_TEXTURE)
     , mOceanNoiseTexture(nullptr)
+    , mButterFlyTexture(mOceanFFT.passes(), OCEAN_RESOLUTION, 32, false, BUTTERFLY_TEXTURE, nullptr)
     , mButterflyIndicesBuffer(mOceanFFT.bitReversedIndicesSizeInBytes())
     , mEnvironmentResolution(2048.0f, 2048.0f)
     , mQuad(GL_TRIANGLE_STRIP, 4)
@@ -222,6 +224,10 @@ void Renderer::preRender()
         mOceanHDySpectrumTexture.bind(false);
         mOceanHDzSpectrumTexture.bind(false);
         mPrecomputeOceanHShader.dispatch(true, workGroupSize, workGroupSize, 1);
+
+        //mButterflyIndicesBuffer.bind(BUTTERFLY_INDICES);
+        //mButterFlyTexture.bind(false);
+        //mPrecomputeButterflyTexShader.dispatch(true, mOceanFFT.passes(), workGroupSize, 1);
     }
 
     // render quarter sized render texture
