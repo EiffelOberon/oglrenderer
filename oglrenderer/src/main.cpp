@@ -140,7 +140,6 @@ void mouseClick(
     }
     else if (state == GLUT_UP)
     {
-        assert(mouseStates.size() > 0);
         if (mouseStates.size() == 0)
         {
             return;
