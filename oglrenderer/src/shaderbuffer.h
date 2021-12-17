@@ -10,10 +10,8 @@ class ShaderBuffer
 {
 public:
     ShaderBuffer(
-        const char*  name,
         const size_t sizeInBytes)
-        : mName(name)
-        , mSizeInBytes(sizeInBytes)
+        : mSizeInBytes(sizeInBytes)
     {
         glGenBuffers(1, &mSSBO);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSSBO);
@@ -64,12 +62,6 @@ public:
     }
 
 
-    const char* const name()
-    {
-        return mName.c_str();
-    }
-
-
     GLuint id()
     {
         return mSSBO;
@@ -82,7 +74,6 @@ public:
     }
 
 private:
-    std::string mName;
     GLuint      mSSBO;
     size_t      mSizeInBytes;
 };

@@ -86,6 +86,9 @@ private:
     Texture   mOceanHDzSpectrumTexture;
     std::unique_ptr<Texture> mOceanNoiseTexture;
 
+    // shader buffers
+    ShaderBuffer mButterflyIndicesBuffer;
+
     // shaders
     ShaderProgram mPrecomputeEnvironmentShader;
     ShaderProgram mPrecomputeCloudShader;

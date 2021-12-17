@@ -88,6 +88,12 @@ public:
     }
 
 
+    int bitReversedIndicesSizeInBytes() const
+    {
+        return mBitReversedIndices.size() * sizeof(int);
+    }
+
+
 private:
     uint32_t reverse(uint32_t x)
     {

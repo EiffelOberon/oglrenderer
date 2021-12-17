@@ -25,6 +25,7 @@ Renderer::Renderer()
     , mOceanHDySpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, H_Y_TEXTURE)
     , mOceanHDzSpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, H_Z_TEXTURE)
     , mOceanNoiseTexture(nullptr)
+    , mButterflyIndicesBuffer(mOceanFFT.bitReversedIndicesSizeInBytes())
     , mEnvironmentResolution(2048.0f, 2048.0f)
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mRenderTexture(nullptr)
@@ -103,9 +104,9 @@ Renderer::Renderer()
     // cubemap environment
     mRenderCubemapTexture = std::make_unique<RenderCubemapTexture>(ENVIRONMENT_TEXTURE, mEnvironmentResolution.x);
 
-    // ocean noise texture
+    // ocean related noise texture and other shader buffers
     updateOceanNoiseTexture();
-    mOceanFFT.computeButterflyLookupTable();
+    mButterflyIndicesBuffer.upload(mOceanFFT.bitReversedIndices());
 }
 
 Renderer::~Renderer()
