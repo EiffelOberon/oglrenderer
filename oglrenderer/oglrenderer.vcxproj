@@ -93,7 +93,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)\include\imgui;$(ProjectDir)\include\GL;$(ProjectDir)\include;$(ProjectDir)\shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -130,6 +130,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)\include\imgui;$(ProjectDir)\include\GL;$(ProjectDir)\include;$(ProjectDir)\shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -176,10 +177,12 @@
     <ClInclude Include="shaders\worley.h" />
     <ClInclude Include="src\camera.h" />
     <ClInclude Include="src\ini.h" />
+    <ClInclude Include="src\oceanfft.h" />
     <ClInclude Include="src\quad.h" />
     <ClInclude Include="src\renderer.h" />
     <ClInclude Include="src\rendertexture.h" />
     <ClInclude Include="src\shader.h" />
+    <ClInclude Include="src\shaderbuffer.h" />
     <ClInclude Include="src\shaderprogram.h" />
     <ClInclude Include="src\texture.h" />
     <ClInclude Include="src\uniformbuffer.h" />
@@ -187,8 +190,10 @@
   <ItemGroup>
     <None Include="shaders\cloudnoise.frag" />
     <None Include="shaders\fbmnoise.frag" />
+    <None Include="shaders\oceanhfinal.comp" />
     <None Include="shaders\oceanheightfield.comp" />
     <None Include="shaders\perlinnoise.frag" />
+    <None Include="shaders\precomputebutterfly.comp" />
     <None Include="shaders\precomputecloud.comp" />
     <None Include="shaders\precomputeenvironment.frag" />
     <None Include="shaders\quad.frag" />

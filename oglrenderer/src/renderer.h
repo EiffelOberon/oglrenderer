@@ -8,9 +8,11 @@
 #include "camera.h"
 #include "deviceconstants.h" 
 #include "devicestructs.h"
+#include "oceanfft.h"
 #include "quad.h"
 #include "rendertexture.h"
 #include "shader.h"
+#include "shaderbuffer.h"
 #include "shaderprogram.h"
 #include "texture.h"
 
@@ -69,29 +71,40 @@ private:
         mUniforms[bindingPt]->upload(offsetInBytes, sizeInBytes, (void*)&memoryBlock);
     }
 
+    // initialize uniform white noise [0, 1]
     void updateOceanNoiseTexture();
 
+    // methods for saving/loading settings
     void saveStates();
     void loadStates();
 
+    // textures
     Texture3D mCloudTexture;
-    Texture   mOceanSpectrumTexture;
-    Texture   mOceanNoiseTexture;
+    Texture   mOceanH0SpectrumTexture;
+    Texture   mOceanHDxSpectrumTexture;
+    Texture   mOceanHDySpectrumTexture;
+    Texture   mOceanHDzSpectrumTexture;
+    std::unique_ptr<Texture> mOceanNoiseTexture;
 
     // shaders
     ShaderProgram mPrecomputeEnvironmentShader;
     ShaderProgram mPrecomputeCloudShader;
-    ShaderProgram mPrecomputeOceanWaveShader;
+    ShaderProgram mPrecomputeOceanH0Shader;
+    ShaderProgram mPrecomputeOceanHShader;
     ShaderProgram mPrerenderQuadShader;
     ShaderProgram mTexturedQuadShader;
     ShaderProgram mWorleyNoiseQuadShader;
     ShaderProgram mPerlinNoiseQuadShader;
     ShaderProgram mCloudNoiseQuadShader;
     
+    // quad geometry
     Quad          mQuad;
 
+    // resolution
     glm::vec2     mResolution;
     glm::vec2     mEnvironmentResolution;
+
+    // multiplier for lower resolution for down-res background
     float         mLowResFactor;
     
     // update boolean
@@ -116,6 +129,8 @@ private:
     // noise 
     NoiseParams mWorleyNoiseParams;
     NoiseParams mPerlinNoiseParams;
+
+    OceanFFT mOceanFFT;
 
     // gui
     bool mShowOceanWindow;

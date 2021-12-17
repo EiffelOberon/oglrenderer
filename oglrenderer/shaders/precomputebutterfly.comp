@@ -1,0 +1,72 @@
+#version 450 core
+#define GLSL_SHADER
+#extension GL_EXT_scalar_block_layout : require
+
+#include "deviceconstants.h"
+#include "devicestructs.h"
+
+layout(local_size_x = 1, local_size_y = PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE) in;
+
+layout(binding = H0K_TEXTURE, rgba32f) uniform readonly image2D h0Texture;
+layout(binding = BUTTERFLY_TEXTURE, rgba32f) uniform writeonly image2D butterflyTexture;
+layout(std430, binding = BUTTERFLY_INDICES) buffer ButterflyIndices
+{
+    int j[];
+} bitReversed;
+
+layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
+{
+    OceanParams oceanParams;
+};
+
+struct complex
+{
+	vec2 mComponent;
+};
+
+
+void main()
+{
+    int N = int(oceanParams.mHeightSettings);
+    vec2 x = gl_GlobalInvocationID.xy;
+    float k = mod(x.y * (float(N) / pow(2, x.x + 1)), N);
+
+    complex twiddle = complex(vec2(cos(2.0f * PI * k) / float(N), sin(2.0f * PI * k / float(N))));
+
+    int butterflySpan = int(pow(2.0f, x.x));
+    int butterflyWing;
+
+    if (mod(x.y, pow(2.0f, x.x + 1)) < pow(2.0f, x.x))
+    {
+        butterflyWing = 1;
+    }
+    else
+    {
+        butterflyWing = 0;
+    }
+
+    if (x.x == 0)
+    {
+        if (butterflyWing == 1)
+        {
+            imageStore(butterflyTexture, ivec2(x), vec4(twiddle.xy, bitReversed.j[int(x.y)], bitReversed.j[int(x.y+1)]));
+        }
+        else
+        {
+            imageStore(butterflyTexture, ivec2(x), vec4(twiddle.xy, bitReversed.j[int(x.y - 1)], bitReversed.j[int(x.y)]));
+        }
+    }
+    else
+    {
+        if (butterflyWing == 1)
+        {
+            imageStore(butterflyTexture, ivec2(x), vec4(twiddle.xy, x.y, x.y + butterflySpan));
+        }
+        else
+        {
+            imageStore(butterflyTexture, ivec2(x), vec4(twiddle.xy, x.y - butterflySpan, x.y));
+        }
+    }
+
+
+}

@@ -17,10 +17,18 @@
 # define ENVIRONMENT_TEXTURE 2
 # define OCEAN_NOISE         3
 # define H0K_TEXTURE         4
+# define H_X_TEXTURE         5
+# define H_Y_TEXTURE         6
+# define H_Z_TEXTURE         7
+# define BUTTERFLY_TEXTURE   8
+# define TEXTURES_COUNT      (BUTTERFLY_TEXTURE + 1)
+
+// ssbo binding points
+# define BUTTERFLY_INDICES   0
 
 // texture resolution
 # define CLOUD_RESOLUTION 128
-# define OCEAN_RESOLUTION 128
+# define OCEAN_RESOLUTION 256
 
 // compute shader
 # define PRECOMPUTE_CLOUD_LOCAL_SIZE       4

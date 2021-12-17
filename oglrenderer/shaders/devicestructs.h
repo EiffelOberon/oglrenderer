@@ -3,10 +3,11 @@
 
 #ifndef GLSL_SHADER
 # include "glm/glm.hpp"
-# define vec4 glm::vec4
-# define vec3 glm::vec3
-# define vec2 glm::vec2
-# define uint uint32_t
+# include "GL/glew.h"
+# define vec4  glm::vec4
+# define vec3  glm::vec3
+# define vec2  glm::vec2
+# define uint  uint32_t
 # define ivec4 glm::ivec4
 #endif
 
@@ -57,7 +58,11 @@ struct OceanParams
 
     // x: amplitude, y: wind speed z & w: wind direction
     vec4 mWaveSettings;
+
+    // x: time
+    vec4 mTime;
 };
+
 
 #ifndef GLSL_SHADER
 # undef vec4

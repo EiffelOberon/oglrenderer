@@ -1,6 +1,6 @@
 #include "renderer.h"
 
-#include<random>
+#include <random>
 
 #include "freeglut.h"
 #include "glm/gtc/matrix_transform.hpp"
@@ -11,15 +11,20 @@
 Renderer::Renderer()
     : mPrecomputeCloudShader("./spv/precomputecloud.spv")
     , mPrecomputeEnvironmentShader("./spv/vert.spv", "./spv/precomputeenvironment.spv")
-    , mPrecomputeOceanWaveShader("./spv/oceanheightfield.spv")
+    , mPrecomputeOceanH0Shader("./spv/oceanheightfield.spv")
+    , mPrecomputeOceanHShader("./spv/oceanhfinal.spv")
     , mPrerenderQuadShader("./spv/vert.spv", "./spv/frag.spv")
     , mTexturedQuadShader("./spv/vert.spv", "./spv/texturedQuadFrag.spv")
     , mCloudNoiseQuadShader("./spv/vert.spv", "./spv/cloudnoisefrag.spv")
     , mPerlinNoiseQuadShader("./spv/vert.spv", "./spv/perlinnoisefrag.spv")
     , mWorleyNoiseQuadShader("./spv/vert.spv", "./spv/worleynoisefrag.spv")
     , mCloudTexture(CLOUD_RESOLUTION, CLOUD_RESOLUTION, CLOUD_RESOLUTION, 32, false, CLOUD_TEXTURE)
-    , mOceanSpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, H0K_TEXTURE)
-    , mOceanNoiseTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, OCEAN_NOISE)
+    , mOceanFFT(OCEAN_RESOLUTION)
+    , mOceanH0SpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, H0K_TEXTURE)
+    , mOceanHDxSpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, H_X_TEXTURE)
+    , mOceanHDySpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, H_Y_TEXTURE)
+    , mOceanHDzSpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, H_Z_TEXTURE)
+    , mOceanNoiseTexture(nullptr)
     , mEnvironmentResolution(2048.0f, 2048.0f)
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mRenderTexture(nullptr)
@@ -35,6 +40,7 @@ Renderer::Renderer()
     , mTime(0.0f)
     , mFrameCount(0)
 {
+    // cloud noise textures
     mCloudNoiseRenderTexture[0] = nullptr;
     mCloudNoiseRenderTexture[1] = nullptr;
     mCloudNoiseRenderTexture[2] = nullptr;
@@ -89,6 +95,7 @@ Renderer::Renderer()
     // initialize ocean params
     mOceanParams.mHeightSettings = glm::ivec4(OCEAN_RESOLUTION, 1024, 0, 0);
     mOceanParams.mWaveSettings = glm::vec4(4.0f, 40.0f, 1.0f, 1.0f);
+    mOceanParams.mTime.x = 0.0f;
     addUniform(OCEAN_PARAMS, mOceanParams);
 
     loadStates();
@@ -96,7 +103,9 @@ Renderer::Renderer()
     // cubemap environment
     mRenderCubemapTexture = std::make_unique<RenderCubemapTexture>(ENVIRONMENT_TEXTURE, mEnvironmentResolution.x);
 
+    // ocean noise texture
     updateOceanNoiseTexture();
+    mOceanFFT.computeButterflyLookupTable();
 }
 
 Renderer::~Renderer()
@@ -121,17 +130,12 @@ void Renderer::updateOceanNoiseTexture()
 {
     float* randomNumbers = new float[OCEAN_RESOLUTION * OCEAN_RESOLUTION * 4];
 
-    // This generates [a, b), but should be OKAY for our purpose
-    std::random_device randomDevice;
-    std::mt19937 generator(randomDevice());
-    std::uniform_real_distribution<> distribution(0.0, 1.0);
-
     for (int i = 0; i < OCEAN_RESOLUTION * OCEAN_RESOLUTION * 4; ++i)
     {
-        randomNumbers[i] = distribution(generator);
+        randomNumbers[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
     }
 
-    mOceanNoiseTexture.uploadData(&randomNumbers[0]);
+    mOceanNoiseTexture = std::make_unique<Texture>(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, OCEAN_NOISE, randomNumbers);
     delete[] randomNumbers;
 }
 
@@ -203,11 +207,20 @@ void Renderer::preRender()
     }
 
     // ocean waves precomputation
+    if(mOceanNoiseTexture != nullptr)
     {
         const int workGroupSize = int(float(OCEAN_RESOLUTION) / float(PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE));
-        mOceanSpectrumTexture.bind(false);
-        mOceanNoiseTexture.bind();
-        mPrecomputeOceanWaveShader.dispatch(true, workGroupSize, workGroupSize, 1);
+        // pass 1
+        mOceanH0SpectrumTexture.bind(false);
+        mOceanNoiseTexture->bind();
+        mPrecomputeOceanH0Shader.dispatch(true, workGroupSize, workGroupSize, 1);
+
+        // pass 2
+        mOceanH0SpectrumTexture.bind();
+        mOceanHDxSpectrumTexture.bind(false);
+        mOceanHDySpectrumTexture.bind(false);
+        mOceanHDzSpectrumTexture.bind(false);
+        mPrecomputeOceanHShader.dispatch(true, workGroupSize, workGroupSize, 1);
     }
 
     // render quarter sized render texture
@@ -458,11 +471,15 @@ void Renderer::renderGUI()
         {
             updateUniform(OCEAN_PARAMS, mOceanParams);
         }
+        if (ImGui::SliderFloat("Time", &mOceanParams.mTime.x, 0.0f, 1.0f))
+        {
+            updateUniform(OCEAN_PARAMS, mOceanParams);
+        }
 
         float my_tex_w = 100;
         float my_tex_h = 100;
         ImGui::Text("Ocean spectrum: %.0fx%.0f", my_tex_w, my_tex_h);
-        ImTextureID oceanSpectrumTexId = (ImTextureID)mOceanSpectrumTexture.texId();
+        ImTextureID oceanSpectrumTexId = (ImTextureID)mOceanH0SpectrumTexture.texId();
         {
             ImVec2 pos = ImGui::GetCursorScreenPos();
             ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
@@ -470,6 +487,39 @@ void Renderer::renderGUI()
             ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
             ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
             ImGui::Image(oceanSpectrumTexId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
+        }
+
+        ImTextureID oceanHDxSpectrumTexId = (ImTextureID)mOceanHDxSpectrumTexture.texId();
+        {
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+            ImGui::Image(oceanHDxSpectrumTexId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
+        }
+        ImGui::SameLine();
+
+        ImTextureID oceanHDySpectrumTexId = (ImTextureID)mOceanHDySpectrumTexture.texId();
+        {
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+            ImGui::Image(oceanHDySpectrumTexId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
+        }
+        ImGui::SameLine();
+
+
+        ImTextureID oceanHDzSpectrumTexId = (ImTextureID)mOceanHDzSpectrumTexture.texId();
+        {
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+            ImGui::Image(oceanHDzSpectrumTexId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
         }
 
         ImGui::End();

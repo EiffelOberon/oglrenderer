@@ -33,22 +33,20 @@ vec4 gaussRandomNum(
 float philipSpectrum(
 	const vec2 k)
 {
-    const float kSquared = k.x * k.x + k.y * k.y;
+    const float kLength = max(length(k), 0.00001f);
 
-	if (kSquared == 0.0f)
-	{
-		return kSquared;
-	}
+	const float kLength2 = kLength * kLength;
+	const float kLength4 = kLength2 * kLength2;
 
 	// V^2 / g
     float LSquared = (oceanParams.mWaveSettings.y * oceanParams.mWaveSettings.y) / 9.81f;
     LSquared *= LSquared;
 
-    float kDotWindSquared = abs(dot(normalize(k), normalize(vec2(oceanParams.mWaveSettings.zw))));
+    float kDotWindSquared = dot(normalize(k), normalize(vec2(oceanParams.mWaveSettings.zw)));
     kDotWindSquared *= kDotWindSquared;
 	
 	// Amplitude * exponent
-    float philip = oceanParams.mWaveSettings.x * exp((-1.0f / (kSquared * LSquared))) / (kSquared * kSquared);
+    float philip = oceanParams.mWaveSettings.x * exp((-1.0f / (kLength2 * LSquared))) / (kLength4);
     philip *= kDotWindSquared;
 	return philip;
 }
