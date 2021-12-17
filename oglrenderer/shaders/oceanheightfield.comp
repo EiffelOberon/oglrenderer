@@ -12,8 +12,8 @@ layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
     OceanParams oceanParams;
 };
 
-layout(binding = OCEAN_NOISE) uniform sampler2D noiseTexture;
-layout (binding = H0K_TEXTURE, rgba32f) uniform image2D h0Texture;
+layout(binding = OCEAN_HEIGHTFIELD_NOISE) uniform sampler2D noiseTexture;
+layout (binding = OCEAN_HEIGHTFIELD_H0K, rgba32f) uniform writeonly image2D h0Texture;
 
 
 vec4 gaussRandomNum(

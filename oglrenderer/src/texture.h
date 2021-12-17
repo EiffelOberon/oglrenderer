@@ -12,12 +12,10 @@ public:
         int          height,
         const int    bitsPerChannel = 8,
         const bool   greyScale      = false,
-        const GLuint texUnit        = 0,
         const void*  data           = nullptr)
         : mWidth(width)
         , mHeight(height)
         , mInternalFormat(GL_RGBA8)
-        , mTexUnit(texUnit)
         , mIsGreyScale(greyScale)
     {
         glGenTextures(1, &mTex);
@@ -47,17 +45,24 @@ public:
     }
 
 
-    virtual void bind(
-        bool readOnly = true)
+    virtual void bindTexture(
+        const uint32_t texUnit)
     {
-        // TODO: read from unit 0 for now
+        glBindTextureUnit(texUnit, mTex);
+    }
+
+
+    virtual void bindImageTexture(
+        const uint32_t texUnit,
+        const bool     readOnly)
+    {
         if (readOnly)
         {
-            glBindTextureUnit(mTexUnit, mTex);
+            glBindImageTexture(texUnit, mTex, 0, GL_FALSE, 0, GL_READ_ONLY, mInternalFormat);
         }
         else
         {
-            glBindImageTexture(mTexUnit, mTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, mInternalFormat);
+            glBindImageTexture(texUnit, mTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, mInternalFormat);
         }
     }
 
@@ -130,7 +135,6 @@ public:
 protected:
     Texture(){}
 
-    GLuint mTexUnit;
     GLuint mTex;
     GLuint mInternalFormat;
 
@@ -149,14 +153,12 @@ public:
         int          height,
         int          depth,
         const int    bitsPerChannel = 8,
-        const bool   greyScale = false,
-        const GLuint texUnit = 0)
+        const bool   greyScale = false)
     {
         mWidth          = width;
         mHeight         = height;
         mDepth          = depth;
         mInternalFormat = GL_RGBA8;
-        mTexUnit        = texUnit;
 
         glGenTextures(1, &mTex);
         glBindTexture(GL_TEXTURE_3D, mTex);
@@ -185,19 +187,28 @@ public:
         glDeleteTextures(1, &mTex);
     }
 
-    void bind(
-        bool readOnly = true) override
+
+    void bindTexture(
+        const uint32_t texUnit) override
     {
-        // TODO: read from unit 0 for now
+        glBindTextureUnit(texUnit, mTex);
+    }
+
+
+    void bindImageTexture(
+        const uint32_t texUnit,
+        const bool     readOnly) override
+    {
         if (readOnly)
         {
-            glBindTextureUnit(mTexUnit, mTex);
+            glBindImageTexture(texUnit, mTex, 0, GL_TRUE, 0, GL_READ_ONLY, mInternalFormat);
         }
         else
         {
-            glBindImageTexture(mTexUnit, mTex, 0, GL_TRUE, 0, GL_WRITE_ONLY, mInternalFormat);
+            glBindImageTexture(texUnit, mTex, 0, GL_TRUE, 0, GL_WRITE_ONLY, mInternalFormat);
         }
     }
+
 private:
     int mDepth;
 };

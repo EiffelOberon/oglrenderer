@@ -16,10 +16,10 @@ layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
     OceanParams oceanParams;
 };
 
-layout(binding = H0K_TEXTURE, rgba32f) uniform readonly image2D h0Texture;
-layout(binding = H_X_TEXTURE, rgba32f) uniform image2D hDxTexture;
-layout(binding = H_Y_TEXTURE, rgba32f) uniform image2D hDyTexture;
-layout(binding = H_Z_TEXTURE, rgba32f) uniform image2D hDzTexture;
+layout(binding = OCEAN_HEIGHT_FINAL_H0K, rgba32f) uniform readonly image2D h0Texture;
+layout(binding = OCEAN_HEIGHT_FINAL_H_X, rgba32f) uniform writeonly image2D hDxTexture;
+layout(binding = OCEAN_HEIGHT_FINAL_H_Y, rgba32f) uniform writeonly image2D hDyTexture;
+layout(binding = OCEAN_HEIGHT_FINAL_H_Z, rgba32f) uniform writeonly image2D hDzTexture;
 
 
 struct complex

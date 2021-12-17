@@ -6,7 +6,7 @@
 
 layout(location = 0) out vec4 c;
 
-layout(binding = SCREEN_QUAD) uniform sampler2D mainTexture;
+layout(binding = SCREEN_QUAD_TEX) uniform sampler2D mainTexture;
 
 layout(location = 1) in vec2 uv;
 

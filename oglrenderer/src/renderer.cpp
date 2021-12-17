@@ -19,14 +19,14 @@ Renderer::Renderer()
     , mCloudNoiseQuadShader("./spv/vert.spv", "./spv/cloudnoisefrag.spv")
     , mPerlinNoiseQuadShader("./spv/vert.spv", "./spv/perlinnoisefrag.spv")
     , mWorleyNoiseQuadShader("./spv/vert.spv", "./spv/worleynoisefrag.spv")
-    , mCloudTexture(CLOUD_RESOLUTION, CLOUD_RESOLUTION, CLOUD_RESOLUTION, 32, false, CLOUD_TEXTURE)
+    , mCloudTexture(CLOUD_RESOLUTION, CLOUD_RESOLUTION, CLOUD_RESOLUTION, 32, false)
     , mOceanFFT(OCEAN_RESOLUTION)
-    , mOceanH0SpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, H0K_TEXTURE)
-    , mOceanHDxSpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, H_X_TEXTURE)
-    , mOceanHDySpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, H_Y_TEXTURE)
-    , mOceanHDzSpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, H_Z_TEXTURE)
+    , mOceanH0SpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false)
+    , mOceanHDxSpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false)
+    , mOceanHDySpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false)
+    , mOceanHDzSpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false)
     , mOceanNoiseTexture(nullptr)
-    , mButterFlyTexture(mOceanFFT.passes(), OCEAN_RESOLUTION, 32, false, BUTTERFLY_TEXTURE, nullptr)
+    , mButterFlyTexture(mOceanFFT.passes(), OCEAN_RESOLUTION, 32, false)
     , mButterflyIndicesBuffer(mOceanFFT.bitReversedIndicesSizeInBytes())
     , mEnvironmentResolution(2048.0f, 2048.0f)
     , mQuad(GL_TRIANGLE_STRIP, 4)
@@ -104,7 +104,7 @@ Renderer::Renderer()
     loadStates();
 
     // cubemap environment
-    mRenderCubemapTexture = std::make_unique<RenderCubemapTexture>(ENVIRONMENT_TEXTURE, mEnvironmentResolution.x);
+    mRenderCubemapTexture = std::make_unique<RenderCubemapTexture>(mEnvironmentResolution.x);
 
     // ocean related noise texture and other shader buffers
     updateOceanNoiseTexture();
@@ -138,7 +138,7 @@ void Renderer::updateOceanNoiseTexture()
         randomNumbers[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
     }
 
-    mOceanNoiseTexture = std::make_unique<Texture>(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, OCEAN_NOISE, randomNumbers);
+    mOceanNoiseTexture = std::make_unique<Texture>(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, randomNumbers);
     delete[] randomNumbers;
 }
 
@@ -176,7 +176,7 @@ void Renderer::preRender()
 
     if (mFrameCount % 16 == 0)
     {
-        mCloudTexture.bind(false);
+        mCloudTexture.bindImageTexture(PRECOMPUTE_CLOUD_CLOUD_TEX, false);
         const int workGroupSize = int(float(CLOUD_RESOLUTION) / float(PRECOMPUTE_CLOUD_LOCAL_SIZE));
         mPrecomputeCloudShader.dispatch(true, workGroupSize, workGroupSize, workGroupSize);
 
@@ -200,6 +200,7 @@ void Renderer::preRender()
                 mWorleyNoiseParams.mTextureIdx = i;
                 updateUniform(WORLEY_PARAMS, mWorleyNoiseParams);
 
+                mCloudTexture.bindTexture(CLOUD_NOISE_CLOUD_TEX);
                 mCloudNoiseRenderTexture[i]->bind();
                 mCloudNoiseQuadShader.use();
                 mQuad.draw();
@@ -214,15 +215,15 @@ void Renderer::preRender()
     {
         const int workGroupSize = int(float(OCEAN_RESOLUTION) / float(PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE));
         // pass 1
-        mOceanH0SpectrumTexture.bind(false);
-        mOceanNoiseTexture->bind();
+        mOceanNoiseTexture->bindTexture(OCEAN_HEIGHTFIELD_NOISE);
+        mOceanH0SpectrumTexture.bindImageTexture(OCEAN_HEIGHTFIELD_H0K, false);
         mPrecomputeOceanH0Shader.dispatch(true, workGroupSize, workGroupSize, 1);
 
         // pass 2
-        mOceanH0SpectrumTexture.bind();
-        mOceanHDxSpectrumTexture.bind(false);
-        mOceanHDySpectrumTexture.bind(false);
-        mOceanHDzSpectrumTexture.bind(false);
+        mOceanH0SpectrumTexture.bindImageTexture(OCEAN_HEIGHT_FINAL_H0K, true);
+        mOceanHDxSpectrumTexture.bindImageTexture(OCEAN_HEIGHT_FINAL_H_X, false);
+        mOceanHDySpectrumTexture.bindImageTexture(OCEAN_HEIGHT_FINAL_H_Y, false);
+        mOceanHDzSpectrumTexture.bindImageTexture(OCEAN_HEIGHT_FINAL_H_Z, false);
         mPrecomputeOceanHShader.dispatch(true, workGroupSize, workGroupSize, 1);
 
         //mButterflyIndicesBuffer.bind(BUTTERFLY_INDICES);
@@ -268,8 +269,8 @@ void Renderer::render()
     // render quarter sized render texture
     glViewport(0, 0, mResolution.x * mLowResFactor, mResolution.y * mLowResFactor);
     mRenderTexture->bind();
-    mCloudTexture.bind();
-    mRenderCubemapTexture->bindTexture(0);
+    mCloudTexture.bindTexture(QUAD_CLOUD_TEX);
+    mRenderCubemapTexture->bindTexture(QUAD_ENV_TEX, 0);
     mPrerenderQuadShader.use();
     mQuad.draw();
     mPrerenderQuadShader.disable();
@@ -278,7 +279,7 @@ void Renderer::render()
     // render final quad
     glViewport(0, 0, int(mResolution.x), int(mResolution.y));
     mTexturedQuadShader.use();
-    mRenderTexture->bindTexture(0);
+    mRenderTexture->bindTexture(SCREEN_QUAD_TEX, 0);
     mQuad.draw();
     mTexturedQuadShader.disable();
 }

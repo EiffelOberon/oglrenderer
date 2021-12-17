@@ -23,7 +23,7 @@ layout(std430, binding = WORLEY_PARAMS) uniform WorleyParamsUniform
 {
 	NoiseParams worleyParams;
 };
-layout (binding = CLOUD_TEXTURE, rgba32f) uniform image3D cloudTexture;
+layout (binding = PRECOMPUTE_CLOUD_CLOUD_TEX, rgba32f) uniform writeonly image3D cloudTexture;
 
 void main()
 {

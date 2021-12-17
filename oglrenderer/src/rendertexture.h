@@ -79,9 +79,10 @@ public:
 
 
     virtual void bindTexture(
+        const uint32_t texUnit,
         const uint32_t slot) const
     {
-        glBindTexture(GL_TEXTURE_2D, mTex[slot]);
+        glBindTextureUnit(texUnit, mTex[slot]);
     }
 
 
@@ -134,14 +135,12 @@ private:
 
 
 
-class RenderCubemapTexture : RenderTexture
+class RenderCubemapTexture : public RenderTexture
 {
 public:
 
     RenderCubemapTexture(
-        const uint32_t texUnit,
         const uint32_t dimension)
-        : mTexUnit(texUnit)
     {
         mWidth = dimension;
         mHeight = dimension;
@@ -204,13 +203,6 @@ public:
     }
 
 
-    virtual void bindTexture(
-        const uint32_t slot) const
-    {
-        glBindTextureUnit(mTexUnit, mTex[slot]);
-    }
-
-
     GLuint getTextureId(
         const uint32_t slot) const
     {
@@ -242,7 +234,4 @@ public:
     {
         return mHeight;
     }
-
-protected:
-    uint32_t mTexUnit;
 };

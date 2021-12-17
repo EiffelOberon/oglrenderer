@@ -34,8 +34,8 @@ layout(std430, binding = WORLEY_PARAMS) uniform WorleyParamsUniform
 {
 	NoiseParams worleyParams;
 };
-layout (binding = CLOUD_TEXTURE) uniform sampler3D cloudTexture;
-layout (binding = ENVIRONMENT_TEXTURE) uniform samplerCube environmentTexture;
+layout (binding = QUAD_CLOUD_TEX) uniform sampler3D cloudTexture;
+layout (binding = QUAD_ENV_TEX) uniform samplerCube environmentTexture;
 
 layout(location = 0) out vec4 c;
 
