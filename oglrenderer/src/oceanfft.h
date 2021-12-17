@@ -82,6 +82,12 @@ public:
     }
 
 
+    int passes() const
+    {
+        return mPasses;
+    }
+
+
     const int* bitReversedIndices() const
     {
         return mBitReversedIndices.data();

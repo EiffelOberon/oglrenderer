@@ -49,22 +49,22 @@ void main()
     {
         if (butterflyWing == 1)
         {
-            imageStore(butterflyTexture, ivec2(x), vec4(twiddle.xy, bitReversed.j[int(x.y)], bitReversed.j[int(x.y+1)]));
+            imageStore(butterflyTexture, ivec2(x), vec4(twiddle.mComponent.xy, bitReversed.j[int(x.y)], bitReversed.j[int(x.y+1)]));
         }
         else
         {
-            imageStore(butterflyTexture, ivec2(x), vec4(twiddle.xy, bitReversed.j[int(x.y - 1)], bitReversed.j[int(x.y)]));
+            imageStore(butterflyTexture, ivec2(x), vec4(twiddle.mComponent.xy, bitReversed.j[int(x.y - 1)], bitReversed.j[int(x.y)]));
         }
     }
     else
     {
         if (butterflyWing == 1)
         {
-            imageStore(butterflyTexture, ivec2(x), vec4(twiddle.xy, x.y, x.y + butterflySpan));
+            imageStore(butterflyTexture, ivec2(x), vec4(twiddle.mComponent.xy, x.y, x.y + butterflySpan));
         }
         else
         {
-            imageStore(butterflyTexture, ivec2(x), vec4(twiddle.xy, x.y - butterflySpan, x.y));
+            imageStore(butterflyTexture, ivec2(x), vec4(twiddle.mComponent.xy, x.y - butterflySpan, x.y));
         }
     }
 
