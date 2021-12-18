@@ -42,8 +42,7 @@
 # define CLOUD_NOISE_CLOUD_TEX 1
 
 // precompute butterfly shader
-# define PRECOMPUTE_BUTTERFLY_H0     1
-# define PRECOMPUTE_BUTTERFLY_OUTPUT 2
+# define PRECOMPUTE_BUTTERFLY_OUTPUT 1
 
 // precompute cloud shader
 # define PRECOMPUTE_CLOUD_CLOUD_TEX 1

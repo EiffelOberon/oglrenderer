@@ -21,12 +21,12 @@ Renderer::Renderer()
     , mWorleyNoiseQuadShader("./spv/vert.spv", "./spv/worleynoisefrag.spv")
     , mCloudTexture(CLOUD_RESOLUTION, CLOUD_RESOLUTION, CLOUD_RESOLUTION, 32, false)
     , mOceanFFT(OCEAN_RESOLUTION)
-    , mOceanH0SpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false)
-    , mOceanHDxSpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false)
-    , mOceanHDySpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false)
-    , mOceanHDzSpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false)
+    , mOceanH0SpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, GL_NEAREST, 32, false)
+    , mOceanHDxSpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, GL_NEAREST, 32, false)
+    , mOceanHDySpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, GL_NEAREST, 32, false)
+    , mOceanHDzSpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, GL_NEAREST, 32, false)
     , mOceanNoiseTexture(nullptr)
-    , mButterFlyTexture(mOceanFFT.passes(), OCEAN_RESOLUTION, 32, false)
+    , mButterFlyTexture((int)(log(float(OCEAN_RESOLUTION)) / log(2.0f)), OCEAN_RESOLUTION, GL_NEAREST, 32, false, nullptr)
     , mButterflyIndicesBuffer(mOceanFFT.bitReversedIndicesSizeInBytes())
     , mEnvironmentResolution(2048.0f, 2048.0f)
     , mQuad(GL_TRIANGLE_STRIP, 4)
@@ -138,7 +138,7 @@ void Renderer::updateOceanNoiseTexture()
         randomNumbers[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
     }
 
-    mOceanNoiseTexture = std::make_unique<Texture>(OCEAN_RESOLUTION, OCEAN_RESOLUTION, 32, false, randomNumbers);
+    mOceanNoiseTexture = std::make_unique<Texture>(OCEAN_RESOLUTION, OCEAN_RESOLUTION, GL_NEAREST, 32, false, randomNumbers);
     delete[] randomNumbers;
 }
 
@@ -226,9 +226,9 @@ void Renderer::preRender()
         mOceanHDzSpectrumTexture.bindImageTexture(OCEAN_HEIGHT_FINAL_H_Z, false);
         mPrecomputeOceanHShader.dispatch(true, workGroupSize, workGroupSize, 1);
 
-        //mButterflyIndicesBuffer.bind(BUTTERFLY_INDICES);
-        //mButterFlyTexture.bind(false);
-        //mPrecomputeButterflyTexShader.dispatch(true, mOceanFFT.passes(), workGroupSize, 1);
+        mButterflyIndicesBuffer.bind(BUTTERFLY_INDICES);
+        mButterFlyTexture.bindImageTexture(PRECOMPUTE_BUTTERFLY_OUTPUT, false);
+        mPrecomputeButterflyTexShader.dispatch(true, mOceanFFT.passes(), workGroupSize, 1);
     }
 
     // render quarter sized render texture
@@ -529,6 +529,17 @@ void Renderer::renderGUI()
             ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
             ImGui::Image(oceanHDzSpectrumTexId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
         }
+
+        ImTextureID butterflyTexId = (ImTextureID)mButterFlyTexture.texId();
+        {
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+            ImGui::Image(butterflyTexId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
+        }
+
 
         ImGui::End();
     }

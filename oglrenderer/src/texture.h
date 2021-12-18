@@ -8,11 +8,12 @@ class Texture
 {
 public:
     Texture(
-        int          width,
-        int          height,
-        const int    bitsPerChannel = 8,
-        const bool   greyScale      = false,
-        const void*  data           = nullptr)
+        int            width,
+        int            height,
+        const uint32_t sampleMode,
+        const int      bitsPerChannel = 8,
+        const bool     greyScale      = false,
+        const void*    data           = nullptr)
         : mWidth(width)
         , mHeight(height)
         , mInternalFormat(GL_RGBA8)
@@ -20,8 +21,8 @@ public:
     {
         glGenTextures(1, &mTex);
         glBindTexture(GL_TEXTURE_2D, mTex);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 

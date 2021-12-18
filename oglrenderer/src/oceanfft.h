@@ -12,7 +12,7 @@ public:
     OceanFFT(
         const int N)
         : mN(N)
-        , mPasses((int)(log(float(N)) / log(2.0f)))
+        , mPasses((int)(float(log(float(N))) / float(log(2.0f))))
         , mButterflyTable(nullptr)
     {
         mBitReversedIndices.resize(N);

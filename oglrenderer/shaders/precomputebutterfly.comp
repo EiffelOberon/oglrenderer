@@ -7,7 +7,6 @@
 
 layout(local_size_x = 1, local_size_y = PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE) in;
 
-layout(binding = PRECOMPUTE_BUTTERFLY_H0, rgba32f) uniform readonly image2D h0Texture;
 layout(binding = PRECOMPUTE_BUTTERFLY_OUTPUT, rgba32f) uniform writeonly image2D butterflyTexture;
 
 layout(std430, binding = BUTTERFLY_INDICES) buffer ButterflyIndices
@@ -30,6 +29,11 @@ void main()
 {
     int N = int(oceanParams.mHeightSettings);
     vec2 x = gl_GlobalInvocationID.xy;
+
+    if (x.x >= int(log(N) / log(2.0f)) || x.y >= N)
+    {
+        return;
+    }
     float k = mod(x.y * (float(N) / pow(2, x.x + 1)), N);
 
     complex twiddle = complex(vec2(cos(2.0f * PI * k) / float(N), sin(2.0f * PI * k / float(N))));
@@ -68,6 +72,4 @@ void main()
             imageStore(butterflyTexture, ivec2(x), vec4(twiddle.mComponent.xy, x.y - butterflySpan, x.y));
         }
     }
-
-
 }
