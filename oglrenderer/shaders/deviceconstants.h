@@ -38,6 +38,11 @@
 
 //////////////////////////////////////////////////////////////////////////
 
+// butterfly operation
+# define BUTTERFLY_INPUT_TEX     0
+# define BUTTERFLY_PINGPONG_TEX0 1
+# define BUTTERFLY_PINGPONG_TEX1 2
+
 // cloud noise frag
 # define CLOUD_NOISE_CLOUD_TEX 1
 
