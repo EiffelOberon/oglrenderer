@@ -175,5 +175,8 @@
     <None Include="shaders\precomputebutterfly.comp">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\butterflyoperation.comp">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
