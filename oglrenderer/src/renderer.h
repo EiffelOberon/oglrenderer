@@ -79,18 +79,22 @@ private:
     void loadStates();
 
     // textures
-    Texture3D mCloudTexture;
-    Texture   mOceanH0SpectrumTexture;
-    Texture   mOceanHDxSpectrumTexture;
-    Texture   mOceanHDySpectrumTexture;
-    Texture   mOceanHDzSpectrumTexture;
+    Texture3D                mCloudTexture;
+    Texture                  mOceanDisplacementTexture;
+    Texture                  mOceanH0SpectrumTexture;
+    Texture                  mOceanHDxSpectrumTexture;
+    Texture                  mOceanHDySpectrumTexture;
+    Texture                  mOceanHDzSpectrumTexture;
     std::unique_ptr<Texture> mOceanNoiseTexture;
-    Texture   mButterFlyTexture;
+    Texture                  mButterFlyTexture;
+    Texture                  mPingPongTexture;
 
     // shader buffers
     ShaderBuffer mButterflyIndicesBuffer;
 
     // shaders
+    ShaderProgram mButterflyOpShader;
+    ShaderProgram mInversionShader;
     ShaderProgram mPrecomputeEnvironmentShader;
     ShaderProgram mPrecomputeCloudShader;
     ShaderProgram mPrecomputeOceanH0Shader;
@@ -101,7 +105,7 @@ private:
     ShaderProgram mWorleyNoiseQuadShader;
     ShaderProgram mPerlinNoiseQuadShader;
     ShaderProgram mCloudNoiseQuadShader;
-    
+        
     // quad geometry
     Quad          mQuad;
 

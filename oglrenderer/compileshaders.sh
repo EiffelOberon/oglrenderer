@@ -12,3 +12,4 @@
 ./shaderc/glslc.exe ./shaders/oceanhfinal.comp -o ./spv/oceanhfinal.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 ./shaderc/glslc.exe ./shaders/precomputebutterfly.comp -o ./spv/precomputebutterfly.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 ./shaderc/glslc.exe ./shaders/butterflyoperation.comp -o ./spv/butterflyoperation.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
+./shaderc/glslc.exe ./shaders/inversion.comp -o ./spv/inversion.spv --target-env=opengl -std=450core -I "./" -I "./shaders"

@@ -46,6 +46,11 @@
 // cloud noise frag
 # define CLOUD_NOISE_CLOUD_TEX 1
 
+// inversion shader
+# define INVERSION_PINGPONG_TEX0 0
+# define INVERSION_PINGPONG_TEX1 1
+# define INVERSION_OUTPUT_TEX    2
+
 // precompute butterfly shader
 # define PRECOMPUTE_BUTTERFLY_OUTPUT 1
 

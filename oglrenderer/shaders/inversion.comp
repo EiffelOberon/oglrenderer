@@ -1,0 +1,44 @@
+#version 450 core
+#define GLSL_SHADER
+#extension GL_EXT_scalar_block_layout : require
+
+#include "complex.h"
+#include "deviceconstants.h"
+#include "devicestructs.h"
+
+layout(local_size_x = PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE, local_size_y = PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE) in;
+
+layout(binding = INVERSION_OUTPUT_TEX, rgba32f) uniform writeonly image2D displacement;
+layout(binding = INVERSION_PINGPONG_TEX0, rgba32f) uniform readonly image2D pingpong0;
+layout(binding = INVERSION_PINGPONG_TEX1, rgba32f) uniform readonly image2D pingpong1;
+
+layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
+{
+    OceanParams oceanParams;
+};
+
+void main()
+{
+    ivec2 x = ivec2(gl_GlobalInvocationID.xy);
+    if (x.x >= oceanParams.mHeightSettings.x || x.y >= oceanParams.mHeightSettings.y)
+    {
+        return;
+    }
+
+    const float perms[] = { 1.0,-1.0 };
+    const int index = int(mod((int(x.x + x.y)), 2));
+    const float perm = perms[index];
+    const uint N = oceanParams.mHeightSettings.x;
+
+    float h = 0.0f;
+    if (oceanParams.mPingPong.x == 0)
+    {
+        h = imageLoad(pingpong0, x).r;
+    }
+    else
+    {
+        h = imageLoad(pingpong1, x).r;
+    }
+    const float disp = perm * (h / float(N * N));
+    imageStore(displacement, x, vec4(disp, disp, disp, 1));
+}

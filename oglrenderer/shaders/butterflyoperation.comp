@@ -6,7 +6,7 @@
 #include "deviceconstants.h"
 #include "devicestructs.h"
 
-layout(local_size_x = 1, local_size_y = PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE) in;
+layout(local_size_x = PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE, local_size_y = PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE) in;
 
 layout(binding = BUTTERFLY_INPUT_TEX, rgba32f) uniform readonly image2D butterflyTexture;
 layout(binding = BUTTERFLY_PINGPONG_TEX0, rgba32f) uniform image2D pingpong0;
@@ -18,6 +18,90 @@ layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
 };
 
 
+void horizontalButterflies()
+{
+    complex H;
+    ivec2 x = ivec2(gl_GlobalInvocationID.xy);
+
+    const vec4 data = imageLoad(butterflyTexture, ivec2(oceanParams.mPingPong.y, x.x));
+
+    vec2 p, q;
+    if (oceanParams.mPingPong.x == 0)
+    {
+        p = imageLoad(pingpong0, ivec2(data.z, x.y)).rg;
+        q = imageLoad(pingpong0, ivec2(data.w, x.y)).rg;
+
+    }
+    else
+    {
+        p = imageLoad(pingpong1, ivec2(data.z, x.y)).rg;
+        q = imageLoad(pingpong1, ivec2(data.w, x.y)).rg;
+    }
+    vec2 w = vec2(data.x, data.y);
+    complex complexP = complex(p);
+    complex complexQ = complex(q);
+    complex complexW = complex(w);
+
+    H = add(complexP, mul(complexW, complexQ));
+    if (isnan(H.mComponent.x)) { H.mComponent.x = 0.0f; }
+    if (isnan(H.mComponent.y)) { H.mComponent.y = 0.0f; }
+    if (oceanParams.mPingPong.x == 0)
+    {
+        imageStore(pingpong1, x, vec4(H.mComponent.x, H.mComponent.y, 0.0f, 1.0f));
+    }
+    else
+    {
+        imageStore(pingpong0, x, vec4(H.mComponent.x, H.mComponent.y, 0.0f, 1.0f));
+    }
+}
+
+
+void verticalButterflies()
+{
+    complex H;
+    ivec2 x = ivec2(gl_GlobalInvocationID.xy);
+
+    const vec4 data = imageLoad(butterflyTexture, ivec2(oceanParams.mPingPong.y, x.y));
+
+    vec2 p, q;
+    if (oceanParams.mPingPong.x == 0)
+    {
+        p = imageLoad(pingpong0, ivec2(x.x, data.z)).rg;
+        q = imageLoad(pingpong0, ivec2(x.x, data.w)).rg;
+
+    }
+    else
+    {
+        p = imageLoad(pingpong1, ivec2(x.x, data.z)).rg;
+        q = imageLoad(pingpong1, ivec2(x.x, data.w)).rg;
+    }
+    vec2 w = vec2(data.x, data.y);
+    complex complexP = complex(p);
+    complex complexQ = complex(q);
+    complex complexW = complex(w);
+
+    H = add(complexP, mul(complexW, complexQ));
+    if (isnan(H.mComponent.x)) { H.mComponent.x = 0.0f; }
+    if (isnan(H.mComponent.y)) { H.mComponent.y = 0.0f; }
+    if (oceanParams.mPingPong.x == 0)
+    {
+        imageStore(pingpong1, x, vec4(H.mComponent.x, H.mComponent.y, 0.0f, 1.0f));
+    }
+    else
+    {
+        imageStore(pingpong0, x, vec4(H.mComponent.x, H.mComponent.y, 0.0f, 1.0f));
+    }
+}
+
+
 void main()
 {
+    if (oceanParams.mPingPong.z == 0)
+    {
+        horizontalButterflies();
+    }
+    else
+    {
+        verticalButterflies();
+    }
 }

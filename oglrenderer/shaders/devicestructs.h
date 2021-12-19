@@ -53,8 +53,11 @@ struct NoiseParams
 
 struct OceanParams
 {
-    // x: N, y: L
+    // x: N, y: L, z: empty, w: empty
     ivec4 mHeightSettings;
+
+    // x: ping pong, y: stage, z: direction, w: empty
+    ivec4 mPingPong;
 
     // x: amplitude, y: wind speed z & w: wind direction
     vec4 mWaveSettings;

@@ -7,6 +7,7 @@
 class Texture
 {
 public:
+
     Texture(
         int            width,
         int            height,
@@ -55,16 +56,9 @@ public:
 
     virtual void bindImageTexture(
         const uint32_t texUnit,
-        const bool     readOnly)
+        const uint32_t readWriteState)
     {
-        if (readOnly)
-        {
-            glBindImageTexture(texUnit, mTex, 0, GL_FALSE, 0, GL_READ_ONLY, mInternalFormat);
-        }
-        else
-        {
-            glBindImageTexture(texUnit, mTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, mInternalFormat);
-        }
+        glBindImageTexture(texUnit, mTex, 0, GL_FALSE, 0, readWriteState, mInternalFormat);
     }
 
 
@@ -198,16 +192,9 @@ public:
 
     void bindImageTexture(
         const uint32_t texUnit,
-        const bool     readOnly) override
+        const uint32_t readWriteState) override
     {
-        if (readOnly)
-        {
-            glBindImageTexture(texUnit, mTex, 0, GL_TRUE, 0, GL_READ_ONLY, mInternalFormat);
-        }
-        else
-        {
-            glBindImageTexture(texUnit, mTex, 0, GL_TRUE, 0, GL_WRITE_ONLY, mInternalFormat);
-        }
+        glBindImageTexture(texUnit, mTex, 0, GL_TRUE, 0, readWriteState, mInternalFormat);
     }
 
 private:

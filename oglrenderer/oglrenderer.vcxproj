@@ -192,6 +192,7 @@
     <None Include="shaders\butterflyoperation.comp" />
     <None Include="shaders\cloudnoise.frag" />
     <None Include="shaders\fbmnoise.frag" />
+    <None Include="shaders\inversion.comp" />
     <None Include="shaders\oceanhfinal.comp" />
     <None Include="shaders\oceanheightfield.comp" />
     <None Include="shaders\perlinnoise.frag" />
