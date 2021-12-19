@@ -103,7 +103,6 @@ Renderer::Renderer()
     mOceanParams.mHeightSettings = glm::ivec4(OCEAN_RESOLUTION, 1024, 0, 0);
     mOceanParams.mPingPong = glm::ivec4(0, 0, 0, 0);
     mOceanParams.mWaveSettings = glm::vec4(4.0f, 40.0f, 1.0f, 1.0f);
-    mOceanParams.mTime.x = 0.0f;
     addUniform(OCEAN_PARAMS, mOceanParams);
 
     loadStates();
@@ -517,10 +516,6 @@ void Renderer::renderGUI()
             updateUniform(OCEAN_PARAMS, mOceanParams);
         }
         if (ImGui::SliderFloat2("Wind direction", &mOceanParams.mWaveSettings.z, -1.0f, 1.0f))
-        {
-            updateUniform(OCEAN_PARAMS, mOceanParams);
-        }
-        if (ImGui::SliderFloat("Time", &mOceanParams.mTime.x, 0.0f, 1.0f))
         {
             updateUniform(OCEAN_PARAMS, mOceanParams);
         }

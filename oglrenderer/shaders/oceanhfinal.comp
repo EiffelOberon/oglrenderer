@@ -43,8 +43,8 @@ void main()
     complex fourierComponent = complex(h0.xy);
     complex fourierComponentConj = conj(complex(h0.zw));
 
-    const float cosWt = cos(w * oceanParams.mTime.x);
-    const float sinWt = sin(w * oceanParams.mTime.x);
+    const float cosWt = cos(w * renderParams.mSettings.x);
+    const float sinWt = sin(w * renderParams.mSettings.x);
 
     // complex euler
     complex expiWt = complex(vec2(cosWt, sinWt));

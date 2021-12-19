@@ -61,9 +61,6 @@ struct OceanParams
 
     // x: amplitude, y: wind speed z & w: wind direction
     vec4 mWaveSettings;
-
-    // x: time
-    vec4 mTime;
 };
 
 
