@@ -2,6 +2,7 @@
 #define GLSL_SHADER
 #extension GL_EXT_scalar_block_layout : require
 
+#include "complex.h"
 #include "deviceconstants.h"
 #include "devicestructs.h"
 
@@ -20,44 +21,6 @@ layout(binding = OCEAN_HEIGHT_FINAL_H0K, rgba32f) uniform readonly image2D h0Tex
 layout(binding = OCEAN_HEIGHT_FINAL_H_X, rgba32f) uniform writeonly image2D hDxTexture;
 layout(binding = OCEAN_HEIGHT_FINAL_H_Y, rgba32f) uniform writeonly image2D hDyTexture;
 layout(binding = OCEAN_HEIGHT_FINAL_H_Z, rgba32f) uniform writeonly image2D hDzTexture;
-
-
-struct complex
-{
-	vec2 mComponent;
-};
-
-
-complex mul(
-	in complex c0, 
-	in complex c1)
-{
-	complex result;
-	result.mComponent.x = c0.mComponent.x * c1.mComponent.x - c0.mComponent.y * c1.mComponent.y;
-	result.mComponent.y = c0.mComponent.x * c1.mComponent.y + c0.mComponent.y * c1.mComponent.x;
-	return result;
-}
-
-
-complex add(
-    in complex c0,
-    in complex c1)
-{
-    complex result;
-    result.mComponent.x = c0.mComponent.x + c1.mComponent.x;
-    result.mComponent.y = c0.mComponent.y + c1.mComponent.y;
-    return result;
-}
-
-
-complex conj(
-    in complex c)
-{
-    complex result;
-    result.mComponent.x = c.mComponent.x;
-    result.mComponent.y = -c.mComponent.y;
-    return result;
-}
 
 
 void main()

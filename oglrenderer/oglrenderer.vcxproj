@@ -168,6 +168,7 @@
     <ClInclude Include="include\imgui\imstb_textedit.h" />
     <ClInclude Include="include\imgui\imstb_truetype.h" />
     <ClInclude Include="shaders\cloud.h" />
+    <ClInclude Include="shaders\complex.h" />
     <ClInclude Include="shaders\deviceconstants.h" />
     <ClInclude Include="shaders\devicestructs.h" />
     <ClInclude Include="shaders\fbm.h" />

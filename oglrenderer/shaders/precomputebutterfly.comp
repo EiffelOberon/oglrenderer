@@ -2,6 +2,7 @@
 #define GLSL_SHADER
 #extension GL_EXT_scalar_block_layout : require
 
+#include "complex.h"
 #include "deviceconstants.h"
 #include "devicestructs.h"
 
@@ -17,11 +18,6 @@ layout(std430, binding = BUTTERFLY_INDICES) buffer ButterflyIndices
 layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
 {
     OceanParams oceanParams;
-};
-
-struct complex
-{
-	vec2 mComponent;
 };
 
 

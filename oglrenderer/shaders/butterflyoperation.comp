@@ -2,6 +2,7 @@
 #define GLSL_SHADER
 #extension GL_EXT_scalar_block_layout : require
 
+#include "complex.h"
 #include "deviceconstants.h"
 #include "devicestructs.h"
 
@@ -14,11 +15,6 @@ layout(binding = BUTTERFLY_PINGPONG_TEX1, rgba32f) uniform image2D pingpong1;
 layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
 {
     OceanParams oceanParams;
-};
-
-struct complex
-{
-	vec2 mComponent;
 };
 
 
