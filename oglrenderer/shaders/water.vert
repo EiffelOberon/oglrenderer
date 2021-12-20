@@ -29,7 +29,7 @@ void main()
     const vec3 d= texture(displacement, vertexUV.xy).xyz;
 	const vec3 newVertexPos = vertexPos + d;
 
-	gl_Position =  mvpMatrix.mProjectionMatrix * mvpMatrix.mModelViewMatrix * vec4(newVertexPos, 1.0);
+	gl_Position =  mvpMatrix.mProjectionMatrix * mvpMatrix.mViewMatrix * vec4(newVertexPos, 1.0);
 	
 	position = newVertexPos;
 	uv = vertexUV.xy;

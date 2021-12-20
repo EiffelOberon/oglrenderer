@@ -130,7 +130,7 @@ Renderer::Renderer()
     glm::mat4 projMatrix = glm::perspective(glm::radians(45.0f), 1600.0f / 900.0f, 0.1f, 1000.0f);
     glm::mat4 viewMatrix = mCamera.getViewMatrix();
     mMVPMatrix.mProjectionMatrix = projMatrix;
-    mMVPMatrix.mModelViewMatrix = viewMatrix;
+    mMVPMatrix.mViewMatrix = viewMatrix;
     addUniform(MVP_MATRIX, mMVPMatrix);
 }
 
@@ -152,7 +152,7 @@ void Renderer::updateCamera(
 
     // update MVP
     glm::mat4 viewMatrix = mCamera.getViewMatrix();
-    mMVPMatrix.mModelViewMatrix = viewMatrix;
+    mMVPMatrix.mViewMatrix = viewMatrix;
     updateUniform(MVP_MATRIX, mMVPMatrix);
 }
 
@@ -168,7 +168,7 @@ void Renderer::updateCameraZoom(
 
     // update MVP
     glm::mat4 viewMatrix = mCamera.getViewMatrix();
-    mMVPMatrix.mModelViewMatrix = viewMatrix;
+    mMVPMatrix.mViewMatrix = viewMatrix;
     updateUniform(MVP_MATRIX, mMVPMatrix);
 }
 
@@ -618,11 +618,11 @@ void Renderer::renderGUI()
         {
             updateUniform(OCEAN_PARAMS, mOceanParams);
         }
-        if (ImGui::SliderFloat("Wave amplitude", &mOceanParams.mWaveSettings.x, 0.0f, 8.0f))
+        if (ImGui::SliderFloat("Wave amplitude", &mOceanParams.mWaveSettings.x, 0.01f, 20.0f))
         {
             updateUniform(OCEAN_PARAMS, mOceanParams);
         }
-        if (ImGui::SliderFloat("Wind speed", &mOceanParams.mWaveSettings.y, 0.0f, 80.0f))
+        if (ImGui::SliderFloat("Wind speed", &mOceanParams.mWaveSettings.y, 0.0f, 200.0f))
         {
             updateUniform(OCEAN_PARAMS, mOceanParams);
         }

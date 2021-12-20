@@ -68,7 +68,7 @@ struct OceanParams
 struct MVPMatrix
 {
     mat4 mProjectionMatrix;
-    mat4 mModelViewMatrix;
+    mat4 mViewMatrix;
 };
 
 
