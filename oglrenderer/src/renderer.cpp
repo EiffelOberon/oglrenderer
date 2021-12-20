@@ -189,8 +189,8 @@ void Renderer::updateOceanNoiseTexture()
 
 void Renderer::updateWaterGrid()
 {
-    std::vector<Vertex> mVertices;
-    std::vector<uint32_t> mIndices;
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
 
     int count = 0;
     // patch count along each axis (square)
@@ -205,7 +205,7 @@ void Renderer::updateWaterGrid()
             v.mPosition = glm::vec3(column * offset - dimension * 0.5f, 0.0f, row * offset - dimension * 0.5f);
             v.mNormal = glm::vec3(0, 1, 0);
             v.mUV = glm::vec2(column / float(columnCount - 1), row / float(columnCount - 1));
-            mVertices.push_back(v);
+            vertices.push_back(v);
         }
     }
 
@@ -213,17 +213,17 @@ void Renderer::updateWaterGrid()
     {
         for (int column = 0; column < (columnCount-1); ++column)
         {
-            mIndices.push_back(row * columnCount + column);
-            mIndices.push_back(row * columnCount + (column + 1));
-            mIndices.push_back((row + 1) * columnCount + column);
+            indices.push_back(row * columnCount + column);
+            indices.push_back(row * columnCount + (column + 1));
+            indices.push_back((row + 1) * columnCount + column);
 
-            mIndices.push_back((row + 1) * columnCount + column);
-            mIndices.push_back(row * columnCount + (column + 1));
-            mIndices.push_back((row + 1) * columnCount + (column + 1));
+            indices.push_back((row + 1) * columnCount + column);
+            indices.push_back(row * columnCount + (column + 1));
+            indices.push_back((row + 1) * columnCount + (column + 1));
         }
     }
 
-    mWaterGrid.update(mVertices.size() * sizeof(Vertex), mIndices.size() * sizeof(uint32_t), mVertices.data(), mIndices.data());
+    mWaterGrid.update(vertices.size() * sizeof(Vertex), indices.size() * sizeof(uint32_t), vertices.data(), indices.data());
 }
 
 
