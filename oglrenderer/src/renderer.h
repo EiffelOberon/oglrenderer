@@ -150,7 +150,7 @@ private:
     OceanFFT mOceanFFT;
 
     // gui
-    bool mShowOceanWindow;
+    bool mShowPropertiesWindow;
     bool mShowPerformanceWindow;
     bool mShowSkyWindow;
 

@@ -41,7 +41,7 @@ Renderer::Renderer()
     , mRenderCubemapTexture(nullptr)
     , mWorleyNoiseRenderTexture(nullptr)
     , mCamera()
-    , mShowOceanWindow(true)
+    , mShowPropertiesWindow(true)
     , mShowPerformanceWindow(true)
     , mShowSkyWindow(true)
     , mUpdateEnvironment(true)
@@ -492,7 +492,9 @@ void Renderer::renderGUI()
 
     if (mShowSkyWindow)
     {
-        ImGui::Begin("Sky", &mShowSkyWindow);
+        ImGui::Begin("Environment", &mShowSkyWindow);
+        ImGui::Text("Sun");
+        ImGui::NewLine();
         ImGui::Text("Sun Direction");
         if (ImGui::SliderFloat("x", &mSkyParams.mSunDir.x, -1.0f, 1.0f))
         {
@@ -508,10 +510,14 @@ void Renderer::renderGUI()
         {
             mUpdateEnvironment = true;
         }
+
+        ImGui::Separator();
         // FBM
         float my_tex_w = 100;
         float my_tex_h = 100;
 
+        ImGui::Text("Cloud");
+        ImGui::NewLine();
         ImGui::Text("Cloud Noise: %.0fx%.0f", my_tex_w, my_tex_h);
 
         // Worley
@@ -604,16 +610,10 @@ void Renderer::renderGUI()
             updateUniform(RENDERER_PARAMS, mRenderParams);
         }
 
-
-        ImGui::End();
-
-    }
-
-    // ocean window
-    if (mShowOceanWindow)
-    {
-        ImGui::Begin("Ocean", &mShowOceanWindow);
-
+        ImGui::Separator();
+        
+        ImGui::Text("Ocean");
+        ImGui::NewLine();
         if (ImGui::SliderInt("Patch dimension", &mOceanParams.mHeightSettings.y, 64, 1024))
         {
             updateUniform(OCEAN_PARAMS, mOceanParams);
@@ -631,8 +631,8 @@ void Renderer::renderGUI()
             updateUniform(OCEAN_PARAMS, mOceanParams);
         }
 
-        float my_tex_w = 100;
-        float my_tex_h = 100;
+        my_tex_w = 100;
+        my_tex_h = 100;
         ImGui::Text("Ocean spectrum: %.0fx%.0f", my_tex_w, my_tex_h);
         ImTextureID oceanSpectrumTexId = (ImTextureID)mOceanH0SpectrumTexture.texId();
         {
@@ -708,6 +708,23 @@ void Renderer::renderGUI()
             ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
             ImGui::Image(normalTexId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
         }
+
+        ImGui::End();
+
+    }
+
+    // ocean window
+    if (mShowPropertiesWindow)
+    {
+        ImGui::Begin("Properties", &mShowPropertiesWindow);
+        ImGui::Text("Camera");
+        ImGui::NewLine();
+        ImGui::Text("Position");
+        ImGui::Text("x: %.2f y: %.2f z: %.2f", mCamera.getEye().x, mCamera.getEye().y, mCamera.getEye().z);
+        ImGui::Text("Target");
+        ImGui::Text("x: %.2f y: %.2f z: %.2f", mCamera.getTarget().x, mCamera.getTarget().y, mCamera.getTarget().z);
+        ImGui::Text("Distance");
+        ImGui::Text("dist: %.2f", length(mCamera.getTarget() - mCamera.getEye()));
         ImGui::End();
     }
 
