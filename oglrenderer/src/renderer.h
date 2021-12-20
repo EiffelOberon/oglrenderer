@@ -25,7 +25,7 @@ public:
 
     void updateCamera(const int deltaX, 
                       const int deltaY);
-
+    void updateCameraZoom(const int dir);
     void preRender();
     void render();
     void postRender();

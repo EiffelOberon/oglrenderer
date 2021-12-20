@@ -155,6 +155,22 @@ void Renderer::updateCamera(
 }
 
 
+void Renderer::updateCameraZoom(
+    const int dir)
+{
+    mCamera.updateZoom(dir);
+    mCamParams.mEye = glm::vec4(mCamera.getEye(), 0.0f);
+    mCamParams.mTarget = glm::vec4(mCamera.getTarget(), 0.0f);
+    mCamParams.mUp = glm::vec4(mCamera.getUp(), 0.0f);
+    updateUniform(CAMERA_PARAMS, mCamParams);
+
+    // update MVP
+    glm::mat4 viewMatrix = mCamera.getViewMatrix();
+    mMVPMatrix.mModelViewMatrix = viewMatrix;
+    updateUniform(MVP_MATRIX, mMVPMatrix);
+}
+
+
 void Renderer::updateOceanNoiseTexture()
 {
     float* randomNumbers = new float[OCEAN_RESOLUTION * OCEAN_RESOLUTION * 4];

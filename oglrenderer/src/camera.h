@@ -29,7 +29,7 @@ public:
         glm::vec4 position(mEye.x, mEye.y, mEye.z, 1);
         glm::vec4 pivot(mTarget.x, mTarget.y, mTarget.z, 1);
 
-        float xAngle = deltaX;
+        float xAngle = -deltaX;
         float yAngle = -deltaY;
 
         // extra step to handle the problem when the camera direction is the same as the up vector
@@ -51,6 +51,18 @@ public:
         glm::vec3 finalPosition = (rotationMatrixY * (position - pivot)) + pivot;
 
         mEye = finalPosition;
+    }
+
+
+    void updateZoom(
+        const int dir)
+    {
+        glm::vec3 forward = (mTarget - mEye);
+        float dist = length(forward);
+        dist -= dir;
+        dist = glm::clamp(dist, 0.01f, 1000.0f);
+
+        mEye = mTarget - normalize(forward) * dist;
     }
 
 

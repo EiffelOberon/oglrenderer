@@ -19,5 +19,5 @@ layout(location = 0) out vec4 c;
 void main()
 {	
     float nDotL = abs(dot(normal, skyParams.mSunDir.xyz));
-	c = vec4(nDotL, nDotL, nDotL, 1.0f);
+	c = vec4(uv.xy, 0.0f, 1.0f);
 }

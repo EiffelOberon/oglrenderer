@@ -30,10 +30,6 @@ void main()
 	const vec3 newVertexPos = vec3(vertexPos.x, height, vertexPos.z);
 
 	gl_Position =  mvpMatrix.mProjectionMatrix * mvpMatrix.mModelViewMatrix * vec4(newVertexPos, 1.0);
-
-    const float height2 = texture(displacement, vertexUV.xy + vec2(1.0f/float(OCEAN_RESOLUTION), 0.0f)).x;
-    const float height3 = texture(displacement, vertexUV.xy + vec2(0.0f, 1.0f/float(OCEAN_RESOLUTION))).x;
-
-	normal = normalize(vec3(height2-height, 1.0f, height3-height));
+	normal = vec3(0, 1, 0);
 	uv = vertexUV.xy;
 }

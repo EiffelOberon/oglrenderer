@@ -177,6 +177,20 @@ void mouseMotion(
     ImGui_ImplGLUT_MotionFunc(x, y);
 }
 
+void mouseWheel(int button, int dir, int x, int y)
+{
+    if (dir > 0)
+    {
+        renderer->updateCameraZoom(dir);
+    }
+    else
+    {
+        renderer->updateCameraZoom(dir);
+    }
+
+    return;
+}
+
 
 void resize(
     int width,
@@ -259,6 +273,7 @@ int main(
         glutIdleFunc(update);
         glutMouseFunc(mouseClick);
         glutMotionFunc(mouseMotion);
+        glutMouseWheelFunc(mouseWheel);
 
         // Here is our new entry in the main function
         glutReshapeFunc(resize);
