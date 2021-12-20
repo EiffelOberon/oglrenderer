@@ -23,10 +23,10 @@ layout(location = 0) out vec4 c;
 
 void main()
 {	
-	const vec3 n = normalize(vec3(0, 1, 0) + texture(normalTex, uv.xy).xyz);
+	const vec3 n = normalize(texture(normalTex, uv.xy).xyz);
 	
-	const vec3 viewDir = normalize(camParams.mEye.xyz - position);
-	const vec3 rayDir = -reflect(viewDir, n);
+	const vec3 viewDir = normalize(position - camParams.mEye.xyz);
+	const vec3 rayDir = reflect(viewDir, n);
 
 	vec3 env = texture(environmentTex, rayDir).xyz;
 
