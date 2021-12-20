@@ -4,6 +4,7 @@
 #ifndef GLSL_SHADER
 # include "glm/glm.hpp"
 # include "GL/glew.h"
+# define mat4  glm::mat4
 # define vec4  glm::vec4
 # define vec3  glm::vec3
 # define vec2  glm::vec2
@@ -64,7 +65,15 @@ struct OceanParams
 };
 
 
+struct MVPMatrix
+{
+    mat4 mProjectionMatrix;
+    mat4 mModelViewMatrix;
+};
+
+
 #ifndef GLSL_SHADER
+# undef mat4
 # undef vec4
 # undef vec3
 # undef vec2

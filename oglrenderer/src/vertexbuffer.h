@@ -5,6 +5,14 @@
 
 #include <vector>
 
+struct Vertex
+{
+    glm::vec3 mPosition;
+    glm::vec3 mNormal;
+    glm::vec2 mUV;
+};
+
+
 class VertexBuffer
 {
 public:
@@ -44,26 +52,28 @@ public:
         glBindVertexArray(mVAO);
         glBindBuffer(GL_ARRAY_BUFFER, mVBO);
         glBufferData(GL_ARRAY_BUFFER, vertexDataSizeInBytes, data, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void*)(nullptr));
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void*)(sizeof(float)*3));
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void*)(sizeof(float)*6));
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(nullptr));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(glm::vec3)));
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(glm::vec3) * 2));
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexDataSizeInBytes, indexData, GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
         mTriangleCount = indexDataSizeInBytes / sizeof(uint32_t);
     }
 
 
-    void render()
+    void draw()
     {
         if (mTriangleCount > 0)
         {
             glBindVertexArray(mVAO);
             glDrawElements(GL_TRIANGLES, mTriangleCount, GL_UNSIGNED_INT, 0);
+            glBindVertexArray(0);
         }
     }
 

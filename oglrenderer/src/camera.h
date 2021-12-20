@@ -12,7 +12,6 @@ public:
         , mTarget(0.0f, 0.0f, 0.0f)
         , mUp(0.0f, 1.0f, 0.0f)
     {
-        update();
     }
 
 
@@ -31,18 +30,16 @@ public:
         forward = glm::rotate(forward, -deltaX / 1600.0f * 2.0f * glm::pi<float>(), mUp);
 
         glm::vec3 right = glm::cross(forward, mUp);
+        mEye = (mTarget - forward) * dist;
+        mUp = glm::normalize(glm::cross(right, forward));
+        right = normalize(cross(normalize(forward), mUp));
+
+
         mUp = glm::normalize(glm::cross(right, forward));
         forward = glm::rotate(forward, -deltaY / 800.0f * 2.0f * glm::pi<float>(), right);
 
         mEye = (mTarget - forward) * dist;
         mUp  = glm::normalize(glm::cross(right, forward));
-
-    }
-
-
-    void update()
-    {
-        mMVP = glm::lookAt(mEye, mTarget, mUp);
     }
 
 
@@ -61,6 +58,12 @@ public:
     glm::vec3 getUp() const
     {
         return mUp;
+    }
+
+
+    glm::mat4 getViewMatrix() const
+    {
+        return glm::lookAt(mEye, mTarget, mUp);
     }
 
 private:

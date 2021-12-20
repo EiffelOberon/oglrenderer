@@ -10,6 +10,7 @@
 # define WORLEY_PARAMS   5
 # define PERLIN_PARAMS   6
 # define OCEAN_PARAMS    7
+# define MVP_MATRIX      8
 
 // texture binding points
 //# define SCREEN_QUAD         0

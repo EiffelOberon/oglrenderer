@@ -187,5 +187,11 @@
     <None Include="shaders\inversion.comp">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\water.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\water.vert">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -107,6 +107,7 @@ private:
     ShaderProgram mWorleyNoiseQuadShader;
     ShaderProgram mPerlinNoiseQuadShader;
     ShaderProgram mCloudNoiseQuadShader;
+    ShaderProgram mWaterShader;
         
     // quad geometry
     Quad          mQuad;
@@ -150,6 +151,9 @@ private:
     bool mShowOceanWindow;
     bool mShowPerformanceWindow;
     bool mShowSkyWindow;
+
+    // MVP matrix
+    MVPMatrix mMVPMatrix;
 
     float mDeltaTime;
     float mTime;
