@@ -125,7 +125,7 @@ Renderer::Renderer()
     // compute water geometry
     updateWaterGrid();
 
-    glm::mat4 projMatrix = glm::perspective(glm::radians(60.0f), 1600.0f / 900.0f, 0.01f, 10000.0f);
+    glm::mat4 projMatrix = glm::perspective(glm::radians(45.0f), 1600.0f / 900.0f, 0.1f, 1000.0f);
     glm::mat4 viewMatrix = mCamera.getViewMatrix();
     mMVPMatrix.mProjectionMatrix = projMatrix;
     mMVPMatrix.mModelViewMatrix = viewMatrix;
@@ -176,24 +176,34 @@ void Renderer::updateWaterGrid()
 
     int count = 0;
     // patch count along each axis (square)
-    int columnCount = 2; 
-    float offset = 1024.0f / columnCount;
+    int columnCount = 256; 
+    float dimension = 256.0f;
+    float offset = dimension / columnCount;
     for (int row = 0; row < columnCount; ++row)
     {
         for (int column = 0; column < columnCount; ++column)
         {
             Vertex v;
-            v.mPosition = glm::vec3(column * offset * 2 - 1024, 0.0f, row * offset * 2 - 1024);
+            v.mPosition = glm::vec3(column * offset - dimension * 0.5f, 0.0f, row * offset - dimension * 0.5f);
             v.mNormal = glm::vec3(0, 1, 0);
-            v.mUV = glm::vec2(column / 1.0f, row / 1.0f);
+            v.mUV = glm::vec2(column / float(columnCount - 1), row / float(columnCount - 1));
             mVertices.push_back(v);
-            //mIndices.push_back(count);
-            //++count;
         }
     }
 
-    mIndices.push_back(0); mIndices.push_back(1); mIndices.push_back(2);
-    mIndices.push_back(2); mIndices.push_back(1); mIndices.push_back(3);
+    for (int row = 0; row < (columnCount-1); ++row)
+    {
+        for (int column = 0; column < (columnCount-1); ++column)
+        {
+            mIndices.push_back(row * columnCount + column);
+            mIndices.push_back(row * columnCount + (column + 1));
+            mIndices.push_back((row + 1) * columnCount + column);
+
+            mIndices.push_back((row + 1) * columnCount + column);
+            mIndices.push_back(row * columnCount + (column + 1));
+            mIndices.push_back((row + 1) * columnCount + (column + 1));
+        }
+    }
 
     mWaterGrid.update(mVertices.size() * sizeof(Vertex), mIndices.size() * sizeof(uint32_t), mVertices.data(), mIndices.data());
 }
@@ -224,7 +234,7 @@ void Renderer::resize(
         io.DisplaySize = ImVec2(float(width), float(height));
 
         // update MVP
-        glm::mat4 perspectiveMatrix = glm::perspective(glm::radians(45.0f), mResolution.x / mResolution.y, 0.01f, 10000.0f);
+        glm::mat4 perspectiveMatrix = glm::perspective(glm::radians(45.0f), mResolution.x / mResolution.y, 0.1f, 1000.0f);
         mMVPMatrix.mProjectionMatrix = perspectiveMatrix;
         updateUniform(MVP_MATRIX, mMVPMatrix);
     }
@@ -244,6 +254,7 @@ void Renderer::preRender()
         // render quarter sized render texture
         glViewport(0, 0, 100, 100);
         {
+
             mPerlinNoiseRenderTexture->bind();
             mPerlinNoiseQuadShader.use();
             mQuad.draw();
@@ -326,6 +337,7 @@ void Renderer::preRender()
     if (mUpdateEnvironment)
     {
         glViewport(0, 0, int(mEnvironmentResolution.x), int(mEnvironmentResolution.y));
+
         mPrecomputeEnvironmentShader.use();
         for (int i = 0; i < 6; ++i)
         {
@@ -354,7 +366,7 @@ void Renderer::render()
     mRenderParams.mSettings.x = mTime * 0.001f;
     updateUniform(RENDERER_PARAMS, 0, sizeof(float), mRenderParams);
 
-    glClearColor(1, 1, 1, 1);
+    glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // render quarter sized render texture
@@ -373,10 +385,18 @@ void Renderer::render()
     mRenderTexture->bindTexture(SCREEN_QUAD_TEX, 0);
     mQuad.draw();
     mTexturedQuadShader.disable();
+    
+    // enable depth mask
+    glEnable (GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LESS);
 
     mWaterShader.use();
+    mOceanDisplacementTexture.bindTexture(WATER_DISPLACEMENT_TEX);
     mWaterGrid.draw();
     mWaterShader.disable();
+    
+    glDisable(GL_DEPTH_TEST);
 }
 
 

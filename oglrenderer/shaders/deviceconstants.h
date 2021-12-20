@@ -75,4 +75,7 @@
 // texturedQuad.frag
 # define SCREEN_QUAD_TEX 1
 
+// water shader
+# define WATER_DISPLACEMENT_TEX 1
+
 #endif
