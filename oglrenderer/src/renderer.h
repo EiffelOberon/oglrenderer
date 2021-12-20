@@ -83,6 +83,7 @@ private:
     // textures
     Texture3D                mCloudTexture;
     Texture                  mOceanDisplacementTexture;
+    Texture                  mOceanNormalTexture;
     Texture                  mOceanH0SpectrumTexture;
     Texture                  mOceanHDxSpectrumTexture;
     Texture                  mOceanHDySpectrumTexture;
@@ -97,6 +98,7 @@ private:
     // shaders
     ShaderProgram mButterflyOpShader;
     ShaderProgram mInversionShader;
+    ShaderProgram mOceanNormalShader;
     ShaderProgram mPrecomputeEnvironmentShader;
     ShaderProgram mPrecomputeCloudShader;
     ShaderProgram mPrecomputeOceanH0Shader;

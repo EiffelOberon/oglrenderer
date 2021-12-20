@@ -52,6 +52,10 @@
 # define INVERSION_PINGPONG_TEX1 1
 # define INVERSION_OUTPUT_TEX    2
 
+// ocean normal shader
+# define OCEAN_NOMRAL_INPUT_TEX 0
+# define OCEAN_NOMRAL_OUTPUT_TEX 1
+
 // precompute butterfly shader
 # define PRECOMPUTE_BUTTERFLY_OUTPUT 1
 
@@ -77,5 +81,7 @@
 
 // water shader
 # define WATER_DISPLACEMENT_TEX 1
+# define WATER_NORMAL_TEX       2
+# define WATER_ENV_TEX          3
 
 #endif

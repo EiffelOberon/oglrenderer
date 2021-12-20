@@ -196,6 +196,7 @@
     <None Include="shaders\inversion.comp" />
     <None Include="shaders\oceanhfinal.comp" />
     <None Include="shaders\oceanheightfield.comp" />
+    <None Include="shaders\oceannormal.comp" />
     <None Include="shaders\perlinnoise.frag" />
     <None Include="shaders\precomputebutterfly.comp" />
     <None Include="shaders\precomputecloud.comp" />

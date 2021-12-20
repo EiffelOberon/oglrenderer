@@ -8,7 +8,7 @@
 
 layout(local_size_x = PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE, local_size_y = PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE) in;
 
-layout(binding = INVERSION_OUTPUT_TEX, rgba32f) uniform writeonly image2D displacement;
+layout(binding = INVERSION_OUTPUT_TEX, rgba32f) uniform image2D displacement;
 layout(binding = INVERSION_PINGPONG_TEX0, rgba32f) uniform readonly image2D pingpong0;
 layout(binding = INVERSION_PINGPONG_TEX1, rgba32f) uniform readonly image2D pingpong1;
 
@@ -39,6 +39,23 @@ void main()
     {
         h = imageLoad(pingpong1, x).r;
     }
+
+
+    vec3 d = imageLoad(displacement, x).xyz;
+
     const float disp = perm * (h / float(N * N));
-    imageStore(displacement, x, vec4(disp, disp, disp, 1));
+    if (oceanParams.mPingPong.w == 0)
+    {
+        d.x = disp;
+    }
+    else if (oceanParams.mPingPong.w == 1)
+    {
+        d.y = disp;
+    }
+    else
+    {
+        d.z = disp;
+    }
+
+    imageStore(displacement, x, vec4(d, 1));
 }

@@ -57,7 +57,7 @@ struct OceanParams
     // x: N, y: L, z: empty, w: empty
     ivec4 mHeightSettings;
 
-    // x: ping pong, y: stage, z: direction, w: empty
+    // x: ping pong, y: stage, z: direction, w: dX, dY, or dZ (0, 1, 2)
     ivec4 mPingPong;
 
     // x: amplitude, y: wind speed z & w: wind direction

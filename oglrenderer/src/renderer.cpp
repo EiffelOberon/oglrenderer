@@ -11,6 +11,7 @@
 Renderer::Renderer()
     : mButterflyOpShader("./spv/butterflyoperation.spv")
     , mInversionShader("./spv/inversion.spv")
+    , mOceanNormalShader("./spv/oceannormal.spv")
     , mPrecomputeButterflyTexShader("./spv/precomputebutterfly.spv")
     , mPrecomputeCloudShader("./spv/precomputecloud.spv")
     , mPrecomputeEnvironmentShader("./spv/vert.spv", "./spv/precomputeenvironment.spv")
@@ -25,6 +26,7 @@ Renderer::Renderer()
     , mCloudTexture(CLOUD_RESOLUTION, CLOUD_RESOLUTION, CLOUD_RESOLUTION, 32, false)
     , mOceanFFT(OCEAN_RESOLUTION)
     , mOceanDisplacementTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, GL_LINEAR, 32, false)
+    , mOceanNormalTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, GL_LINEAR, 32, false)
     , mOceanH0SpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, GL_NEAREST, 32, false)
     , mOceanHDxSpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, GL_NEAREST, 32, false)
     , mOceanHDySpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, GL_NEAREST, 32, false)
@@ -314,39 +316,55 @@ void Renderer::preRender()
         mOceanHDzSpectrumTexture.bindImageTexture(OCEAN_HEIGHT_FINAL_H_Z, GL_WRITE_ONLY);
         mPrecomputeOceanHShader.dispatch(true, workGroupSize, workGroupSize, 1);
 
-        mButterFlyTexture.bindImageTexture(BUTTERFLY_INPUT_TEX, GL_READ_ONLY);
-        mOceanHDySpectrumTexture.bindImageTexture(BUTTERFLY_PINGPONG_TEX0, GL_READ_WRITE);
-        mPingPongTexture.bindImageTexture(BUTTERFLY_PINGPONG_TEX1, GL_READ_WRITE);
-
-        for (int i = 0; i < mOceanFFT.passes(); ++i)
+        for (int texIdx = 0; texIdx < 3; ++texIdx)
         {
-            mOceanParams.mPingPong.y = i;
-            mOceanParams.mPingPong.z = 0;
-            updateUniform(OCEAN_PARAMS, offsetof(OceanParams, mPingPong), sizeof(glm::ivec4), mOceanParams.mPingPong);
-            
-            mButterflyOpShader.dispatch(true, workGroupSize, workGroupSize, 1);
+            Texture* spectrum = nullptr;
+            switch (texIdx)
+            {
+            case 0: spectrum = &mOceanHDxSpectrumTexture; break;
+            case 1: spectrum = &mOceanHDySpectrumTexture; break;
+            case 2: spectrum = &mOceanHDzSpectrumTexture; break;
+            }
 
-            mOceanParams.mPingPong.x++;
-            mOceanParams.mPingPong.x = mOceanParams.mPingPong.x % 2;
+            mButterFlyTexture.bindImageTexture(BUTTERFLY_INPUT_TEX, GL_READ_ONLY);
+            spectrum->bindImageTexture(BUTTERFLY_PINGPONG_TEX0, GL_READ_WRITE);
+            mPingPongTexture.bindImageTexture(BUTTERFLY_PINGPONG_TEX1, GL_READ_WRITE);
+
+            for (int i = 0; i < mOceanFFT.passes(); ++i)
+            {
+                mOceanParams.mPingPong.y = i;
+                mOceanParams.mPingPong.z = 0;
+                updateUniform(OCEAN_PARAMS, offsetof(OceanParams, mPingPong), sizeof(glm::ivec4), mOceanParams.mPingPong);
+
+                mButterflyOpShader.dispatch(true, workGroupSize, workGroupSize, 1);
+
+                mOceanParams.mPingPong.x++;
+                mOceanParams.mPingPong.x = mOceanParams.mPingPong.x % 2;
+            }
+
+            for (int i = 0; i < mOceanFFT.passes(); ++i)
+            {
+                mOceanParams.mPingPong.y = i;
+                mOceanParams.mPingPong.z = 1;
+                updateUniform(OCEAN_PARAMS, offsetof(OceanParams, mPingPong), sizeof(glm::ivec4), mOceanParams.mPingPong);
+
+                mButterflyOpShader.dispatch(true, workGroupSize, workGroupSize, 1);
+
+                mOceanParams.mPingPong.x++;
+                mOceanParams.mPingPong.x = mOceanParams.mPingPong.x % 2;
+            }
+
+            mOceanParams.mPingPong.w = texIdx;
+            updateUniform(OCEAN_PARAMS, offsetof(OceanParams, mPingPong), sizeof(glm::ivec4), mOceanParams.mPingPong);
+            spectrum->bindImageTexture(INVERSION_PINGPONG_TEX0, GL_READ_ONLY);
+            mPingPongTexture.bindImageTexture(INVERSION_PINGPONG_TEX1, GL_READ_ONLY);
+            mOceanDisplacementTexture.bindImageTexture(INVERSION_OUTPUT_TEX, GL_READ_WRITE);
+            mInversionShader.dispatch(true, workGroupSize, workGroupSize, 1);
         }
 
-        for (int i = 0; i < mOceanFFT.passes(); ++i)
-        {
-            mOceanParams.mPingPong.y = i;
-            mOceanParams.mPingPong.z = 1;
-            updateUniform(OCEAN_PARAMS, offsetof(OceanParams, mPingPong), sizeof(glm::ivec4), mOceanParams.mPingPong);
-            
-            mButterflyOpShader.dispatch(true, workGroupSize, workGroupSize, 1);
-
-            mOceanParams.mPingPong.x++;
-            mOceanParams.mPingPong.x = mOceanParams.mPingPong.x % 2;
-        }
-
-        updateUniform(OCEAN_PARAMS, offsetof(OceanParams, mPingPong), sizeof(glm::ivec4), mOceanParams.mPingPong);
-        mOceanHDySpectrumTexture.bindImageTexture(INVERSION_PINGPONG_TEX0, GL_READ_ONLY);
-        mPingPongTexture.bindImageTexture(INVERSION_PINGPONG_TEX1, GL_READ_ONLY);
-        mOceanDisplacementTexture.bindImageTexture(INVERSION_OUTPUT_TEX, GL_WRITE_ONLY);
-        mInversionShader.dispatch(true, workGroupSize, workGroupSize, 1);
+        mOceanDisplacementTexture.bindImageTexture(OCEAN_NOMRAL_INPUT_TEX, GL_READ_ONLY);
+        mOceanNormalTexture.bindImageTexture(OCEAN_NOMRAL_OUTPUT_TEX, GL_WRITE_ONLY);
+        mOceanNormalShader.dispatch(true, workGroupSize, workGroupSize, 1);
     }
 
     // render quarter sized render texture
@@ -408,7 +426,9 @@ void Renderer::render()
     glDepthFunc(GL_LESS);
 
     mWaterShader.use();
+    mRenderCubemapTexture->bindTexture(WATER_ENV_TEX, 0);
     mOceanDisplacementTexture.bindTexture(WATER_DISPLACEMENT_TEX);
+    mOceanNormalTexture.bindTexture(WATER_NORMAL_TEX);
     mWaterGrid.draw();
     mWaterShader.disable();
     
@@ -677,6 +697,17 @@ void Renderer::renderGUI()
             ImGui::Image(displacementTexId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
         }
 
+        ImGui::SameLine();
+
+        ImTextureID normalTexId = (ImTextureID)mOceanNormalTexture.texId();
+        {
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+            ImGui::Image(normalTexId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
+        }
         ImGui::End();
     }
 
