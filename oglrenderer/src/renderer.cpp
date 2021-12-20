@@ -142,7 +142,7 @@ void Renderer::updateCamera(
     const int deltaX, 
     const int deltaY)
 {
-    mCamera.update(deltaX, deltaY);
+    mCamera.update(deltaX * 2.0f * M_PI / mResolution.x, deltaY * M_PI / mResolution.y);
     mCamParams.mEye = glm::vec4(mCamera.getEye(), 0.0f);
     mCamParams.mTarget = glm::vec4(mCamera.getTarget(), 0.0f);
     mCamParams.mUp = glm::vec4(mCamera.getUp(), 0.0f);

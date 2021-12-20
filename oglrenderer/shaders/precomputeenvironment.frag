@@ -22,18 +22,6 @@ layout(std430, binding = SKY_PARAMS) uniform SkyParamsUniform
 {
 	SkyParams skyParams;
 };
-layout(std430, binding = FBM_PARAMS) uniform FBMParamsUniform
-{
-	NoiseParams fbmParams;
-};
-layout(std430, binding = PERLIN_PARAMS) uniform PerlinParamsUniform
-{
-	NoiseParams perlinParams;
-};
-layout(std430, binding = WORLEY_PARAMS) uniform WorleyParamsUniform
-{
-	NoiseParams worleyParams;
-};
 
 layout(location = 0) out vec4 c;
 
