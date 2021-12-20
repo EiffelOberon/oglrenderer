@@ -15,6 +15,7 @@
 #include "shaderbuffer.h"
 #include "shaderprogram.h"
 #include "texture.h"
+#include "vertexbuffer.h"
 
 class Renderer
 {
@@ -73,6 +74,7 @@ private:
 
     // initialize uniform white noise [0, 1]
     void updateOceanNoiseTexture();
+    void updateWaterGrid();
 
     // methods for saving/loading settings
     void saveStates();
@@ -134,6 +136,9 @@ private:
     RendererParams mRenderParams;
     SkyParams mSkyParams;
     OceanParams mOceanParams;
+
+    // ocean geometry
+    VertexBuffer mWaterGrid;
 
     // noise 
     NoiseParams mWorleyNoiseParams;

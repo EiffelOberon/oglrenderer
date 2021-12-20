@@ -187,6 +187,7 @@
     <ClInclude Include="src\shaderprogram.h" />
     <ClInclude Include="src\texture.h" />
     <ClInclude Include="src\uniformbuffer.h" />
+    <ClInclude Include="src\vertexbuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\butterflyoperation.comp" />

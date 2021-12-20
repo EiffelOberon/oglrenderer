@@ -46,6 +46,7 @@ Renderer::Renderer()
     , mLowResFactor(0.5f)
     , mTime(0.0f)
     , mFrameCount(0)
+    , mWaterGrid()
 {
     // cloud noise textures
     mCloudNoiseRenderTexture[0] = nullptr;
@@ -119,6 +120,8 @@ Renderer::Renderer()
     mButterFlyTexture.bindImageTexture(PRECOMPUTE_BUTTERFLY_OUTPUT, GL_WRITE_ONLY);
     const int workGroupSize = int(float(OCEAN_RESOLUTION) / float(PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE));
     mPrecomputeButterflyTexShader.dispatch(true, mOceanFFT.passes(), workGroupSize, 1);
+
+    updateWaterGrid();
 }
 
 Renderer::~Renderer()
@@ -150,6 +153,12 @@ void Renderer::updateOceanNoiseTexture()
 
     mOceanNoiseTexture = std::make_unique<Texture>(OCEAN_RESOLUTION, OCEAN_RESOLUTION, GL_NEAREST, 32, false, randomNumbers);
     delete[] randomNumbers;
+}
+
+
+void Renderer::updateWaterGrid()
+{
+
 }
 
 
