@@ -66,7 +66,7 @@ void main()
 	vec3 rayleigh;
 	vec3 mie;
 	vec3 sky;
-	nishita_sky(max(1.0f, camParams.mEye.y), 20.0f, sunDir, rayDir.xyz,  rayleigh, mie, sky);
+	nishita_sky(1.0f, 20.0f, sunDir, rayDir.xyz,  rayleigh, mie, sky);
     c = vec4(sky, 1.0f);
 
 }

@@ -26,7 +26,14 @@ void main()
 	const vec3 n = normalize(texture(normalTex, uv.xy).xyz);
 	
 	const vec3 viewDir = normalize(position - camParams.mEye.xyz);
-	const vec3 rayDir = reflect(viewDir, n);
+	vec3 rayDir = reflect(viewDir, n);
+
+	// TODO_ remove this, should not need this, we'll use PBR and lerp with diffuse layered
+	if(rayDir.y < 0)
+	{
+		rayDir.y = abs(rayDir.y);
+	}
+
 
 	vec3 env = texture(environmentTex, rayDir).xyz;
 

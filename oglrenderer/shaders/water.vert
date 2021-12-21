@@ -26,11 +26,13 @@ layout(location = 2) out vec2 uv;
 
 void main()
 {
-    const vec3 d= texture(displacement, vertexUV.xy).xyz;
-	const vec3 newVertexPos = vertexPos + d;
+	const vec2 testUV = (vertexPos.xz / OCEAN_RESOLUTION);
 
+    const vec3 d= texture(displacement, testUV).xyz;
+	const vec3 newVertexPos = vertexPos + d;
+	
 	gl_Position =  mvpMatrix.mProjectionMatrix * mvpMatrix.mViewMatrix * vec4(newVertexPos, 1.0);
 	
 	position = newVertexPos;
-	uv = vertexUV.xy;
+	uv = testUV;
 }

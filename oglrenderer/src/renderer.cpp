@@ -37,6 +37,8 @@ Renderer::Renderer()
     , mButterflyIndicesBuffer(OCEAN_RESOLUTION * sizeof(int))
     , mEnvironmentResolution(2048.0f, 2048.0f)
     , mQuad(GL_TRIANGLE_STRIP, 4)
+    , mClipmap(4)
+    , mClipmapLevel(0)
     , mRenderTexture(nullptr)
     , mRenderCubemapTexture(nullptr)
     , mWorleyNoiseRenderTexture(nullptr)
@@ -126,8 +128,9 @@ Renderer::Renderer()
 
     // compute water geometry
     updateWaterGrid();
+    mClipmap.generateGeometry();
 
-    glm::mat4 projMatrix = glm::perspective(glm::radians(45.0f), 1600.0f / 900.0f, 0.1f, 1000.0f);
+    glm::mat4 projMatrix = glm::perspective(glm::radians(45.0f), 1600.0f / 900.0f, 0.1f, 10000.0f);
     glm::mat4 viewMatrix = mCamera.getViewMatrix();
     mMVPMatrix.mProjectionMatrix = projMatrix;
     mMVPMatrix.mViewMatrix = viewMatrix;
@@ -194,8 +197,8 @@ void Renderer::updateWaterGrid()
 
     int count = 0;
     // patch count along each axis (square)
-    int columnCount = 256; 
-    float dimension = 256.0f;
+    int columnCount = (pow(2,9)) - 1; 
+    float dimension = (pow(2,11)) - 1;
     float offset = dimension / columnCount;
     for (int row = 0; row < columnCount; ++row)
     {
@@ -252,7 +255,7 @@ void Renderer::resize(
         io.DisplaySize = ImVec2(float(width), float(height));
 
         // update MVP
-        glm::mat4 perspectiveMatrix = glm::perspective(glm::radians(45.0f), mResolution.x / mResolution.y, 0.1f, 1000.0f);
+        glm::mat4 perspectiveMatrix = glm::perspective(glm::radians(45.0f), mResolution.x / mResolution.y, 0.1f, 10000.0f);
         mMVPMatrix.mProjectionMatrix = perspectiveMatrix;
         updateUniform(MVP_MATRIX, mMVPMatrix);
     }
@@ -429,7 +432,8 @@ void Renderer::render()
     mRenderCubemapTexture->bindTexture(WATER_ENV_TEX, 0);
     mOceanDisplacementTexture.bindTexture(WATER_DISPLACEMENT_TEX);
     mOceanNormalTexture.bindTexture(WATER_NORMAL_TEX);
-    mWaterGrid.draw();
+    //mWaterGrid.draw();
+    mClipmap.draw(mClipmapLevel);
     mWaterShader.disable();
     
     glDisable(GL_DEPTH_TEST);
@@ -629,6 +633,10 @@ void Renderer::renderGUI()
         if (ImGui::SliderFloat2("Wind direction", &mOceanParams.mWaveSettings.z, -1.0f, 1.0f))
         {
             updateUniform(OCEAN_PARAMS, mOceanParams);
+        }
+        if (ImGui::SliderInt("Clipmap", &mClipmapLevel, 0, mClipmap.levels()))
+        {
+
         }
 
         my_tex_w = 100;

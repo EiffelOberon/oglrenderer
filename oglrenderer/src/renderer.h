@@ -6,6 +6,7 @@
 #include "glm/glm.hpp"
 
 #include "camera.h"
+#include "clipmap.h"
 #include "deviceconstants.h" 
 #include "devicestructs.h"
 #include "oceanfft.h"
@@ -164,4 +165,7 @@ private:
     std::chrono::steady_clock::time_point mRenderEndTime;
 
     std::map<uint32_t, std::unique_ptr<UniformBuffer>> mUniforms;
+
+    Clipmap mClipmap;
+    int mClipmapLevel;
 };
