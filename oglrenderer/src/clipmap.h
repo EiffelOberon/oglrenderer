@@ -35,7 +35,7 @@ public:
         std::vector<uint32_t> indices;
 
         int count = 0;
-        float offset = dimension / n;
+        float offset = (dimension + 1) / (n + 1);
         for (int row = 0; row < n; ++row)
         {
             for (int column = 0; column < n; ++column)
