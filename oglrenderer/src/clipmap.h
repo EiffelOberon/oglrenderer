@@ -29,13 +29,14 @@ public:
 
     void generatePatch(
         const uint32_t iterationCount,
-        const uint32_t n,
-        const float    dimension)
+        const uint32_t maxIteration,
+        const uint32_t lowestLevel,
+        uint32_t       n,
+        float          dimension)
     {
         std::vector<Vertex> vertices;
         std::vector<uint32_t> indices;
 
-        int count = 0;
         float offset = (dimension + 1) / (n + 1);
         for (int row = 0; row < n; ++row)
         {
@@ -50,14 +51,14 @@ public:
         }
 
         int exclusionColumn = ((dimension / 2.0f) - (dimension / 4.0f)) / offset;
-
-        for (int row = 0; row < (n - 1); ++row)
+        int m = n - 1;
+        for (int row = 0; row < m; ++row)
         {
-            for (int column = 0; column < (n - 1); ++column)
+            for (int column = 0; column < m; ++column)
             {
                 if (iterationCount > 0 &&
-                    (column > exclusionColumn && column < (n - 1 - exclusionColumn) &&
-                     row > exclusionColumn && row < (n - 1 - exclusionColumn)))
+                    (column > exclusionColumn && column < (n - exclusionColumn) &&
+                     row > exclusionColumn && row < (n - exclusionColumn)))
                 {
                     continue;
                 }
@@ -74,6 +75,8 @@ public:
             }
         }
 
+        generateHorizontalStitchingTriangles(n, dimension, vertices, indices);
+        generateVerticalStitchingTriangles(n, dimension, vertices, indices);
         mGrid.update(vertices.size() * sizeof(Vertex), indices.size() * sizeof(uint32_t), vertices.data(), indices.data());
     }
 
@@ -84,6 +87,134 @@ public:
     }
 
 private:
+
+    void generateHorizontalStitchingTriangles(
+        const uint32_t        n,
+        const float           dimension,
+        std::vector<Vertex>   &vertices,
+        std::vector<uint32_t> &indices)
+    {
+        float offset = (dimension + 1) / (n + 1);
+        const uint32_t endIdx = vertices.size();
+
+        // stitching triangles for neighboring patches
+        for (int column = 0; column < n; column += 4)
+        {
+            Vertex v;
+            v.mPosition = glm::vec3(column * offset - dimension * 0.5f, 0.0f, (n + 1) * offset - dimension * 0.5f);
+            v.mNormal = glm::vec3(0, 1, 0);
+            v.mUV = glm::vec2(column / float(n - 1), n / float(n - 1));
+            vertices.push_back(v);
+        }
+
+        Vertex v;
+        v.mPosition = glm::vec3((n + 1) * offset - dimension * 0.5f, 0.0f, (n + 1) * offset - dimension * 0.5f);
+        v.mNormal = glm::vec3(0, 1, 0);
+        v.mUV = glm::vec2(1.0f, 1.0f);
+        vertices.push_back(v);
+
+        for (int column = 0; column < n; column += 4)
+        {
+            // last row
+            int row = n - 1;
+
+            indices.push_back(row * n + column);
+            indices.push_back(row * n + (column + 1));
+            indices.push_back(endIdx + (column / 4));
+
+            indices.push_back(row * n + (column + 1));
+            indices.push_back(row * n + (column + 2));
+            indices.push_back(endIdx + (column / 4));
+
+            if (((endIdx + (column / 4) + 1) < vertices.size()))
+            {
+                if ((column + 2) < n)
+                {
+                    indices.push_back(row * n + (column + 2));
+                    indices.push_back(endIdx + (column / 4));
+                    indices.push_back(endIdx + (column / 4) + 1);
+
+                    if ((column + 3) < n)
+                    {
+                        indices.push_back(row * n + (column + 2));
+                        indices.push_back(row * n + (column + 3));
+                        indices.push_back(endIdx + (column / 4) + 1);
+
+                        if ((column + 4) < n)
+                        {
+                            indices.push_back(row * n + (column + 3));
+                            indices.push_back(row * n + (column + 4));
+                            indices.push_back(endIdx + (column / 4) + 1);
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+
+    void generateVerticalStitchingTriangles(
+        const uint32_t        n,
+        const float           dimension,
+        std::vector<Vertex>& vertices,
+        std::vector<uint32_t>& indices)
+    {
+        float offset = (dimension + 1) / (n + 1);
+        const uint32_t endIdx = vertices.size();
+
+        // stitching triangles for neighboring patches
+        for (int row = 0; row < n; row += 4)
+        {
+            Vertex v;
+            v.mPosition = glm::vec3((n+1) * offset - dimension * 0.5f, 0.0f, row * offset - dimension * 0.5f);
+            v.mNormal = glm::vec3(0, 1, 0);
+            v.mUV = glm::vec2(n / float(n - 1), row / float(n - 1));
+            vertices.push_back(v);
+        }
+
+        Vertex v;
+        v.mPosition = glm::vec3((n + 1) * offset - dimension * 0.5f, 0.0f, (n + 1) * offset - dimension * 0.5f);
+        v.mNormal = glm::vec3(0, 1, 0);
+        v.mUV = glm::vec2(1.0f, 1.0f);
+        vertices.push_back(v);
+
+        for (int row = 0; row < n; row += 4)
+        {
+            int column = n - 1;
+            indices.push_back(row * n + column);
+            indices.push_back(endIdx + (row / 4));
+            indices.push_back((row+1) * n + (column));
+
+            indices.push_back((row+1) * n + (column));
+            indices.push_back(endIdx + (row / 4));
+            indices.push_back((row+2) * n + (column));
+
+            if (((endIdx + (row / 4) + 1) < vertices.size()))
+            {
+                if ((row + 2) < n)
+                {
+                    indices.push_back((row + 2) * n + (column));
+                    indices.push_back(endIdx + (row / 4));
+                    indices.push_back(endIdx + (row / 4) + 1);
+
+                    if ((row + 3) < n)
+                    {
+                        indices.push_back((row + 2) * n + (column));
+                        indices.push_back((row + 3) * n + (column));
+                        indices.push_back(endIdx + (row / 4) + 1);
+
+                        if ((row + 4) < n)
+                        {
+                            indices.push_back((row + 3) * n + (column));
+                            indices.push_back((row + 4) * n + (column));
+                            indices.push_back(endIdx + (row / 4) + 1);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     uint32_t mWidth;
     uint32_t mHeight;
@@ -100,24 +231,24 @@ public:
         : mWidth(0)
         , mHeight(0)
         , mLevels(levels)
+        , mLowestLevel(8)
     {
 
     }
 
     void generateGeometry()
     {
-        int lowestLevel = 8;
         for (int i = 0; i < mLevels; ++i)
         {
             // patch count along each axis (square)
-            int n = (pow(2, lowestLevel - i)) - 1;
-            float dimension = (pow(2, lowestLevel + i)) - 1;
+            int n = (pow(2, mLowestLevel - i)) - 1;
+            float dimension = (pow(2, mLowestLevel + i)) - 1;
 #ifdef _DEBUG
             printf("%d/%d | %d %f\n", i, mLevels, n, dimension);
 #endif
             const uint32_t idx = mClipmapPatches.size();
             mClipmapPatches.push_back(std::make_unique<ClipmapPatch>(dimension, dimension));
-            mClipmapPatches[idx]->generatePatch(i, n, dimension);
+            mClipmapPatches[idx]->generatePatch(i, mLevels, mLowestLevel, n, dimension);
         }
     }
 
@@ -143,6 +274,7 @@ public:
     }
 
 private:
+    uint32_t mLowestLevel;
     uint32_t mLevels;
     uint32_t mWidth;
     uint32_t mHeight;

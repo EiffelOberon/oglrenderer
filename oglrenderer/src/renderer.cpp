@@ -46,6 +46,7 @@ Renderer::Renderer()
     , mShowPropertiesWindow(true)
     , mShowPerformanceWindow(true)
     , mShowSkyWindow(true)
+    , mOceanWireframe(false)
     , mUpdateEnvironment(true)
     , mDeltaTime(0.0f)
     , mLowResFactor(0.5f)
@@ -432,7 +433,15 @@ void Renderer::render()
     mRenderCubemapTexture->bindTexture(WATER_ENV_TEX, 0);
     mOceanDisplacementTexture.bindTexture(WATER_DISPLACEMENT_TEX);
     mOceanNormalTexture.bindTexture(WATER_NORMAL_TEX);
+    if (mOceanWireframe)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
     mClipmap.draw();
+    if (mOceanWireframe)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
     mWaterShader.disable();
     
     glDisable(GL_DEPTH_TEST);
@@ -496,221 +505,234 @@ void Renderer::renderGUI()
     if (mShowSkyWindow)
     {
         ImGui::Begin("Environment", &mShowSkyWindow);
-        ImGui::Text("Sun");
-        ImGui::NewLine();
-        ImGui::Text("Sun Direction");
-        if (ImGui::SliderFloat("x", &mSkyParams.mSunDir.x, -1.0f, 1.0f))
+        if (ImGui::BeginTabBar("Settings", ImGuiTabBarFlags_None))
         {
-            mUpdateEnvironment = true;
+            if (ImGui::BeginTabItem("Sun"))
+            {
+                ImGui::Text("Sun Direction");
+                if (ImGui::SliderFloat("x", &mSkyParams.mSunDir.x, -1.0f, 1.0f))
+                {
+                    mUpdateEnvironment = true;
+                }
+
+                if (ImGui::SliderFloat("y", &mSkyParams.mSunDir.y, 0.0f, 1.0f))
+                {
+                    mUpdateEnvironment = true;
+                }
+
+                if (ImGui::SliderFloat("z", &mSkyParams.mSunDir.z, -1.0f, 1.0f))
+                {
+                    mUpdateEnvironment = true;
+                }
+
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("Cloud"))
+            {
+                // FBM
+                const float textureWidth = 100;
+                const float textureHeight = 100;
+
+                ImGui::NewLine();
+                ImGui::Text("Cloud Noise: %.0fx%.0f", textureWidth, textureHeight);
+
+                // Worley
+                ImTextureID cloudyNoiseId = (ImTextureID)mCloudNoiseRenderTexture[0]->getTextureId(0);
+                {
+                    ImVec2 pos = ImGui::GetCursorScreenPos();
+                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                    ImGui::Image(cloudyNoiseId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                }
+
+                cloudyNoiseId = (ImTextureID)mCloudNoiseRenderTexture[1]->getTextureId(0);
+                {
+                    ImVec2 pos = ImGui::GetCursorScreenPos();
+                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                    ImGui::Image(cloudyNoiseId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                }
+                ImGui::SameLine();
+
+                cloudyNoiseId = (ImTextureID)mCloudNoiseRenderTexture[2]->getTextureId(0);
+                {
+                    ImVec2 pos = ImGui::GetCursorScreenPos();
+                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                    ImGui::Image(cloudyNoiseId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                }
+                ImGui::SameLine();
+
+                // Cloud (perlin worley)
+                cloudyNoiseId = (ImTextureID)mCloudNoiseRenderTexture[3]->getTextureId(0);
+                {
+                    ImVec2 pos = ImGui::GetCursorScreenPos();
+                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                    ImGui::Image(cloudyNoiseId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                }
+                if (ImGui::Checkbox("Worley invert", &mWorleyNoiseParams.mInvert))
+                {
+                    updateUniform(WORLEY_PARAMS, mWorleyNoiseParams);
+                }
+                if (ImGui::SliderInt("Perlin octaves", &mPerlinNoiseParams.mNoiseOctaves, 1, 8))
+                {
+                    updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
+                }
+
+                if (ImGui::SliderFloat("Perlin freq", &mPerlinNoiseParams.mSettings.z, 0.0f, 100.0f, " %.3f", ImGuiSliderFlags_Logarithmic))
+                {
+                    updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
+                }
+                if (ImGui::SliderFloat("Cloud cutoff", &mRenderParams.mCloudSettings.x, 0.0f, 1.0f))
+                {
+                    updateUniform(RENDERER_PARAMS, mRenderParams);
+                }
+                if (ImGui::SliderFloat("Cloud speed", &mRenderParams.mCloudSettings.y, 0.0f, 1.0f))
+                {
+                    updateUniform(RENDERER_PARAMS, mRenderParams);
+                }
+                if (ImGui::SliderFloat("Cloud density", &mRenderParams.mCloudSettings.z, 0.0001f, 100.0f, "%.3f", ImGuiSliderFlags_Logarithmic))
+                {
+                    updateUniform(RENDERER_PARAMS, mRenderParams);
+                }
+                if (ImGui::SliderFloat("Cloud BBox height", &mRenderParams.mCloudSettings.w, 100.0f, 100000.0f))
+                {
+                    updateUniform(RENDERER_PARAMS, mRenderParams);
+                }
+                if (ImGui::SliderFloat("Cloud UV width", &mRenderParams.mCloudMapping.x, 1.0f, 1000.0f))
+                {
+                    updateUniform(RENDERER_PARAMS, mRenderParams);
+                }
+                if (ImGui::SliderFloat("Cloud UV height", &mRenderParams.mCloudMapping.y, 1.0f, 1000.0f))
+                {
+                    updateUniform(RENDERER_PARAMS, mRenderParams);
+                }
+                if (ImGui::SliderInt("Max steps", &mRenderParams.mSteps.x, 4, 1024))
+                {
+                    updateUniform(RENDERER_PARAMS, mRenderParams);
+                }
+
+                if (ImGui::SliderInt("Max shadow steps", &mRenderParams.mSteps.y, 2, 32))
+                {
+                    updateUniform(RENDERER_PARAMS, mRenderParams);
+                }
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("Ocean"))
+            {
+                if (ImGui::SliderInt("Patch dimension", &mOceanParams.mHeightSettings.y, 64, 1024))
+                {
+                    updateUniform(OCEAN_PARAMS, mOceanParams);
+                }
+                if (ImGui::SliderFloat("Wave amplitude", &mOceanParams.mWaveSettings.x, 0.01f, 20.0f))
+                {
+                    updateUniform(OCEAN_PARAMS, mOceanParams);
+                }
+                if (ImGui::SliderFloat("Wind speed", &mOceanParams.mWaveSettings.y, 0.0f, 200.0f))
+                {
+                    updateUniform(OCEAN_PARAMS, mOceanParams);
+                }
+                if (ImGui::SliderFloat2("Wind direction", &mOceanParams.mWaveSettings.z, -1.0f, 1.0f))
+                {
+                    updateUniform(OCEAN_PARAMS, mOceanParams);
+                }
+                if (ImGui::Checkbox("Wireframe", &mOceanWireframe))
+                {
+
+                }
+
+                const float textureWidth = 100;
+                const float textureHeight = 100;
+                ImGui::Text("Ocean spectrum: %.0fx%.0f", textureWidth, textureHeight);
+                ImTextureID oceanSpectrumTexId = (ImTextureID)mOceanH0SpectrumTexture.texId();
+                {
+                    ImVec2 pos = ImGui::GetCursorScreenPos();
+                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                    ImGui::Image(oceanSpectrumTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                }
+
+                ImTextureID oceanHDxSpectrumTexId = (ImTextureID)mOceanHDxSpectrumTexture.texId();
+                {
+                    ImVec2 pos = ImGui::GetCursorScreenPos();
+                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                    ImGui::Image(oceanHDxSpectrumTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                }
+                ImGui::SameLine();
+
+                ImTextureID oceanHDySpectrumTexId = (ImTextureID)mOceanHDySpectrumTexture.texId();
+                {
+                    ImVec2 pos = ImGui::GetCursorScreenPos();
+                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                    ImGui::Image(oceanHDySpectrumTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                }
+                ImGui::SameLine();
+
+
+                ImTextureID oceanHDzSpectrumTexId = (ImTextureID)mOceanHDzSpectrumTexture.texId();
+                {
+                    ImVec2 pos = ImGui::GetCursorScreenPos();
+                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                    ImGui::Image(oceanHDzSpectrumTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                }
+
+                ImTextureID butterflyTexId = (ImTextureID)mButterFlyTexture.texId();
+                {
+                    ImVec2 pos = ImGui::GetCursorScreenPos();
+                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                    ImGui::Image(butterflyTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                }
+
+                ImTextureID displacementTexId = (ImTextureID)mOceanDisplacementTexture.texId();
+                {
+                    ImVec2 pos = ImGui::GetCursorScreenPos();
+                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                    ImGui::Image(displacementTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                }
+
+                ImGui::SameLine();
+
+                ImTextureID normalTexId = (ImTextureID)mOceanNormalTexture.texId();
+                {
+                    ImVec2 pos = ImGui::GetCursorScreenPos();
+                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                    ImGui::Image(normalTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                }
+
+                ImGui::EndTabItem();
+            }
+            ImGui::EndTabBar();
         }
 
-        if (ImGui::SliderFloat("y", &mSkyParams.mSunDir.y, 0.0f, 1.0f))
-        {
-            mUpdateEnvironment = true;
-        }
-
-        if (ImGui::SliderFloat("z", &mSkyParams.mSunDir.z, -1.0f, 1.0f))
-        {
-            mUpdateEnvironment = true;
-        }
-
-        ImGui::Separator();
-        // FBM
-        float my_tex_w = 100;
-        float my_tex_h = 100;
-
-        ImGui::Text("Cloud");
-        ImGui::NewLine();
-        ImGui::Text("Cloud Noise: %.0fx%.0f", my_tex_w, my_tex_h);
-
-        // Worley
-        ImTextureID cloudyNoiseId = (ImTextureID)mCloudNoiseRenderTexture[0]->getTextureId(0);
-        {
-            ImVec2 pos = ImGui::GetCursorScreenPos();
-            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-            ImGui::Image(cloudyNoiseId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
-        }
-
-        cloudyNoiseId = (ImTextureID)mCloudNoiseRenderTexture[1]->getTextureId(0);
-        {
-            ImVec2 pos = ImGui::GetCursorScreenPos();
-            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-            ImGui::Image(cloudyNoiseId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
-        }
-        ImGui::SameLine();
-
-        cloudyNoiseId = (ImTextureID)mCloudNoiseRenderTexture[2]->getTextureId(0);
-        {
-            ImVec2 pos = ImGui::GetCursorScreenPos();
-            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-            ImGui::Image(cloudyNoiseId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
-        }
-        ImGui::SameLine();
-
-        // Cloud (perlin worley)
-        cloudyNoiseId = (ImTextureID)mCloudNoiseRenderTexture[3]->getTextureId(0);
-        {
-            ImVec2 pos = ImGui::GetCursorScreenPos();
-            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-            ImGui::Image(cloudyNoiseId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
-        }
-        if (ImGui::Checkbox("Worley invert", &mWorleyNoiseParams.mInvert))
-        {
-            updateUniform(WORLEY_PARAMS, mWorleyNoiseParams);
-        }
-        if (ImGui::SliderInt("Perlin octaves", &mPerlinNoiseParams.mNoiseOctaves, 1, 8))
-        {
-            updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
-        }
-
-        if (ImGui::SliderFloat("Perlin freq", &mPerlinNoiseParams.mSettings.z, 0.0f, 100.0f, " %.3f", ImGuiSliderFlags_Logarithmic))
-        {
-            updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
-        }
-        if (ImGui::SliderFloat("Cloud cutoff", &mRenderParams.mCloudSettings.x, 0.0f, 1.0f))
-        {
-            updateUniform(RENDERER_PARAMS, mRenderParams);
-        }
-        if (ImGui::SliderFloat("Cloud speed", &mRenderParams.mCloudSettings.y, 0.0f, 1.0f))
-        {
-            updateUniform(RENDERER_PARAMS, mRenderParams);
-        }
-        if (ImGui::SliderFloat("Cloud density", &mRenderParams.mCloudSettings.z, 0.0001f, 100.0f, "%.3f", ImGuiSliderFlags_Logarithmic))
-        {
-            updateUniform(RENDERER_PARAMS, mRenderParams);
-        }
-        if (ImGui::SliderFloat("Cloud BBox height", &mRenderParams.mCloudSettings.w, 100.0f, 100000.0f))
-        {
-            updateUniform(RENDERER_PARAMS, mRenderParams);
-        }
-        if (ImGui::SliderFloat("Cloud UV width", &mRenderParams.mCloudMapping.x, 1.0f, 1000.0f))
-        {
-            updateUniform(RENDERER_PARAMS, mRenderParams);
-        }
-        if (ImGui::SliderFloat("Cloud UV height", &mRenderParams.mCloudMapping.y, 1.0f, 1000.0f))
-        {
-            updateUniform(RENDERER_PARAMS, mRenderParams);
-        }
-        if (ImGui::SliderInt("Max steps", &mRenderParams.mSteps.x, 4, 1024))
-        {
-            updateUniform(RENDERER_PARAMS, mRenderParams);
-        }
-
-        if (ImGui::SliderInt("Max shadow steps", &mRenderParams.mSteps.y, 2, 32))
-        {
-            updateUniform(RENDERER_PARAMS, mRenderParams);
-        }
-
-        ImGui::Separator();
-        
-        ImGui::Text("Ocean");
-        ImGui::NewLine();
-        if (ImGui::SliderInt("Patch dimension", &mOceanParams.mHeightSettings.y, 64, 1024))
-        {
-            updateUniform(OCEAN_PARAMS, mOceanParams);
-        }
-        if (ImGui::SliderFloat("Wave amplitude", &mOceanParams.mWaveSettings.x, 0.01f, 20.0f))
-        {
-            updateUniform(OCEAN_PARAMS, mOceanParams);
-        }
-        if (ImGui::SliderFloat("Wind speed", &mOceanParams.mWaveSettings.y, 0.0f, 200.0f))
-        {
-            updateUniform(OCEAN_PARAMS, mOceanParams);
-        }
-        if (ImGui::SliderFloat2("Wind direction", &mOceanParams.mWaveSettings.z, -1.0f, 1.0f))
-        {
-            updateUniform(OCEAN_PARAMS, mOceanParams);
-        }
-
-        my_tex_w = 100;
-        my_tex_h = 100;
-        ImGui::Text("Ocean spectrum: %.0fx%.0f", my_tex_w, my_tex_h);
-        ImTextureID oceanSpectrumTexId = (ImTextureID)mOceanH0SpectrumTexture.texId();
-        {
-            ImVec2 pos = ImGui::GetCursorScreenPos();
-            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-            ImGui::Image(oceanSpectrumTexId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
-        }
-
-        ImTextureID oceanHDxSpectrumTexId = (ImTextureID)mOceanHDxSpectrumTexture.texId();
-        {
-            ImVec2 pos = ImGui::GetCursorScreenPos();
-            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-            ImGui::Image(oceanHDxSpectrumTexId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
-        }
-        ImGui::SameLine();
-
-        ImTextureID oceanHDySpectrumTexId = (ImTextureID)mOceanHDySpectrumTexture.texId();
-        {
-            ImVec2 pos = ImGui::GetCursorScreenPos();
-            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-            ImGui::Image(oceanHDySpectrumTexId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
-        }
-        ImGui::SameLine();
-
-
-        ImTextureID oceanHDzSpectrumTexId = (ImTextureID)mOceanHDzSpectrumTexture.texId();
-        {
-            ImVec2 pos = ImGui::GetCursorScreenPos();
-            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-            ImGui::Image(oceanHDzSpectrumTexId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
-        }
-
-        ImTextureID butterflyTexId = (ImTextureID)mButterFlyTexture.texId();
-        {
-            ImVec2 pos = ImGui::GetCursorScreenPos();
-            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-            ImGui::Image(butterflyTexId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
-        }
-
-        ImTextureID displacementTexId = (ImTextureID)mOceanDisplacementTexture.texId();
-        {
-            ImVec2 pos = ImGui::GetCursorScreenPos();
-            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-            ImGui::Image(displacementTexId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
-        }
-
-        ImGui::SameLine();
-
-        ImTextureID normalTexId = (ImTextureID)mOceanNormalTexture.texId();
-        {
-            ImVec2 pos = ImGui::GetCursorScreenPos();
-            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-            ImGui::Image(normalTexId, ImVec2(my_tex_w, my_tex_h), minUV, maxUV, tint, border);
-        }
 
         ImGui::End();
 

@@ -124,6 +124,7 @@ private:
     
     // update boolean
     bool          mUpdateEnvironment;
+    bool          mOceanWireframe;
 
     // 2D textures to display
     std::unique_ptr<RenderTexture> mRenderTexture;
