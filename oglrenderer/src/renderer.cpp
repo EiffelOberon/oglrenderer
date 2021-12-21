@@ -37,7 +37,7 @@ Renderer::Renderer()
     , mButterflyIndicesBuffer(OCEAN_RESOLUTION * sizeof(int))
     , mEnvironmentResolution(2048.0f, 2048.0f)
     , mQuad(GL_TRIANGLE_STRIP, 4)
-    , mClipmap(4)
+    , mClipmap(5)
     , mClipmapLevel(0)
     , mRenderTexture(nullptr)
     , mRenderCubemapTexture(nullptr)
@@ -432,8 +432,7 @@ void Renderer::render()
     mRenderCubemapTexture->bindTexture(WATER_ENV_TEX, 0);
     mOceanDisplacementTexture.bindTexture(WATER_DISPLACEMENT_TEX);
     mOceanNormalTexture.bindTexture(WATER_NORMAL_TEX);
-    //mWaterGrid.draw();
-    mClipmap.draw(mClipmapLevel);
+    mClipmap.draw();
     mWaterShader.disable();
     
     glDisable(GL_DEPTH_TEST);
@@ -633,10 +632,6 @@ void Renderer::renderGUI()
         if (ImGui::SliderFloat2("Wind direction", &mOceanParams.mWaveSettings.z, -1.0f, 1.0f))
         {
             updateUniform(OCEAN_PARAMS, mOceanParams);
-        }
-        if (ImGui::SliderInt("Clipmap", &mClipmapLevel, 0, mClipmap.levels()))
-        {
-
         }
 
         my_tex_w = 100;

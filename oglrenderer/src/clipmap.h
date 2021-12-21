@@ -28,6 +28,7 @@ public:
 
 
     void generatePatch(
+        const uint32_t iterationCount,
         const uint32_t n,
         const float    dimension)
     {
@@ -48,17 +49,28 @@ public:
             }
         }
 
+        int exclusionColumn = ((dimension / 2.0f) - (dimension / 4.0f)) / offset;
+
         for (int row = 0; row < (n - 1); ++row)
         {
             for (int column = 0; column < (n - 1); ++column)
             {
-                indices.push_back(row * n + column);
-                indices.push_back(row * n + (column + 1));
-                indices.push_back((row + 1) * n + column);
+                if (iterationCount > 0 &&
+                    (column > exclusionColumn && column < (n - 1 - exclusionColumn) &&
+                     row > exclusionColumn && row < (n - 1 - exclusionColumn)))
+                {
+                    continue;
+                }
+                else
+                {
+                    indices.push_back(row * n + column);
+                    indices.push_back(row * n + (column + 1));
+                    indices.push_back((row + 1) * n + column);
 
-                indices.push_back((row + 1) * n + column);
-                indices.push_back(row * n + (column + 1));
-                indices.push_back((row + 1) * n + (column + 1));
+                    indices.push_back((row + 1) * n + column);
+                    indices.push_back(row * n + (column + 1));
+                    indices.push_back((row + 1) * n + (column + 1));
+                }
             }
         }
 
@@ -105,16 +117,17 @@ public:
 #endif
             const uint32_t idx = mClipmapPatches.size();
             mClipmapPatches.push_back(std::make_unique<ClipmapPatch>(dimension, dimension));
-            mClipmapPatches[idx]->generatePatch(n, dimension);
+            mClipmapPatches[idx]->generatePatch(i, n, dimension);
         }
     }
 
 
-    void draw(
-        uint32_t i)
+    void draw()
     {
-        i = glm::clamp(i, uint32_t(0), mLevels - 1);
-        mClipmapPatches[i]->draw();
+        for (int i = 0; i < mClipmapPatches.size(); ++i)
+        {
+            mClipmapPatches[i]->draw();
+        }
     }
 
 
