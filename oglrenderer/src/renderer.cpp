@@ -37,7 +37,7 @@ Renderer::Renderer()
     , mButterflyIndicesBuffer(OCEAN_RESOLUTION * sizeof(int))
     , mEnvironmentResolution(2048.0f, 2048.0f)
     , mQuad(GL_TRIANGLE_STRIP, 4)
-    , mClipmap(5)
+    , mClipmap(6)
     , mClipmapLevel(0)
     , mRenderTexture(nullptr)
     , mRenderCubemapTexture(nullptr)
@@ -130,7 +130,7 @@ Renderer::Renderer()
     updateWaterGrid();
     mClipmap.generateGeometry();
 
-    glm::mat4 projMatrix = glm::perspective(glm::radians(45.0f), 1600.0f / 900.0f, 0.1f, 10000.0f);
+    glm::mat4 projMatrix = glm::perspective(glm::radians(60.0f), 1600.0f / 900.0f, 0.1f, 10000.0f);
     glm::mat4 viewMatrix = mCamera.getViewMatrix();
     mMVPMatrix.mProjectionMatrix = projMatrix;
     mMVPMatrix.mViewMatrix = viewMatrix;
@@ -255,7 +255,7 @@ void Renderer::resize(
         io.DisplaySize = ImVec2(float(width), float(height));
 
         // update MVP
-        glm::mat4 perspectiveMatrix = glm::perspective(glm::radians(45.0f), mResolution.x / mResolution.y, 0.1f, 10000.0f);
+        glm::mat4 perspectiveMatrix = glm::perspective(glm::radians(60.0f), mResolution.x / mResolution.y, 0.1f, 10000.0f);
         mMVPMatrix.mProjectionMatrix = perspectiveMatrix;
         updateUniform(MVP_MATRIX, mMVPMatrix);
     }

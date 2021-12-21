@@ -8,6 +8,8 @@
 #include "nishita.h"
 
 layout(location = 1) in vec2 uv;
+layout(location = 2) in vec4 near;
+layout(location = 3) in vec4 far;
 
 layout(location = 3) uniform vec3 color;
 layout(std430, binding = CAMERA_PARAMS) uniform CameraParamsUniform
@@ -136,16 +138,12 @@ bool intersect(
 
 void main()
 {	
-    // create ray
-    vec2 d = vec2((uv.x * 2.0f - 1.0f) * renderParams.mSettings.y, uv.y * 2.0f - 1.0f);
-	vec3 V = camParams.mUp.xyz;
-	vec3 W = normalize((camParams.mTarget - camParams.mEye).xyz);
-	vec3 U = normalize(cross(W, V));
-    V = normalize(cross(U, W));
-    vec3 rayDir = normalize(d.x*U + d.y*V + W);
-    vec3 sunDir = length(skyParams.mSunDir.xyz) > 0 ? normalize(skyParams.mSunDir.xyz) : vec3(0, 1, 0);
+    Ray r;
+    r.mOrigin = near.xyz / near.w;
+    r.mDir = normalize((far.xyz / far.w) - r.mOrigin); 
 
-    vec3 sky = texture(environmentTexture, rayDir.xyz).xyz;
+    vec3 sunDir = length(skyParams.mSunDir.xyz) > 0 ? normalize(skyParams.mSunDir.xyz) : vec3(0, 1, 0);
+    vec3 sky = texture(environmentTexture, r.mDir.xyz).xyz;
 
     Box b; 
     float width = 30000.0f;
@@ -156,10 +154,6 @@ void main()
     //float height = renderParams.mCloudSettings.w;
     //b.mMin = vec3(0.0f, 0.0f, -2.0f) + vec3(-width, 0, -width);
     //b.mMax = vec3(0.0f, 0.0f, -2.0f) + vec3(width, 2, width);
-
-    Ray r;
-    r.mOrigin = camParams.mEye.xyz;
-    r.mDir = rayDir;
 
     float tMin = 0.0f;
     float tMax = 0.0f;
