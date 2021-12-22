@@ -207,6 +207,7 @@ void render()
 {
     if (renderer)
     {
+        renderer->preRender();
         renderer->render();
 
         // start the Dear ImGui frame
@@ -224,15 +225,14 @@ void render()
 
         // swap buffers
         glutSwapBuffers();
+        renderer->postRender();
     }
 }
 
 
 void update()
 {
-    renderer->preRender();
     render();
-    renderer->postRender();
 }
 
 

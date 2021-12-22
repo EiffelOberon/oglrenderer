@@ -12,8 +12,9 @@ public:
         int            width,
         int            height,
         const uint32_t sampleMode,
-        const int      bitsPerChannel = 8,
-        const bool     greyScale      = false,
+        const bool     mipmap,
+        const int      bitsPerChannel,
+        const bool     greyScale,
         const void*    data           = nullptr)
         : mWidth(width)
         , mHeight(height)
@@ -59,6 +60,14 @@ public:
         const uint32_t readWriteState)
     {
         glBindImageTexture(texUnit, mTex, 0, GL_FALSE, 0, readWriteState, mInternalFormat);
+    }
+
+    
+    void generateMipmap()
+    {
+        glBindTexture(GL_TEXTURE_2D, mTex);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
 
 
