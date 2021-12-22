@@ -65,6 +65,8 @@ struct OceanParams
 
     // x, y, z: transmission w: empty
     vec4 mTransmission;
+    // x, y, z: transmission w: lerp exponent
+    vec4 mTransmission2;
 };
 
 

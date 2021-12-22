@@ -27,11 +27,15 @@ layout(location = 0) out vec4 c;
 
 void main()
 {	
-	const vec3 n = normalize(texture(normalTex, uv.xy).xyz);
+	vec3 n = normalize(texture(normalTex, uv.xy).xyz);
+	if(n.y < 0)
+	{
+		n.y = max(abs(n.y), 0.01f);
+	}
 	
 	const vec3 viewDir = normalize(camParams.mEye.xyz - position);
 
-	const float cosTheta = dot(viewDir, n);
+	const float cosTheta = clamp(dot(viewDir, n), 0.0f, 1.0f);
 	const float r0 = pow((1.3f - 1.0f) / (1.3f + 1.0f), 2.0f);
 	const float f = clamp(r0 + (1.0f - r0) * pow(1 - cosTheta, 5.0f), 0.0f, 1.0f);
 
@@ -43,6 +47,6 @@ void main()
 	}
 
 	vec3 env = texture(environmentTex, rayDir).xyz;
-	radiance = f * env + (1.0f - f) * oceanParams.mTransmission.xyz;
+	radiance = f * env + (1.0f - f) * mix(oceanParams.mTransmission.xyz, oceanParams.mTransmission2.xyz, pow(cosTheta, oceanParams.mTransmission2.w));
 	c = vec4(radiance, 1.0f);
 }

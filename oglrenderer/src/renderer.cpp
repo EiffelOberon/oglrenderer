@@ -111,6 +111,7 @@ Renderer::Renderer()
     mOceanParams.mPingPong = glm::ivec4(0, 0, 0, 0);
     mOceanParams.mWaveSettings = glm::vec4(4.0f, 40.0f, 1.0f, 1.0f);
     mOceanParams.mTransmission = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+    mOceanParams.mTransmission2 = glm::vec4(0.0f, 0.0f, 1.0f, 4.0f);
     addUniform(OCEAN_PARAMS, mOceanParams);
 
     loadStates();
@@ -636,7 +637,14 @@ void Renderer::renderGUI()
                 {
                     updateUniform(OCEAN_PARAMS, mOceanParams);
                 }
-
+                if (ImGui::ColorEdit3("Transmission2", &mOceanParams.mTransmission2[0], ImGuiColorEditFlags_None))
+                {
+                    updateUniform(OCEAN_PARAMS, mOceanParams);
+                }
+                if (ImGui::SliderFloat("Exponent", &mOceanParams.mTransmission2.w, 0.001f, 8.0f))
+                {
+                    updateUniform(OCEAN_PARAMS, mOceanParams);
+                }
                 if (ImGui::SliderInt("Patch dimension", &mOceanParams.mHeightSettings.y, 64, 1024))
                 {
                     updateUniform(OCEAN_PARAMS, mOceanParams);
@@ -794,6 +802,11 @@ void Renderer::saveStates()
     ini["oceanparams"]["transmissionY"] = std::to_string(mOceanParams.mTransmission.y);
     ini["oceanparams"]["transmissionZ"] = std::to_string(mOceanParams.mTransmission.z);
 
+    ini["oceanparams"]["transmission2X"] = std::to_string(mOceanParams.mTransmission2.x);
+    ini["oceanparams"]["transmission2Y"] = std::to_string(mOceanParams.mTransmission2.y);
+    ini["oceanparams"]["transmission2Z"] = std::to_string(mOceanParams.mTransmission2.z);
+    ini["oceanparams"]["exponent"] = std::to_string(mOceanParams.mTransmission2.w);
+
     ini["oceanparams"]["amplitude"] = std::to_string(mOceanParams.mWaveSettings.x);
     ini["oceanparams"]["speed"] = std::to_string(mOceanParams.mWaveSettings.y);
     ini["oceanparams"]["dirX"] = std::to_string(mOceanParams.mWaveSettings.z);
@@ -856,6 +869,10 @@ void Renderer::loadStates()
             mOceanParams.mTransmission.x = std::stof(ini["oceanparams"]["transmissionX"]);
             mOceanParams.mTransmission.y = std::stof(ini["oceanparams"]["transmissionY"]);
             mOceanParams.mTransmission.z = std::stof(ini["oceanparams"]["transmissionZ"]);
+            mOceanParams.mTransmission2.x = std::stof(ini["oceanparams"]["transmission2X"]);
+            mOceanParams.mTransmission2.y = std::stof(ini["oceanparams"]["transmission2Y"]);
+            mOceanParams.mTransmission2.z = std::stof(ini["oceanparams"]["transmission2Z"]);
+            mOceanParams.mTransmission2.w = std::stof(ini["oceanparams"]["exponent"]);
 
             mOceanParams.mWaveSettings.x = std::stof(ini["oceanparams"]["amplitude"]);
             mOceanParams.mWaveSettings.y = std::stof(ini["oceanparams"]["speed"]);
