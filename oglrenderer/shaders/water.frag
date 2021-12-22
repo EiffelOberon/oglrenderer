@@ -42,9 +42,10 @@ void main()
 	// calculate directional vectors
 	const vec3 viewDir = normalize(camParams.mEye.xyz - position);
 	const vec3 sunDir = normalize(skyParams.mSunSetting.xyz);
-	const float cosTheta = clamp(dot(viewDir, n), 0.0f, 1.0f);
+	const vec3 halfDir = normalize(viewDir + sunDir);
+
 	const float r0 = pow((1.3f - 1.0f) / (1.3f + 1.0f), 2.0f);
-	const float f = clamp(r0 + (1.0f - r0) * pow(1 - cosTheta, 5.0f), 0.0f, 1.0f);
+	const float f = clamp(r0 + (1.0f - r0) * pow(1 - dot(viewDir, n), 5.0f), 0.0f, 1.0f);
 
 	vec3 radiance = vec3(0.0f);
 	vec3 rayDir = normalize(reflect(-viewDir, n));
@@ -54,11 +55,11 @@ void main()
 	vec3 transmission = mix(oceanParams.mTransmission.xyz, oceanParams.mTransmission2.xyz, pow(abs(dot(viewDir, n)), oceanParams.mTransmission2.w));
 
 	// direct specular and indirect specular components
-	const float directSpecular = pow(clamp(dot(reflect(-sunDir, n), viewDir), 0.0f, 1.0f), 40.0f);
+	const vec3 directSpecular = pow(clamp(dot(reflect(-sunDir, n), viewDir), 0.0f, 1.0f), 40.0f) * texture(environmentTex, skyParams.mSunSetting.xyz).xyz;
 	const vec3 indirectReflection = max(texture(environmentTex, rayDir).xyz - directSpecular, 0.0f);
 
 	// direct specular + indirect specular + transmission
-	radiance += (directSpecular * texture(environmentTex, skyParams.mSunSetting.xyz).xyz);
+	radiance += directSpecular;
 	radiance += mix(transmission, indirectReflection, f);
 
 	c = vec4(radiance, 1.0f);
