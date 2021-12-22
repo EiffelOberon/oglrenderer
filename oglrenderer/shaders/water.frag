@@ -34,7 +34,7 @@ void main()
 	}
 	
 	const vec3 viewDir = normalize(camParams.mEye.xyz - position);
-
+	const vec3 sunDir = normalize(skyParams.mSunSetting.xyz);
 	const float cosTheta = clamp(dot(viewDir, n), 0.0f, 1.0f);
 	const float r0 = pow((1.3f - 1.0f) / (1.3f + 1.0f), 2.0f);
 	const float f = clamp(r0 + (1.0f - r0) * pow(1 - cosTheta, 5.0f), 0.0f, 1.0f);
@@ -46,7 +46,10 @@ void main()
 		rayDir.y = max(abs(rayDir.y), 0.01f);
 	}
 
+	const float directSpecular = pow(clamp(dot(reflect(-sunDir, n), viewDir), 0.0f, 1.0f), 20.0f);
 	vec3 env = texture(environmentTex, rayDir).xyz;
-	radiance = f * env + (1.0f - f) * mix(oceanParams.mTransmission.xyz, oceanParams.mTransmission2.xyz, pow(cosTheta, oceanParams.mTransmission2.w));
+
+	// direct specular + indirect specular + transmission
+	radiance = (directSpecular) + (f * env) + (1.0f - f) * mix(oceanParams.mTransmission.xyz, oceanParams.mTransmission2.xyz, pow(cosTheta, oceanParams.mTransmission2.w));
 	c = vec4(radiance, 1.0f);
 }
