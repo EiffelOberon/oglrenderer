@@ -48,13 +48,14 @@ void main()
 
 	vec3 radiance = vec3(0.0f);
 	vec3 rayDir = normalize(reflect(-viewDir, n));
+	rayDir.y = max(rayDir.y, 0.1f);
 
 	// transmission color
 	vec3 transmission = mix(oceanParams.mTransmission.xyz, oceanParams.mTransmission2.xyz, pow(abs(dot(viewDir, n)), oceanParams.mTransmission2.w));
 
 	// direct specular and indirect specular components
-	const float directSpecular = pow(clamp(dot(reflect(-sunDir, n), viewDir), 0.0f, 1.0f), 20.0f);
-	const vec3 indirectReflection = texture(environmentTex, rayDir).xyz;
+	const float directSpecular = pow(clamp(dot(reflect(-sunDir, n), viewDir), 0.0f, 1.0f), 40.0f);
+	const vec3 indirectReflection = max(texture(environmentTex, rayDir).xyz - directSpecular, 0.0f);
 
 	// direct specular + indirect specular + transmission
 	radiance += (directSpecular * texture(environmentTex, skyParams.mSunSetting.xyz).xyz);
