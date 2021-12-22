@@ -256,7 +256,7 @@ void nishita_sky(
 		}
 	}
 
-	rayleigh = (SumR * phaseR * BetaR) * intensity;
+	rayleigh = (SumR * phaseR * BetaR) * 20.0f;
 	mie = (SumM * phaseM * BetaM) * intensity;
 	sky = rayleigh + mie;
 }

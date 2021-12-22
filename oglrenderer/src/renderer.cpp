@@ -81,7 +81,7 @@ Renderer::Renderer()
     addUniform(CAMERA_PARAMS, mCamParams);
 
     // initialize sun
-    mSkyParams.mSunDir = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
+    mSkyParams.mSunSetting = glm::vec4(0.0f, 1.0f, 0.0f, 20.0f);
     mSkyParams.mPrecomputeSettings.x = 0;
     addUniform(SKY_PARAMS, mSkyParams);
 
@@ -511,20 +511,25 @@ void Renderer::renderGUI()
         ImGui::Begin("Environment", &mShowSkyWindow);
         if (ImGui::BeginTabBar("Settings", ImGuiTabBarFlags_None))
         {
-            if (ImGui::BeginTabItem("Sun"))
+            if (ImGui::BeginTabItem("Sky"))
             {
                 ImGui::Text("Sun Direction");
-                if (ImGui::SliderFloat("x", &mSkyParams.mSunDir.x, -1.0f, 1.0f))
+                if (ImGui::SliderFloat("x", &mSkyParams.mSunSetting.x, -1.0f, 1.0f))
                 {
                     mUpdateEnvironment = true;
                 }
 
-                if (ImGui::SliderFloat("y", &mSkyParams.mSunDir.y, 0.0f, 1.0f))
+                if (ImGui::SliderFloat("y", &mSkyParams.mSunSetting.y, 0.0f, 1.0f))
                 {
                     mUpdateEnvironment = true;
                 }
 
-                if (ImGui::SliderFloat("z", &mSkyParams.mSunDir.z, -1.0f, 1.0f))
+                if (ImGui::SliderFloat("z", &mSkyParams.mSunSetting.z, -1.0f, 1.0f))
+                {
+                    mUpdateEnvironment = true;
+                }
+
+                if (ImGui::SliderFloat("intensity", &mSkyParams.mSunSetting.w, 0.0f, 20.0f))
                 {
                     mUpdateEnvironment = true;
                 }
@@ -781,9 +786,9 @@ void Renderer::saveStates()
     mINI::INIFile file("oglrenderer.ini");
     mINI::INIStructure ini;
 
-    ini["skyparams"]["x"] = std::to_string(mSkyParams.mSunDir.x);
-    ini["skyparams"]["y"] = std::to_string(mSkyParams.mSunDir.y);
-    ini["skyparams"]["z"] = std::to_string(mSkyParams.mSunDir.z);
+    ini["skyparams"]["x"] = std::to_string(mSkyParams.mSunSetting.x);
+    ini["skyparams"]["y"] = std::to_string(mSkyParams.mSunSetting.y);
+    ini["skyparams"]["z"] = std::to_string(mSkyParams.mSunSetting.z);
 
     ini["renderparams"]["cutoff"] = std::to_string(mRenderParams.mCloudSettings.x);
     ini["renderparams"]["speed"] = std::to_string(mRenderParams.mCloudSettings.y);
@@ -827,9 +832,9 @@ void Renderer::loadStates()
         // read a value
         if (ini.has("skyparams"))
         {
-            mSkyParams.mSunDir.x = std::stof(ini["skyparams"]["x"]);
-            mSkyParams.mSunDir.y = std::stof(ini["skyparams"]["y"]);
-            mSkyParams.mSunDir.z = std::stof(ini["skyparams"]["z"]);
+            mSkyParams.mSunSetting.x = std::stof(ini["skyparams"]["x"]);
+            mSkyParams.mSunSetting.y = std::stof(ini["skyparams"]["y"]);
+            mSkyParams.mSunSetting.z = std::stof(ini["skyparams"]["z"]);
         }
 
         updateUniform(SKY_PARAMS, mSkyParams);

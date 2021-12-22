@@ -61,12 +61,12 @@ void main()
     // create ray
 	vec2 st = uv * 2.0f - 1.0f;
     vec3 rayDir = normalize(uvToXYZ(skyParams.mPrecomputeSettings.x, st));
-    vec3 sunDir = length(skyParams.mSunDir.xyz) > 0 ? normalize(skyParams.mSunDir.xyz) : vec3(0, 1, 0);
+    vec3 sunDir = length(skyParams.mSunSetting.xyz) > 0 ? normalize(skyParams.mSunSetting.xyz) : vec3(0, 1, 0);
 
 	vec3 rayleigh;
 	vec3 mie;
 	vec3 sky;
-	nishita_sky(1.0f, 20.0f, sunDir, rayDir.xyz,  rayleigh, mie, sky);
+	nishita_sky(1.0f, skyParams.mSunSetting.w, sunDir, rayDir.xyz,  rayleigh, mie, sky);
     c = vec4(sky, 1.0f);
 
 }

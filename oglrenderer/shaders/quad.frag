@@ -142,7 +142,7 @@ void main()
     r.mOrigin = near.xyz / near.w;
     r.mDir = normalize((far.xyz / far.w) - r.mOrigin); 
 
-    vec3 sunDir = length(skyParams.mSunDir.xyz) > 0 ? normalize(skyParams.mSunDir.xyz) : vec3(0, 1, 0);
+    vec3 sunDir = length(skyParams.mSunSetting.xyz) > 0 ? normalize(skyParams.mSunSetting.xyz) : vec3(0, 1, 0);
     vec3 sky = texture(environmentTexture, r.mDir.xyz).xyz;
 
     Box b; 
@@ -162,7 +162,7 @@ void main()
     const float stepLength = ((tMax - tMin) / float(renderParams.mSteps.x));
     r.mOrigin = r.mOrigin + r.mDir * tMin;
 
-    vec3 sunPos = skyParams.mSunDir.xyz * 800000.0f;
+    vec3 sunPos = skyParams.mSunSetting.xyz * 800000.0f;
 
     bool hasClouds = false;
     vec4 cloudColor = vec4(1.0f);

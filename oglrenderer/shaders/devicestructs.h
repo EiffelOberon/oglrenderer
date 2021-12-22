@@ -22,7 +22,8 @@ struct CameraParams
 
 struct SkyParams
 {
-    vec4 mSunDir;
+    // x, y, z: dir w: intensity
+    vec4 mSunSetting;
     // x: i-th cubemap texture, y,z,w: empty
     ivec4 mPrecomputeSettings;
 };
