@@ -30,7 +30,7 @@ void main()
 
     const vec3 d= texture(displacement, testUV).xyz;
 	const vec3 newVertexPos = vertexPos + d;
-	
+
 	gl_Position =  mvpMatrix.mProjectionMatrix * mvpMatrix.mViewMatrix * vec4(newVertexPos, 1.0);
 	
 	position = newVertexPos;

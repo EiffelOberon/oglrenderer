@@ -11,7 +11,6 @@
 Renderer::Renderer()
     : mButterflyOpShader("./spv/butterflyoperation.spv")
     , mInversionShader("./spv/inversion.spv")
-    , mOceanNormalShader("./spv/oceannormal.spv")
     , mPrecomputeButterflyTexShader("./spv/precomputebutterfly.spv")
     , mPrecomputeCloudShader("./spv/precomputecloud.spv")
     , mPrecomputeEnvironmentShader("./spv/vert.spv", "./spv/precomputeenvironment.spv")
@@ -26,7 +25,6 @@ Renderer::Renderer()
     , mCloudTexture(CLOUD_RESOLUTION, CLOUD_RESOLUTION, CLOUD_RESOLUTION, 32, false)
     , mOceanFFT(OCEAN_RESOLUTION)
     , mOceanDisplacementTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, GL_LINEAR_MIPMAP_LINEAR, true, 32, false)
-    , mOceanNormalTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, GL_LINEAR_MIPMAP_LINEAR, true, 32, false)
     , mOceanH0SpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, GL_NEAREST, false, 32, false)
     , mOceanHDxSpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, GL_NEAREST, false, 32, false)
     , mOceanHDySpectrumTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, GL_NEAREST, false, 32, false)
@@ -368,11 +366,7 @@ void Renderer::preRender()
             mInversionShader.dispatch(true, workGroupSize, workGroupSize, 1);
         }
 
-        mOceanDisplacementTexture.bindImageTexture(OCEAN_NOMRAL_INPUT_TEX, GL_READ_ONLY);
-        mOceanNormalTexture.bindImageTexture(OCEAN_NOMRAL_OUTPUT_TEX, GL_WRITE_ONLY);
-        mOceanNormalShader.dispatch(true, workGroupSize, workGroupSize, 1);
         mOceanDisplacementTexture.generateMipmap();
-        mOceanNormalTexture.generateMipmap();
     }
 
     // render quarter sized render texture
@@ -436,7 +430,6 @@ void Renderer::render()
     mWaterShader.use();
     mRenderCubemapTexture->bindTexture(WATER_ENV_TEX, 0);
     mOceanDisplacementTexture.bindTexture(WATER_DISPLACEMENT_TEX);
-    mOceanNormalTexture.bindTexture(WATER_NORMAL_TEX);
     if (mOceanWireframe)
     {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -735,18 +728,6 @@ void Renderer::renderGUI()
                     ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
                     ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
                     ImGui::Image(displacementTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
-                }
-
-                ImGui::SameLine();
-
-                ImTextureID normalTexId = (ImTextureID)mOceanNormalTexture.texId();
-                {
-                    ImVec2 pos = ImGui::GetCursorScreenPos();
-                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-                    ImGui::Image(normalTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
                 }
 
                 ImGui::EndTabItem();

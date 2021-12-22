@@ -31,7 +31,7 @@ void main()
 
     const ivec2 verticalNeighbor1 = (x + ivec2(0, 1)) % OCEAN_RESOLUTION;
     const ivec2 verticalNeighbor2 = (x - ivec2(0, 1)) % OCEAN_RESOLUTION;
-    float texelSize = 1.0f / OCEAN_RESOLUTION * oceanParams.mHeightSettings.y;
+    float texelSize = 1.0f / OCEAN_RESOLUTION;
 
     const float left = (imageLoad(displacement, horizontalNeighbor2).y - texel);
     const float right = (imageLoad(displacement, horizontalNeighbor1).y - texel);

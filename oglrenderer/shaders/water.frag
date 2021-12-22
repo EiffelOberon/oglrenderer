@@ -20,15 +20,26 @@ layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
 {
     OceanParams oceanParams;
 };
-layout(binding = WATER_NORMAL_TEX) uniform sampler2D normalTex;
+layout(binding = WATER_DISPLACEMENT_TEX) uniform sampler2D displacement;
 layout(binding = WATER_ENV_TEX) uniform samplerCube environmentTex;
 
 layout(location = 0) out vec4 c;
 
 void main()
 {	
-	vec3 n = normalize(texture(normalTex, uv.xy).xyz);
+	// calculate normal per pixel
+    const vec3 d= texture(displacement, uv).xyz;
+	const vec3 neighborX = vec3(1, 0, 0) + texture(displacement, uv + vec2(1.0f / OCEAN_RESOLUTION, 0)).xyz;
+	const vec3 neighborY = vec3(0, 0, 1) + texture(displacement, uv + vec2(0.0f, 1.0f / OCEAN_RESOLUTION)).xyz;
+	const vec3 tangent = normalize(neighborX - d);
+	const vec3 bitangent = normalize(neighborY - d);
+	vec3 n = normalize(cross(tangent, bitangent));
+	if(dot(vec3(0, 1, 0), n) < 0)
+	{
+		n *= -1;
+	}
 	
+	// calculate directional vectors
 	const vec3 viewDir = normalize(camParams.mEye.xyz - position);
 	const vec3 sunDir = normalize(skyParams.mSunSetting.xyz);
 	const float cosTheta = clamp(dot(viewDir, n), 0.0f, 1.0f);
@@ -37,15 +48,17 @@ void main()
 
 	vec3 radiance = vec3(0.0f);
 	vec3 rayDir = normalize(reflect(-viewDir, n));
-    vec3 indirectReflection = vec3(0.0f);
-	if(rayDir.y > 0)
-	{
-        indirectReflection = texture(environmentTex, rayDir).xyz;
-	}
 
+	// transmission color
+	vec3 transmission = mix(oceanParams.mTransmission.xyz, oceanParams.mTransmission2.xyz, pow(abs(dot(viewDir, n)), oceanParams.mTransmission2.w));
+
+	// direct specular and indirect specular components
 	const float directSpecular = pow(clamp(dot(reflect(-sunDir, n), viewDir), 0.0f, 1.0f), 20.0f);
+	const vec3 indirectReflection = texture(environmentTex, rayDir).xyz;
+
 	// direct specular + indirect specular + transmission
-    radiance += (directSpecular);
-    radiance += mix(mix(oceanParams.mTransmission.xyz, oceanParams.mTransmission2.xyz, pow(cosTheta, oceanParams.mTransmission2.w)), indirectReflection, f);
+	radiance += (directSpecular * texture(environmentTex, skyParams.mSunSetting.xyz).xyz);
+	radiance += mix(transmission, indirectReflection, f);
+
 	c = vec4(radiance, 1.0f);
 }
