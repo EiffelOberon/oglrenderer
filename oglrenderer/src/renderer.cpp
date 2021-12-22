@@ -110,6 +110,7 @@ Renderer::Renderer()
     mOceanParams.mHeightSettings = glm::ivec4(OCEAN_RESOLUTION, 1024, 0, 0);
     mOceanParams.mPingPong = glm::ivec4(0, 0, 0, 0);
     mOceanParams.mWaveSettings = glm::vec4(4.0f, 40.0f, 1.0f, 1.0f);
+    mOceanParams.mTransmission = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
     addUniform(OCEAN_PARAMS, mOceanParams);
 
     loadStates();
@@ -629,6 +630,11 @@ void Renderer::renderGUI()
             }
             if (ImGui::BeginTabItem("Ocean"))
             {
+                if (ImGui::ColorEdit3("Transmission", &mOceanParams.mTransmission[0], ImGuiColorEditFlags_None))
+                {
+                    updateUniform(OCEAN_PARAMS, mOceanParams);
+                }
+
                 if (ImGui::SliderInt("Patch dimension", &mOceanParams.mHeightSettings.y, 64, 1024))
                 {
                     updateUniform(OCEAN_PARAMS, mOceanParams);
@@ -782,6 +788,15 @@ void Renderer::saveStates()
     ini["perlinparams"]["octaves"] = std::to_string(mPerlinNoiseParams.mNoiseOctaves);
     ini["worleyparams"]["invert"] = std::to_string(mWorleyNoiseParams.mInvert);
 
+    ini["oceanparams"]["transmissionX"] = std::to_string(mOceanParams.mTransmission.x);
+    ini["oceanparams"]["transmissionY"] = std::to_string(mOceanParams.mTransmission.y);
+    ini["oceanparams"]["transmissionZ"] = std::to_string(mOceanParams.mTransmission.z);
+
+    ini["oceanparams"]["amplitude"] = std::to_string(mOceanParams.mWaveSettings.x);
+    ini["oceanparams"]["speed"] = std::to_string(mOceanParams.mWaveSettings.y);
+    ini["oceanparams"]["dirX"] = std::to_string(mOceanParams.mWaveSettings.z);
+    ini["oceanparams"]["dirY"] = std::to_string(mOceanParams.mWaveSettings.w);
+
     // generate an INI file (overwrites any previous file)
     file.generate(ini);
 }
@@ -795,32 +810,57 @@ void Renderer::loadStates()
     if (file.read(ini))
     {
         // read a value
-        std::string& amountOfApples = ini["fruits"]["apples"];
-        mSkyParams.mSunDir.x = std::stof(ini["skyparams"]["x"]);
-        mSkyParams.mSunDir.y = std::stof(ini["skyparams"]["y"]);
-        mSkyParams.mSunDir.z = std::stof(ini["skyparams"]["z"]);
+        if (ini.has("skyparams"))
+        {
+            mSkyParams.mSunDir.x = std::stof(ini["skyparams"]["x"]);
+            mSkyParams.mSunDir.y = std::stof(ini["skyparams"]["y"]);
+            mSkyParams.mSunDir.z = std::stof(ini["skyparams"]["z"]);
+        }
 
         updateUniform(SKY_PARAMS, mSkyParams);
 
-        mRenderParams.mCloudSettings.x = std::stof(ini["renderparams"]["cutoff"]);
-        mRenderParams.mCloudSettings.y = std::stof(ini["renderparams"]["speed"]);
-        mRenderParams.mCloudSettings.z = std::stof(ini["renderparams"]["density"]);
-        mRenderParams.mCloudSettings.w = std::stof(ini["renderparams"]["height"]);
-        mRenderParams.mCloudMapping.x = std::stof(ini["renderparams"]["cloudu"]);
-        mRenderParams.mCloudMapping.y = std::stof(ini["renderparams"]["cloudv"]);
+        if (ini.has("renderparams"))
+        {
+            mRenderParams.mCloudSettings.x = std::stof(ini["renderparams"]["cutoff"]);
+            mRenderParams.mCloudSettings.y = std::stof(ini["renderparams"]["speed"]);
+            mRenderParams.mCloudSettings.z = std::stof(ini["renderparams"]["density"]);
+            mRenderParams.mCloudSettings.w = std::stof(ini["renderparams"]["height"]);
+            mRenderParams.mCloudMapping.x = std::stof(ini["renderparams"]["cloudu"]);
+            mRenderParams.mCloudMapping.y = std::stof(ini["renderparams"]["cloudv"]);
 
-        mRenderParams.mSteps.x = std::stoi(ini["renderparams"]["maxsteps"]);
-        mRenderParams.mSteps.y = std::stoi(ini["renderparams"]["maxshadowsteps"]);
+            mRenderParams.mSteps.x = std::stoi(ini["renderparams"]["maxsteps"]);
+            mRenderParams.mSteps.y = std::stoi(ini["renderparams"]["maxshadowsteps"]);
+        }
 
         updateUniform(RENDERER_PARAMS, mRenderParams);
 
-        mWorleyNoiseParams.mInvert = bool(std::stoi(ini["worleyparams"]["invert"]));
+        if (ini.has("worleyparams"))
+        {
+            mWorleyNoiseParams.mInvert = bool(std::stoi(ini["worleyparams"]["invert"]));
+        }
 
         updateUniform(WORLEY_PARAMS, mWorleyNoiseParams);
 
-        mPerlinNoiseParams.mNoiseOctaves = std::stoi(ini["perlinparams"]["octaves"]);
-        mPerlinNoiseParams.mSettings.z = std::stof(ini["perlinparams"]["frequency"]);
+        if (ini.has("perlinparams"))
+        {
+            mPerlinNoiseParams.mNoiseOctaves = std::stoi(ini["perlinparams"]["octaves"]);
+            mPerlinNoiseParams.mSettings.z = std::stof(ini["perlinparams"]["frequency"]);
+        }
 
         updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
+
+        if(ini.has("oceanparams"))
+        {
+            mOceanParams.mTransmission.x = std::stof(ini["oceanparams"]["transmissionX"]);
+            mOceanParams.mTransmission.y = std::stof(ini["oceanparams"]["transmissionY"]);
+            mOceanParams.mTransmission.z = std::stof(ini["oceanparams"]["transmissionZ"]);
+
+            mOceanParams.mWaveSettings.x = std::stof(ini["oceanparams"]["amplitude"]);
+            mOceanParams.mWaveSettings.y = std::stof(ini["oceanparams"]["speed"]);
+            mOceanParams.mWaveSettings.z = std::stof(ini["oceanparams"]["dirX"]);
+            mOceanParams.mWaveSettings.w = std::stof(ini["oceanparams"]["dirY"]);
+        }
+
+        updateUniform(OCEAN_PARAMS, mOceanParams);
     }
 }

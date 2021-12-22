@@ -290,8 +290,8 @@ private:
     void generateVerticalStitchingTriangles(
         const uint32_t        n,
         const float           dimension,
-        std::vector<Vertex>& vertices,
-        std::vector<uint32_t>& indices)
+        std::vector<Vertex>   &vertices,
+        std::vector<uint32_t> &indices)
     {
         float offset = (dimension + 1) / (n + 1);
         const uint32_t endIdx = vertices.size();
@@ -366,7 +366,7 @@ public:
         : mWidth(0)
         , mHeight(0)
         , mLevels(levels)
-        , mLowestLevel(8)
+        , mLowestLevel(10)
     {
 
     }

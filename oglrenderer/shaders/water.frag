@@ -16,6 +16,10 @@ layout(std430, binding = SKY_PARAMS) uniform SkyParamsUniform
 {
 	SkyParams skyParams;
 };
+layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
+{
+    OceanParams oceanParams;
+};
 layout(binding = WATER_NORMAL_TEX) uniform sampler2D normalTex;
 layout(binding = WATER_ENV_TEX) uniform samplerCube environmentTex;
 
@@ -25,18 +29,20 @@ void main()
 {	
 	const vec3 n = normalize(texture(normalTex, uv.xy).xyz);
 	
-	const vec3 viewDir = normalize(position - camParams.mEye.xyz);
-	vec3 rayDir = reflect(viewDir, n);
+	const vec3 viewDir = normalize(camParams.mEye.xyz - position);
 
-	// TODO_ remove this, should not need this, we'll use PBR and lerp with diffuse layered
+	const float cosTheta = dot(viewDir, n);
+	const float r0 = pow((1.3f - 1.0f) / (1.3f + 1.0f), 2.0f);
+	const float f = clamp(r0 + (1.0f - r0) * pow(1 - cosTheta, 5.0f), 0.0f, 1.0f);
+
+	vec3 radiance = vec3(0.0f);
+	vec3 rayDir = reflect(-viewDir, n);
 	if(rayDir.y < 0)
 	{
-		rayDir.y = abs(rayDir.y);
+		rayDir.y = max(abs(rayDir.y), 0.01f);
 	}
 
-
 	vec3 env = texture(environmentTex, rayDir).xyz;
-
-    float nDotL = max(dot(n, skyParams.mSunDir.xyz), 0.0f);
-	c = vec4(vec3(env) * nDotL, 1.0f);
+	radiance = f * env + (1.0f - f) * oceanParams.mTransmission.xyz;
+	c = vec4(radiance, 1.0f);
 }
