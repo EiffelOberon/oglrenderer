@@ -62,6 +62,136 @@ public:
                 {
                     continue;
                 }
+                else if (row == 0 && column < m)
+                {
+                    if ((column + 1) <n)
+                    {
+                        if (column > 0)
+                        {
+                            indices.push_back(row * n + column);
+                            indices.push_back((row + 1) * n + (column + 1));
+                            indices.push_back((row + 1) * n + (column));
+                        }
+
+                        if ((column + 2) < n)
+                        {
+                            indices.push_back(row * n + column);
+                            indices.push_back((row + 1) * n + (column + 2));
+                            indices.push_back((row + 1) * n + (column + 1));
+                            if ((column + 4) < n)
+                            {
+                                indices.push_back(row * n + column);
+                                indices.push_back(row * n + (column + 4));
+                                indices.push_back((row + 1) * n + (column + 2));
+
+                                indices.push_back((row + 1) * n + (column + 2));
+                                indices.push_back(row * n + (column + 4));
+                                indices.push_back((row + 1) * n + (column + 3));
+
+                                indices.push_back((row + 1) * n + (column + 3));
+                                indices.push_back(row * n + (column + 4));
+                                indices.push_back((row + 1) * n + (column + 4));
+                            }
+                            else
+                            {
+                                // patch up the triangle hole at the end because we didn't actually have this vertex at this resolution
+                                const uint32_t newId = vertices.size();
+                                Vertex v;
+                                v.mPosition = glm::vec3((column + 4)* offset - dimension * 0.5f, 0.0f, (row) * offset - dimension * 0.5f);
+                                v.mNormal = glm::vec3(0, 1, 0);
+                                v.mUV = glm::vec2(column / float(n - 1), row / float(n - 1));
+                                vertices.push_back(v);
+
+                                indices.push_back(row * n + column);
+                                indices.push_back((row + 1) * n + (column + 2));
+                                indices.push_back(newId);
+                            }
+                        }
+                    }
+                    if (row == 0 && column == 0)
+                    {
+                        if ((row + 1) < n)
+                        {
+                            indices.push_back((row)*n + (column));
+                            indices.push_back((row + 1) * n + (column + 1));
+                            indices.push_back((row)*n + (column + 1));
+                            if ((row + 2) < n)
+                            {
+                                indices.push_back((row)*n + (column));
+                                indices.push_back((row + 2) * n + (column + 1));
+                                indices.push_back((row + 1) * n + (column + 1));
+
+                                if ((row + 4) < n)
+                                {
+                                    // big triangle
+                                    indices.push_back((row)*n + (column));
+                                    indices.push_back((row + 4) * n + (column));
+                                    indices.push_back((row + 2) * n + (column + 1));
+
+                                    indices.push_back((row + 4) * n + (column));
+                                    indices.push_back((row + 3) * n + (column + 1));
+                                    indices.push_back((row + 2) * n + (column + 1));
+
+                                    indices.push_back((row + 4) * n + (column));
+                                    indices.push_back((row + 4) * n + (column + 1));
+                                    indices.push_back((row + 3) * n + (column + 1));
+                                }
+                            }
+                        }
+                    }
+
+                    column += 3;
+                    continue;
+                }
+                else if (column == 0 && row < m)
+                {
+                    if ((row % 4) == 0)
+                    {
+                        if ((row + 1) < n)
+                        {
+                            indices.push_back((row)*n + (column));
+                            indices.push_back((row + 1) * n + (column + 1));
+                            indices.push_back((row)*n + (column + 1));
+                            if ((row + 2) < n)
+                            {
+                                indices.push_back((row)*n + (column));
+                                indices.push_back((row + 2) * n + (column + 1));
+                                indices.push_back((row + 1) * n + (column + 1));
+
+                                if ((row + 4) < n)
+                                {
+                                    // big triangle
+                                    indices.push_back((row)*n + (column));
+                                    indices.push_back((row + 4) * n + (column));
+                                    indices.push_back((row + 2) * n + (column + 1));
+
+                                    indices.push_back((row + 4)* n + (column));
+                                    indices.push_back((row + 3)* n + (column + 1));
+                                    indices.push_back((row + 2)* n + (column + 1));
+
+                                    indices.push_back((row + 4) * n + (column));
+                                    indices.push_back((row + 4) * n + (column + 1));
+                                    indices.push_back((row + 3) * n + (column + 1));
+                                }
+                                else
+                                {
+                                    // patch up the triangle hole at the end because we didn't actually have this vertex at this resolution
+                                    const uint32_t newId = vertices.size();
+                                    Vertex v;
+                                    v.mPosition = glm::vec3((column) * offset - dimension * 0.5f, 0.0f, (row + 4)*offset - dimension * 0.5f);
+                                    v.mNormal = glm::vec3(0, 1, 0);
+                                    v.mUV = glm::vec2(column / float(n - 1), row / float(n - 1));
+                                    vertices.push_back(v);
+
+                                    indices.push_back((row)*n + (column));
+                                    indices.push_back(newId);
+                                    indices.push_back((row + 2) * n + (column + 1));
+                                }
+                            }
+                        }
+                    }
+                    continue;
+                }
                 else
                 {
                     indices.push_back(row * n + column);
@@ -77,6 +207,7 @@ public:
 
         generateHorizontalStitchingTriangles(n, dimension, vertices, indices);
         generateVerticalStitchingTriangles(n, dimension, vertices, indices);
+
         mGrid.update(vertices.size() * sizeof(Vertex), indices.size() * sizeof(uint32_t), vertices.data(), indices.data());
     }
 
@@ -118,10 +249,12 @@ private:
             // last row
             int row = n - 1;
 
-            indices.push_back(row * n + column);
-            indices.push_back(row * n + (column + 1));
-            indices.push_back(endIdx + (column / 4));
-
+            if (column > 0)
+            {
+                indices.push_back(row * n + column);
+                indices.push_back(row * n + (column + 1));
+                indices.push_back(endIdx + (column / 4));
+            }
             indices.push_back(row * n + (column + 1));
             indices.push_back(row * n + (column + 2));
             indices.push_back(endIdx + (column / 4));
@@ -182,10 +315,12 @@ private:
         for (int row = 0; row < n; row += 4)
         {
             int column = n - 1;
-            indices.push_back(row * n + column);
-            indices.push_back(endIdx + (row / 4));
-            indices.push_back((row+1) * n + (column));
-
+            if (row > 0)
+            {
+                indices.push_back(row * n + column);
+                indices.push_back(endIdx + (row / 4));
+                indices.push_back((row + 1) * n + (column));
+            }
             indices.push_back((row+1) * n + (column));
             indices.push_back(endIdx + (row / 4));
             indices.push_back((row+2) * n + (column));
