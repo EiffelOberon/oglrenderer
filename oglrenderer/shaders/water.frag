@@ -28,7 +28,7 @@ layout(location = 0) out vec4 c;
 void main()
 {	
 	// calculate normal per pixel
-    const vec3 d= texture(displacement, uv).xyz;
+    const vec3 d = texture(displacement, uv).xyz;
 	const vec3 neighborX = vec3(1, 0, 0) + texture(displacement, uv + vec2(1.0f / OCEAN_RESOLUTION, 0)).xyz;
 	const vec3 neighborY = vec3(0, 0, 1) + texture(displacement, uv + vec2(0.0f, 1.0f / OCEAN_RESOLUTION)).xyz;
 	const vec3 tangent = normalize(neighborX - d);
@@ -51,8 +51,10 @@ void main()
 	vec3 rayDir = normalize(reflect(-viewDir, n));
 	rayDir.y = max(rayDir.y, 0.1f);
 
+    const float waveHeight = clamp(d.y, 0.0f, oceanParams.mWaveSettings.x) / oceanParams.mWaveSettings.x;
+
 	// transmission color
-	vec3 transmission = mix(oceanParams.mTransmission.xyz, oceanParams.mTransmission2.xyz, pow(abs(dot(halfDir, n)), oceanParams.mTransmission2.w));
+    vec3 transmission = mix(oceanParams.mTransmission.xyz, oceanParams.mTransmission2.xyz, pow(waveHeight, oceanParams.mTransmission2.w));
 
 	// direct specular and indirect specular components
 	const vec3 directSpecular = pow(clamp(dot(reflect(-sunDir, n), viewDir), 0.0f, 1.0f), 40.0f) * texture(environmentTex, skyParams.mSunSetting.xyz).xyz;
