@@ -28,7 +28,6 @@ public:
     }
     
 
-            int nBlocks = (int)pow(2, mPasses - 1 - i);
     int passes() const
     {
         return mPasses;
