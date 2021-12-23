@@ -30,7 +30,7 @@ layout(location = 2) out vec2 uv;
 
 void main()
 {
-	const vec2 testUV = (vertexPos.xz / OCEAN_RESOLUTION);
+	const vec2 testUV = (vertexPos.xz / oceanParams.mHeightSettings.x);
 	const float distanceToCamera = clamp(length(vertexPos.xyz - camParams.mEye.xyz), 0.0f, oceanParams.mTransmission.w) / oceanParams.mTransmission.w;
 
     const vec3 d = mix(texture(displacement, testUV).xyz, vec3(0, 0, 0), distanceToCamera);

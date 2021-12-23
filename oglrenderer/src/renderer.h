@@ -84,7 +84,6 @@ private:
     }
 
     // initialize uniform white noise [0, 1]
-    void updateOceanNoiseTexture();
     void updateWaterGrid();
 
     // methods for saving/loading settings
@@ -93,11 +92,6 @@ private:
 
     // textures
     Texture3D                mCloudTexture;
-    std::unique_ptr<Texture> mOceanNoiseTexture;
-    Texture                  mButterFlyTexture;
-
-    // shader buffers
-    ShaderBuffer mButterflyIndicesBuffer;
 
     // shaders
     std::unordered_map<uint32_t, std::unique_ptr<ShaderProgram>> mShaders;

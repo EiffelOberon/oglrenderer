@@ -12,9 +12,6 @@
 Renderer::Renderer()
     : mCloudTexture(CLOUD_RESOLUTION, CLOUD_RESOLUTION, CLOUD_RESOLUTION, 32, false)
     , mOceanFFT(nullptr)
-    , mOceanNoiseTexture(nullptr)
-    , mButterFlyTexture((int)(log(float(OCEAN_RESOLUTION)) / log(2.0f)), OCEAN_RESOLUTION, GL_NEAREST, false, 32, false, nullptr)
-    , mButterflyIndicesBuffer(OCEAN_RESOLUTION * sizeof(int))
     , mEnvironmentResolution(2048.0f, 2048.0f)
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mClipmap(6)
@@ -115,17 +112,10 @@ Renderer::Renderer()
 
     // ocean related noise texture and other shader buffers
     mOceanFFT = std::make_unique<OceanFFT>(OCEAN_RESOLUTION);
-    updateOceanNoiseTexture();
-    mButterflyIndicesBuffer.upload(mOceanFFT->bitReversedIndices());
-
-    // compute butterfly indices
-    mButterflyIndicesBuffer.bind(BUTTERFLY_INDICES);
-    mButterFlyTexture.bindImageTexture(PRECOMPUTE_BUTTERFLY_OUTPUT, GL_WRITE_ONLY);
-    const int workGroupSize = int(float(OCEAN_RESOLUTION) / float(PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE));
-    mShaders[PRECOMP_BUTTERFLY_SHADER]->dispatch(true, mOceanFFT->passes(), workGroupSize, 1);
+    mOceanFFT->precomputeButterflyIndices(*this);
 
     // compute water geometry
-    updateWaterGrid();
+    //updateWaterGrid();
     mClipmap.generateGeometry();
 
     glm::mat4 projMatrix = glm::perspective(glm::radians(60.0f), 1600.0f / 900.0f, 0.1f, 10000.0f);
@@ -171,20 +161,6 @@ void Renderer::updateCameraZoom(
     glm::mat4 viewMatrix = mCamera.getViewMatrix();
     mMVPMatrix.mViewMatrix = viewMatrix;
     updateUniform(MVP_MATRIX, mMVPMatrix);
-}
-
-
-void Renderer::updateOceanNoiseTexture()
-{
-    float* randomNumbers = new float[OCEAN_RESOLUTION * OCEAN_RESOLUTION * 4];
-
-    for (int i = 0; i < OCEAN_RESOLUTION * OCEAN_RESOLUTION * 4; ++i)
-    {
-        randomNumbers[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-    }
-
-    mOceanNoiseTexture = std::make_unique<Texture>(OCEAN_RESOLUTION, OCEAN_RESOLUTION, GL_NEAREST, false, 32, false, randomNumbers);
-    delete[] randomNumbers;
 }
 
 
@@ -302,10 +278,7 @@ void Renderer::preRender()
     }
 
     // ocean waves precomputation
-    if(mOceanNoiseTexture != nullptr)
-    {
-        mOceanFFT->precompute(*this, mOceanParams, *mOceanNoiseTexture, mButterFlyTexture);
-    }
+    mOceanFFT->precompute(*this, mOceanParams);
 
     // render quarter sized render texture
     if (mUpdateEnvironment)
@@ -652,7 +625,7 @@ void Renderer::renderGUI()
                     ImGui::Image(oceanHDzSpectrumTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
                 }
 
-                ImTextureID butterflyTexId = (ImTextureID)mButterFlyTexture.texId();
+                ImTextureID butterflyTexId = (ImTextureID)mOceanFFT->butterflyTexId();
                 {
                     ImVec2 pos = ImGui::GetCursorScreenPos();
                     ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left

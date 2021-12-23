@@ -29,8 +29,8 @@ void main()
 {	
 	// calculate normal per pixel
     const vec3 d = texture(displacement, uv).xyz;
-	const vec3 neighborX = vec3(1, 0, 0) + texture(displacement, uv + vec2(1.0f / OCEAN_RESOLUTION, 0)).xyz;
-	const vec3 neighborY = vec3(0, 0, 1) + texture(displacement, uv + vec2(0.0f, 1.0f / OCEAN_RESOLUTION)).xyz;
+	const vec3 neighborX = vec3(1, 0, 0) + texture(displacement, uv + vec2(1.0f / oceanParams.mHeightSettings.x, 0)).xyz;
+	const vec3 neighborY = vec3(0, 0, 1) + texture(displacement, uv + vec2(0.0f, 1.0f / oceanParams.mHeightSettings.x)).xyz;
 	const vec3 tangent = normalize(neighborX - d);
 	const vec3 bitangent = normalize(neighborY - d);
 	vec3 n = normalize(cross(tangent, bitangent));
@@ -49,7 +49,7 @@ void main()
 
 	vec3 radiance = vec3(0.0f);
 	vec3 rayDir = normalize(reflect(-viewDir, n));
-	rayDir.y = max(rayDir.y, 0.1f);
+	rayDir.y = max(rayDir.y, 0.05f);
 	
 	const float distanceToCamera = clamp(length(position - camParams.mEye.xyz), 0.0f, oceanParams.mTransmission.w) / oceanParams.mTransmission.w;
     const float waveHeight = mix(clamp(d.y, 0.0f, oceanParams.mWaveSettings.x) / oceanParams.mWaveSettings.x, 0, distanceToCamera);
