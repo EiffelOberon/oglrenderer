@@ -80,7 +80,7 @@ public:
     }
 
 
-    GLuint texId()
+    GLuint texId() const
     {
         return mTex;
     }

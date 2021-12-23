@@ -83,14 +83,8 @@ private:
 
     // textures
     Texture3D                mCloudTexture;
-    Texture                  mOceanDisplacementTexture;
-    Texture                  mOceanH0SpectrumTexture;
-    Texture                  mOceanHDxSpectrumTexture;
-    Texture                  mOceanHDySpectrumTexture;
-    Texture                  mOceanHDzSpectrumTexture;
     std::unique_ptr<Texture> mOceanNoiseTexture;
     Texture                  mButterFlyTexture;
-    Texture                  mPingPongTexture;
 
     // shader buffers
     ShaderBuffer mButterflyIndicesBuffer;

@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "glm/glm.hpp"
+#include "texture.h"
 
 class OceanFFT
 {
@@ -13,6 +14,12 @@ public:
         const int N)
         : mN(N)
         , mPasses((int)(float(log(float(N))) / float(log(2.0f))))
+        , mOceanDisplacementTexture(N, N, GL_LINEAR_MIPMAP_LINEAR, true, 32, false)
+        , mOceanH0SpectrumTexture(N, N, GL_NEAREST, false, 32, false)
+        , mOceanHDxSpectrumTexture(N, N, GL_NEAREST, false, 32, false)
+        , mOceanHDySpectrumTexture(N, N, GL_NEAREST, false, 32, false)
+        , mOceanHDzSpectrumTexture(N, N, GL_NEAREST, false, 32, false)
+        , mPingPongTexture(N, N, GL_NEAREST, false, 32, false)
     {
         mBitReversedIndices.resize(N);
         for (int i = 0; i < N; i++)
@@ -26,7 +33,98 @@ public:
     ~OceanFFT()
     {
     }
+
+
+    void bind(
+        const int idx)
+    {
+        mOceanDisplacementTexture.bindTexture(idx);
+    }
     
+
+    void bindPass1(
+        const bool readonly)
+    {
+        mOceanH0SpectrumTexture.bindImageTexture(OCEAN_HEIGHTFIELD_H0K, readonly ? GL_READ_ONLY : GL_WRITE_ONLY);
+    }
+
+
+    void bindPass2()
+    {
+        mOceanH0SpectrumTexture.bindImageTexture(OCEAN_HEIGHT_FINAL_H0K, GL_READ_ONLY);
+        mOceanHDxSpectrumTexture.bindImageTexture(OCEAN_HEIGHT_FINAL_H_X, GL_WRITE_ONLY);
+        mOceanHDySpectrumTexture.bindImageTexture(OCEAN_HEIGHT_FINAL_H_Y, GL_WRITE_ONLY);
+        mOceanHDzSpectrumTexture.bindImageTexture(OCEAN_HEIGHT_FINAL_H_Z, GL_WRITE_ONLY);
+    }
+
+
+    void bindPass3(
+        const int differential)
+    {
+        Texture* spectrum = nullptr;
+        switch (differential)
+        {
+        case 0: spectrum = &mOceanHDxSpectrumTexture; break;
+        case 1: spectrum = &mOceanHDySpectrumTexture; break;
+        case 2: spectrum = &mOceanHDzSpectrumTexture; break;
+        }
+
+        spectrum->bindImageTexture(BUTTERFLY_PINGPONG_TEX0, GL_READ_WRITE);
+        mPingPongTexture.bindImageTexture(BUTTERFLY_PINGPONG_TEX1, GL_READ_WRITE);
+    }
+
+
+    void bindPass4(
+        const int differential)
+    {
+        Texture* spectrum = nullptr;
+        switch (differential)
+        {
+        case 0: spectrum = &mOceanHDxSpectrumTexture; break;
+        case 1: spectrum = &mOceanHDySpectrumTexture; break;
+        case 2: spectrum = &mOceanHDzSpectrumTexture; break;
+        }
+        spectrum->bindImageTexture(INVERSION_PINGPONG_TEX0, GL_READ_ONLY);
+        mPingPongTexture.bindImageTexture(INVERSION_PINGPONG_TEX1, GL_READ_ONLY);
+        mOceanDisplacementTexture.bindImageTexture(INVERSION_OUTPUT_TEX, GL_READ_WRITE);
+    }
+
+
+    void finalize()
+    {
+        mOceanDisplacementTexture.generateMipmap();
+    }
+
+
+    uint32_t h0TexId() const
+    {
+        return mOceanH0SpectrumTexture.texId();
+    }
+
+
+    uint32_t dxTexId() const
+    {
+        return mOceanHDxSpectrumTexture.texId();
+    }
+
+
+    uint32_t dyTexId() const
+    {
+        return mOceanHDySpectrumTexture.texId();
+    }
+
+
+    uint32_t dzTexId() const
+    {
+        return mOceanHDzSpectrumTexture.texId();
+    }
+
+
+    uint32_t displacementTexId() const
+    {
+        return mOceanDisplacementTexture.texId();
+    }
+
 
     int passes() const
     {
@@ -66,6 +164,13 @@ private:
         return leftPart | rightPart;
     }
 
+
+    Texture mOceanDisplacementTexture;
+    Texture mOceanH0SpectrumTexture;
+    Texture mOceanHDxSpectrumTexture;
+    Texture mOceanHDySpectrumTexture;
+    Texture mOceanHDzSpectrumTexture;
+    Texture mPingPongTexture;
 
     int mN;
     int mPasses;
