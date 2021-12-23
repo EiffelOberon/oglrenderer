@@ -44,7 +44,14 @@
 
 // texture resolution
 # define CLOUD_RESOLUTION 128
-# define OCEAN_RESOLUTION 256
+
+// ocean resolution
+# define OCEAN_RESOLUTION_1 256
+# define OCEAN_DIMENSIONS_1 1024
+# define OCEAN_RESOLUTION_2 128
+# define OCEAN_DIMENSIONS_2 128
+# define OCEAN_RESOLUTION_3 64
+# define OCEAN_DIMENSIONS_3 64
 
 // compute shader
 # define PRECOMPUTE_CLOUD_LOCAL_SIZE       4
@@ -95,8 +102,9 @@
 # define SCREEN_QUAD_TEX 1
 
 // water shader
-# define WATER_DISPLACEMENT_TEX 1
-# define WATER_NORMAL_TEX       2
-# define WATER_ENV_TEX          3
+# define WATER_DISPLACEMENT1_TEX 1
+# define WATER_DISPLACEMENT2_TEX 2
+# define WATER_DISPLACEMENT3_TEX 3
+# define WATER_ENV_TEX           4
 
 #endif

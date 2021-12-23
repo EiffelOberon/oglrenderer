@@ -133,7 +133,9 @@ private:
     NoiseParams mWorleyNoiseParams;
     NoiseParams mPerlinNoiseParams;
 
-    std::unique_ptr<OceanFFT> mOceanFFT;
+    std::unique_ptr<OceanFFT> mOceanFFTHighRes;
+    std::unique_ptr<OceanFFT> mOceanFFTMidRes;
+    std::unique_ptr<OceanFFT> mOceanFFTLowRes;
 
     // gui
     bool mShowPropertiesWindow;

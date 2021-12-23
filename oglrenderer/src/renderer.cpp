@@ -11,7 +11,9 @@
 
 Renderer::Renderer()
     : mCloudTexture(CLOUD_RESOLUTION, CLOUD_RESOLUTION, CLOUD_RESOLUTION, 32, false)
-    , mOceanFFT(nullptr)
+    , mOceanFFTHighRes(nullptr)
+    , mOceanFFTMidRes(nullptr)
+    , mOceanFFTLowRes(nullptr)
     , mEnvironmentResolution(2048.0f, 2048.0f)
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mClipmap(6)
@@ -98,7 +100,7 @@ Renderer::Renderer()
     addUniform(RENDERER_PARAMS, mRenderParams);
 
     // initialize ocean params
-    mOceanParams.mHeightSettings = glm::ivec4(OCEAN_RESOLUTION, 1024, 0, 0);
+    mOceanParams.mHeightSettings = glm::ivec4(OCEAN_RESOLUTION_1, OCEAN_DIMENSIONS_1, 0, 0);
     mOceanParams.mPingPong = glm::ivec4(0, 0, 0, 0);
     mOceanParams.mWaveSettings = glm::vec4(4.0f, 40.0f, 1.0f, 1.0f);
     mOceanParams.mTransmission = glm::vec4(0.0f, 0.0f, 1.0f, 2000.0f);
@@ -111,8 +113,9 @@ Renderer::Renderer()
     mRenderCubemapTexture = std::make_unique<RenderCubemapTexture>(mEnvironmentResolution.x);
 
     // ocean related noise texture and other shader buffers
-    mOceanFFT = std::make_unique<OceanFFT>(OCEAN_RESOLUTION);
-    mOceanFFT->precomputeButterflyIndices(*this);
+    mOceanFFTHighRes = std::make_unique<OceanFFT>(*this, OCEAN_RESOLUTION_1, OCEAN_DIMENSIONS_1);
+    mOceanFFTMidRes = std::make_unique<OceanFFT>(*this, OCEAN_RESOLUTION_2, OCEAN_DIMENSIONS_2);
+    mOceanFFTLowRes = std::make_unique<OceanFFT>(*this, OCEAN_RESOLUTION_3, OCEAN_DIMENSIONS_3);
 
     // compute water geometry
     //updateWaterGrid();
@@ -278,7 +281,9 @@ void Renderer::preRender()
     }
 
     // ocean waves precomputation
-    mOceanFFT->precompute(*this, mOceanParams);
+    mOceanFFTHighRes->precompute(*this, mOceanParams);
+    mOceanFFTMidRes->precompute(*this, mOceanParams);
+    mOceanFFTLowRes->precompute(*this, mOceanParams);
 
     // render quarter sized render texture
     if (mUpdateEnvironment)
@@ -340,7 +345,10 @@ void Renderer::render()
 
     mShaders[WATER_SHADER]->use();
     mRenderCubemapTexture->bindTexture(WATER_ENV_TEX, 0);
-    mOceanFFT->bind(WATER_DISPLACEMENT_TEX);
+    mOceanFFTHighRes->bind(WATER_DISPLACEMENT1_TEX);
+    mOceanFFTMidRes->bind(WATER_DISPLACEMENT2_TEX);
+    mOceanFFTLowRes->bind(WATER_DISPLACEMENT3_TEX);
+
     if (mOceanWireframe)
     {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -554,10 +562,6 @@ void Renderer::renderGUI()
                 {
                     updateUniform(OCEAN_PARAMS, mOceanParams);
                 }
-                if (ImGui::SliderInt("Patch dimension", &mOceanParams.mHeightSettings.y, 64, 1024))
-                {
-                    updateUniform(OCEAN_PARAMS, mOceanParams);
-                }
                 if (ImGui::SliderFloat("Wave amplitude", &mOceanParams.mWaveSettings.x, 0.01f, 20.0f))
                 {
                     updateUniform(OCEAN_PARAMS, mOceanParams);
@@ -582,7 +586,7 @@ void Renderer::renderGUI()
                 const float textureWidth = 100;
                 const float textureHeight = 100;
                 ImGui::Text("Ocean spectrum: %.0fx%.0f", textureWidth, textureHeight);
-                ImTextureID oceanSpectrumTexId = (ImTextureID)mOceanFFT->h0TexId();
+                ImTextureID oceanSpectrumTexId = (ImTextureID)mOceanFFTHighRes->h0TexId();
                 {
                     ImVec2 pos = ImGui::GetCursorScreenPos();
                     ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
@@ -592,7 +596,7 @@ void Renderer::renderGUI()
                     ImGui::Image(oceanSpectrumTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
                 }
 
-                ImTextureID oceanHDxSpectrumTexId = (ImTextureID)mOceanFFT->dxTexId();
+                ImTextureID oceanHDxSpectrumTexId = (ImTextureID)mOceanFFTHighRes->dxTexId();
                 {
                     ImVec2 pos = ImGui::GetCursorScreenPos();
                     ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
@@ -603,7 +607,7 @@ void Renderer::renderGUI()
                 }
                 ImGui::SameLine();
 
-                ImTextureID oceanHDySpectrumTexId = (ImTextureID)mOceanFFT->dyTexId();
+                ImTextureID oceanHDySpectrumTexId = (ImTextureID)mOceanFFTHighRes->dyTexId();
                 {
                     ImVec2 pos = ImGui::GetCursorScreenPos();
                     ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
@@ -615,7 +619,7 @@ void Renderer::renderGUI()
                 ImGui::SameLine();
 
 
-                ImTextureID oceanHDzSpectrumTexId = (ImTextureID)mOceanFFT->dzTexId();
+                ImTextureID oceanHDzSpectrumTexId = (ImTextureID)mOceanFFTHighRes->dzTexId();
                 {
                     ImVec2 pos = ImGui::GetCursorScreenPos();
                     ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
@@ -625,7 +629,7 @@ void Renderer::renderGUI()
                     ImGui::Image(oceanHDzSpectrumTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
                 }
 
-                ImTextureID butterflyTexId = (ImTextureID)mOceanFFT->butterflyTexId();
+                ImTextureID butterflyTexId = (ImTextureID)mOceanFFTHighRes->butterflyTexId();
                 {
                     ImVec2 pos = ImGui::GetCursorScreenPos();
                     ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
@@ -635,7 +639,27 @@ void Renderer::renderGUI()
                     ImGui::Image(butterflyTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
                 }
 
-                ImTextureID displacementTexId = (ImTextureID)mOceanFFT->displacementTexId();
+                ImTextureID displacementTexId = (ImTextureID)mOceanFFTHighRes->displacementTexId();
+                {
+                    ImVec2 pos = ImGui::GetCursorScreenPos();
+                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                    ImGui::Image(displacementTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                }
+                ImGui::SameLine();
+                displacementTexId = (ImTextureID)mOceanFFTMidRes->displacementTexId();
+                {
+                    ImVec2 pos = ImGui::GetCursorScreenPos();
+                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                    ImGui::Image(displacementTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                }
+                ImGui::SameLine();
+                displacementTexId = (ImTextureID)mOceanFFTLowRes->displacementTexId();
                 {
                     ImVec2 pos = ImGui::GetCursorScreenPos();
                     ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left

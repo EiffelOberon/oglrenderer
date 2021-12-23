@@ -20,17 +20,36 @@ layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
 {
     OceanParams oceanParams;
 };
-layout(binding = WATER_DISPLACEMENT_TEX) uniform sampler2D displacement;
+
+layout(binding = WATER_DISPLACEMENT1_TEX) uniform sampler2D displacement1;
+layout(binding = WATER_DISPLACEMENT2_TEX) uniform sampler2D displacement2;
+layout(binding = WATER_DISPLACEMENT3_TEX) uniform sampler2D displacement3;
+
 layout(binding = WATER_ENV_TEX) uniform samplerCube environmentTex;
 
 layout(location = 0) out vec4 c;
 
 void main()
 {	
+	const vec2 testUV1 = uv / OCEAN_DIMENSIONS_1;
+	const vec2 testUV2 = uv / OCEAN_DIMENSIONS_2;
+	const vec2 testUV3 = uv / OCEAN_DIMENSIONS_3;
+
 	// calculate normal per pixel
-    const vec3 d = texture(displacement, uv).xyz;
-	const vec3 neighborX = vec3(1, 0, 0) + texture(displacement, uv + vec2(1.0f / oceanParams.mHeightSettings.x, 0)).xyz;
-	const vec3 neighborY = vec3(0, 0, 1) + texture(displacement, uv + vec2(0.0f, 1.0f / oceanParams.mHeightSettings.x)).xyz;
+    const vec3 d1 = texture(displacement1, testUV1).xyz;
+	const vec3 d2 = texture(displacement2, testUV2).xyz;
+	const vec3 d3 = texture(displacement3, testUV3).xyz;
+	const vec3 d = d1 + d2 + d3;
+
+	const vec3 neighborX = vec3(1, 0, 0) + 
+						   texture(displacement1, testUV1 + vec2(1.0f / OCEAN_DIMENSIONS_1, 0)).xyz + 
+						   texture(displacement2, testUV2 + vec2(1.0f / OCEAN_DIMENSIONS_2, 0)).xyz + 
+						   texture(displacement3, testUV3 + vec2(1.0f / OCEAN_DIMENSIONS_3, 0)).xyz;
+	const vec3 neighborY = vec3(0, 0, 1) + 
+	                       texture(displacement1, testUV1 + vec2(0.0f, 1.0f / OCEAN_DIMENSIONS_1)).xyz + 
+						   texture(displacement2, testUV2 + vec2(0.0f, 1.0f / OCEAN_DIMENSIONS_2)).xyz + 
+						   texture(displacement3, testUV3 + vec2(0.0f, 1.0f / OCEAN_DIMENSIONS_3)).xyz;
+
 	const vec3 tangent = normalize(neighborX - d);
 	const vec3 bitangent = normalize(neighborY - d);
 	vec3 n = normalize(cross(tangent, bitangent));
@@ -49,7 +68,7 @@ void main()
 
 	vec3 radiance = vec3(0.0f);
 	vec3 rayDir = normalize(reflect(-viewDir, n));
-	rayDir.y = max(rayDir.y, 0.05f);
+	rayDir.y = max(rayDir.y, 0.0f);
 	
 	const float distanceToCamera = clamp(length(position - camParams.mEye.xyz), 0.0f, oceanParams.mTransmission.w) / oceanParams.mTransmission.w;
     const float waveHeight = mix(clamp(d.y, 0.0f, oceanParams.mWaveSettings.x) / oceanParams.mWaveSettings.x, 0, distanceToCamera);

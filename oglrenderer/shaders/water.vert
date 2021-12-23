@@ -23,21 +23,25 @@ layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
 };
 
 
-layout(binding = WATER_DISPLACEMENT_TEX) uniform sampler2D displacement;
+layout(binding = WATER_DISPLACEMENT1_TEX) uniform sampler2D displacement1;
+layout(binding = WATER_DISPLACEMENT2_TEX) uniform sampler2D displacement2;
+layout(binding = WATER_DISPLACEMENT3_TEX) uniform sampler2D displacement3;
 
 layout(location = 1) out vec3 position;
 layout(location = 2) out vec2 uv;
 
 void main()
 {
-	const vec2 testUV = (vertexPos.xz / oceanParams.mHeightSettings.x);
-	const float distanceToCamera = clamp(length(vertexPos.xyz - camParams.mEye.xyz), 0.0f, oceanParams.mTransmission.w) / oceanParams.mTransmission.w;
-
-    const vec3 d = mix(texture(displacement, testUV).xyz, vec3(0, 0, 0), distanceToCamera);
-	const vec3 newVertexPos = vertexPos + d;
+	const vec2 testUV1 = vertexPos.xz / OCEAN_DIMENSIONS_1;
+	const vec2 testUV2 = vertexPos.xz / OCEAN_DIMENSIONS_2;
+	const vec2 testUV3 = vertexPos.xz / OCEAN_DIMENSIONS_3;
+    const vec3 d1 = texture(displacement1, testUV1).xyz;
+    const vec3 d2 = texture(displacement2, testUV2).xyz;
+    const vec3 d3 = texture(displacement3, testUV3).xyz;
+	const vec3 newVertexPos = vertexPos + d1 + d2 + d3;
 
 	gl_Position =  mvpMatrix.mProjectionMatrix * mvpMatrix.mViewMatrix * vec4(newVertexPos, 1.0);
 	
 	position = newVertexPos;
-	uv = testUV;
+	uv = vertexPos.xz;
 }

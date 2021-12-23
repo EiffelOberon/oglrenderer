@@ -14,15 +14,18 @@ class OceanFFT
 
 public:
     OceanFFT(
-        const int N)
+        Renderer    &renderer,
+        const int   N,
+        const float L)
         : mN(N)
+        , mL(L)
         , mPasses((int)(float(log(float(N))) / float(log(2.0f))))
         , mOceanDisplacementTexture(N, N, GL_LINEAR_MIPMAP_LINEAR, true, 32, false)
         , mOceanH0SpectrumTexture(N, N, GL_NEAREST, false, 32, false)
         , mOceanHDxSpectrumTexture(N, N, GL_NEAREST, false, 32, false)
         , mOceanHDySpectrumTexture(N, N, GL_NEAREST, false, 32, false)
         , mOceanHDzSpectrumTexture(N, N, GL_NEAREST, false, 32, false)
-        , mOceanNoiseTexture(OCEAN_RESOLUTION, OCEAN_RESOLUTION, GL_NEAREST, false, 32, false)
+        , mOceanNoiseTexture(N, N, GL_NEAREST, false, 32, false)
         , mPingPongTexture(N, N, GL_NEAREST, false, 32, false)
         , mButterFlyTexture((int)(log(float(N)) / log(2.0f)), N, GL_NEAREST, false, 32, false, nullptr)
         , mButterflyIndicesBuffer(N * sizeof(int))
@@ -45,6 +48,8 @@ public:
             mBitReversedIndices[i] = x;
         }
         mButterflyIndicesBuffer.upload(bitReversedIndices());
+
+        precomputeButterflyIndices(renderer);
     }
 
     ~OceanFFT()
@@ -57,7 +62,8 @@ public:
         OceanParams &oceanParams)
     {
         oceanParams.mHeightSettings.x = mN;
-        renderer.updateUniform(OCEAN_PARAMS, offsetof(OceanParams, mHeightSettings), sizeof(int), oceanParams.mHeightSettings.x);
+        oceanParams.mHeightSettings.y = mL;
+        renderer.updateUniform(OCEAN_PARAMS, offsetof(OceanParams, mHeightSettings), sizeof(glm::ivec4), oceanParams.mHeightSettings);
 
         const int workGroupSize = int(float(mN) / float(PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE));
         // pass 1
@@ -105,17 +111,6 @@ public:
             renderer.dispatch(INVERSION_SHADER, true, workGroupSize, workGroupSize, 1);
         }
         finalize();
-    }
-
-
-    void precomputeButterflyIndices(
-        Renderer& renderer)
-    {
-        // compute butterfly indices
-        mButterflyIndicesBuffer.bind(BUTTERFLY_INDICES);
-        mButterFlyTexture.bindImageTexture(PRECOMPUTE_BUTTERFLY_OUTPUT, GL_WRITE_ONLY);
-        const int workGroupSize = int(float(mN) / float(PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE));
-        renderer.dispatch(PRECOMP_BUTTERFLY_SHADER, true, passes(), workGroupSize, 1);
     }
 
 
@@ -168,6 +163,16 @@ public:
     }
 
 private:
+    void precomputeButterflyIndices(
+        Renderer& renderer)
+    {
+        // compute butterfly indices
+        mButterflyIndicesBuffer.bind(BUTTERFLY_INDICES);
+        mButterFlyTexture.bindImageTexture(PRECOMPUTE_BUTTERFLY_OUTPUT, GL_WRITE_ONLY);
+        const int workGroupSize = int(float(mN) / float(PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE));
+        renderer.dispatch(PRECOMP_BUTTERFLY_SHADER, true, passes(), workGroupSize, 1);
+    }
+
 
     void bindPass1(
         const bool readonly)
@@ -268,6 +273,7 @@ private:
     ShaderBuffer mButterflyIndicesBuffer;
 
     int mN;
+    float mL;
     int mPasses;
     std::vector<int> mBitReversedIndices;
 };
