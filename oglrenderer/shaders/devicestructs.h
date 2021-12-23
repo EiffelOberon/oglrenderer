@@ -64,7 +64,7 @@ struct OceanParams
     // x: amplitude, y: wind speed z & w: wind direction
     vec4 mWaveSettings;
 
-    // x, y, z: transmission w: empty
+    // x, y, z: transmission w: dampening distance
     vec4 mTransmission;
     // x, y, z: transmission w: lerp exponent
     vec4 mTransmission2;

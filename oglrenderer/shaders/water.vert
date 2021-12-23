@@ -13,6 +13,10 @@ layout(std430, binding = MVP_MATRIX) uniform Matrices
 {
     MVPMatrix mvpMatrix;
 };
+layout(std430, binding = CAMERA_PARAMS) uniform CameraParamsUniform
+{
+	CameraParams camParams;
+};
 layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
 {
     OceanParams oceanParams;
@@ -27,8 +31,9 @@ layout(location = 2) out vec2 uv;
 void main()
 {
 	const vec2 testUV = (vertexPos.xz / OCEAN_RESOLUTION);
+	const float distanceToCamera = clamp(length(vertexPos.xyz - camParams.mEye.xyz), 0.0f, oceanParams.mTransmission.w) / oceanParams.mTransmission.w;
 
-    const vec3 d= texture(displacement, testUV).xyz;
+    const vec3 d = mix(texture(displacement, testUV).xyz, vec3(0, 0, 0), distanceToCamera);
 	const vec3 newVertexPos = vertexPos + d;
 
 	gl_Position =  mvpMatrix.mProjectionMatrix * mvpMatrix.mViewMatrix * vec4(newVertexPos, 1.0);

@@ -235,6 +235,8 @@ void main()
     }
 
     cloudColor *= texture(environmentTexture, sunDir.xyz);
+    cloudColor.xyz = max(vec3(renderParams.mCloudSettings.x), cloudColor.xyz);
+
     transmittance = clamp(transmittance, 0.0f, 1.0f);
     if(transmittance < 1.0f)
     {

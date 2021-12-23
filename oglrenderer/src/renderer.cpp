@@ -108,7 +108,7 @@ Renderer::Renderer()
     mOceanParams.mHeightSettings = glm::ivec4(OCEAN_RESOLUTION, 1024, 0, 0);
     mOceanParams.mPingPong = glm::ivec4(0, 0, 0, 0);
     mOceanParams.mWaveSettings = glm::vec4(4.0f, 40.0f, 1.0f, 1.0f);
-    mOceanParams.mTransmission = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+    mOceanParams.mTransmission = glm::vec4(0.0f, 0.0f, 1.0f, 2000.0f);
     mOceanParams.mTransmission2 = glm::vec4(0.0f, 0.0f, 1.0f, 4.0f);
     addUniform(OCEAN_PARAMS, mOceanParams);
 
@@ -659,6 +659,10 @@ void Renderer::renderGUI()
                 {
                     updateUniform(OCEAN_PARAMS, mOceanParams);
                 }
+                if (ImGui::SliderFloat("Dampening distance", &mOceanParams.mTransmission.w, 1000.0f, 5000.0f))
+                {
+                    updateUniform(OCEAN_PARAMS, mOceanParams);
+                }
                 if (ImGui::Checkbox("Wireframe", &mOceanWireframe))
                 {
 
@@ -787,6 +791,7 @@ void Renderer::saveStates()
     ini["oceanparams"]["transmissionX"] = std::to_string(mOceanParams.mTransmission.x);
     ini["oceanparams"]["transmissionY"] = std::to_string(mOceanParams.mTransmission.y);
     ini["oceanparams"]["transmissionZ"] = std::to_string(mOceanParams.mTransmission.z);
+    ini["oceanparams"]["dampeningdistance"] = std::to_string(mOceanParams.mTransmission.w);
 
     ini["oceanparams"]["transmission2X"] = std::to_string(mOceanParams.mTransmission2.x);
     ini["oceanparams"]["transmission2Y"] = std::to_string(mOceanParams.mTransmission2.y);
@@ -855,6 +860,8 @@ void Renderer::loadStates()
             mOceanParams.mTransmission.x = std::stof(ini["oceanparams"]["transmissionX"]);
             mOceanParams.mTransmission.y = std::stof(ini["oceanparams"]["transmissionY"]);
             mOceanParams.mTransmission.z = std::stof(ini["oceanparams"]["transmissionZ"]);
+            //mOceanParams.mTransmission.w = std::stof(ini["oceanparams"]["dampeningdistance"]);
+            
             mOceanParams.mTransmission2.x = std::stof(ini["oceanparams"]["transmission2X"]);
             mOceanParams.mTransmission2.y = std::stof(ini["oceanparams"]["transmission2Y"]);
             mOceanParams.mTransmission2.z = std::stof(ini["oceanparams"]["transmission2Z"]);
