@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <unordered_map>
 #include <memory.h>
 
 #include "glm/glm.hpp"
@@ -9,7 +10,6 @@
 #include "clipmap.h"
 #include "deviceconstants.h" 
 #include "devicestructs.h"
-#include "oceanfft.h"
 #include "quad.h"
 #include "rendertexture.h"
 #include "shader.h"
@@ -18,6 +18,7 @@
 #include "texture.h"
 #include "vertexbuffer.h"
 
+class OceanFFT;
 class Renderer
 {
 public:
@@ -34,25 +35,15 @@ public:
     void resize(int width, 
                 int height);
 
-private:
-
-    template<class UniformType>
-    void addUniform(
-        uint32_t    bindingPt,
-        UniformType& memoryBlock)
+    void dispatch(
+        const uint32_t shaderIdx,
+        const bool     insertImageBarrier,
+        const uint32_t workGroupX,
+        const uint32_t workGroupY,
+        const uint32_t workGroupZ)
     {
-        if (mUniforms.find(bindingPt) == mUniforms.end())
-        {
-            mUniforms[bindingPt] = std::make_unique<UniformBuffer>(sizeof(UniformType), bindingPt);
-            mUniforms[bindingPt]->upload((void*)&memoryBlock);
-        }
-        else
-        {
-            // should not be adding multiple uniforms to the same binding point
-            assert(false);
-        }
+        mShaders[shaderIdx]->dispatch(insertImageBarrier, workGroupX, workGroupY, workGroupZ);
     }
-
 
     template<class UniformType>
     void updateUniform(
@@ -73,6 +64,25 @@ private:
         mUniforms[bindingPt]->upload(offsetInBytes, sizeInBytes, (void*)&memoryBlock);
     }
 
+private:
+
+    template<class UniformType>
+    void addUniform(
+        uint32_t    bindingPt,
+        UniformType& memoryBlock)
+    {
+        if (mUniforms.find(bindingPt) == mUniforms.end())
+        {
+            mUniforms[bindingPt] = std::make_unique<UniformBuffer>(sizeof(UniformType), bindingPt);
+            mUniforms[bindingPt]->upload((void*)&memoryBlock);
+        }
+        else
+        {
+            // should not be adding multiple uniforms to the same binding point
+            assert(false);
+        }
+    }
+
     // initialize uniform white noise [0, 1]
     void updateOceanNoiseTexture();
     void updateWaterGrid();
@@ -90,19 +100,7 @@ private:
     ShaderBuffer mButterflyIndicesBuffer;
 
     // shaders
-    ShaderProgram mButterflyOpShader;
-    ShaderProgram mInversionShader;
-    ShaderProgram mPrecomputeEnvironmentShader;
-    ShaderProgram mPrecomputeCloudShader;
-    ShaderProgram mPrecomputeOceanH0Shader;
-    ShaderProgram mPrecomputeOceanHShader;
-    ShaderProgram mPrecomputeButterflyTexShader;
-    ShaderProgram mPrerenderQuadShader;
-    ShaderProgram mTexturedQuadShader;
-    ShaderProgram mWorleyNoiseQuadShader;
-    ShaderProgram mPerlinNoiseQuadShader;
-    ShaderProgram mCloudNoiseQuadShader;
-    ShaderProgram mWaterShader;
+    std::unordered_map<uint32_t, std::unique_ptr<ShaderProgram>> mShaders;
         
     // quad geometry
     Quad          mQuad;
@@ -141,7 +139,7 @@ private:
     NoiseParams mWorleyNoiseParams;
     NoiseParams mPerlinNoiseParams;
 
-    OceanFFT mOceanFFT;
+    std::unique_ptr<OceanFFT> mOceanFFT;
 
     // gui
     bool mShowPropertiesWindow;

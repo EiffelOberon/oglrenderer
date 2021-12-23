@@ -3,7 +3,10 @@
 #include <math.h>
 #include <vector>
 
+#include "deviceconstants.h"
+#include "devicestructs.h"
 #include "glm/glm.hpp"
+#include "renderer.h"
 #include "texture.h"
 
 class OceanFFT
@@ -34,6 +37,60 @@ public:
     {
     }
 
+
+    void precompute(
+        Renderer    &renderer,
+        OceanParams &oceanParams,
+        Texture     &noiseTexture,
+        Texture     &butterflyTexture)
+    {
+        const int workGroupSize = int(float(OCEAN_RESOLUTION) / float(PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE));
+        // pass 1
+        noiseTexture.bindTexture(OCEAN_HEIGHTFIELD_NOISE);
+        bindPass1(false);
+        renderer.dispatch(PRECOMP_OCEAN_H0_SHADER, true, workGroupSize, workGroupSize, 1);
+
+        // pass 2
+        bindPass2();
+        renderer.dispatch(PRECOMP_OCEAN_H_SHADER, true, workGroupSize, workGroupSize, 1);
+
+        for (int texIdx = 0; texIdx < 3; ++texIdx)
+        {
+            butterflyTexture.bindImageTexture(BUTTERFLY_INPUT_TEX, GL_READ_ONLY);
+            // 0 = dx, 1 = dy, 2 = dz
+            bindPass3(texIdx);
+
+            for (int i = 0; i < passes(); ++i)
+            {
+                oceanParams.mPingPong.y = i;
+                oceanParams.mPingPong.z = 0;
+                renderer.updateUniform(OCEAN_PARAMS, offsetof(OceanParams, mPingPong), sizeof(glm::ivec4), oceanParams.mPingPong);
+
+                renderer.dispatch(BUTTERFLY_SHADER, true, workGroupSize, workGroupSize, 1);
+
+                oceanParams.mPingPong.x++;
+                oceanParams.mPingPong.x = oceanParams.mPingPong.x % 2;
+            }
+
+            for (int i = 0; i < passes(); ++i)
+            {
+                oceanParams.mPingPong.y = i;
+                oceanParams.mPingPong.z = 1;
+                renderer.updateUniform(OCEAN_PARAMS, offsetof(OceanParams, mPingPong), sizeof(glm::ivec4), oceanParams.mPingPong);
+
+                renderer.dispatch(BUTTERFLY_SHADER, true, workGroupSize, workGroupSize, 1);
+
+                oceanParams.mPingPong.x++;
+                oceanParams.mPingPong.x = oceanParams.mPingPong.x % 2;
+            }
+
+            oceanParams.mPingPong.w = texIdx;
+            renderer.updateUniform(OCEAN_PARAMS, offsetof(OceanParams, mPingPong), sizeof(glm::ivec4), oceanParams.mPingPong);
+            bindPass4(texIdx);
+            renderer.dispatch(INVERSION_SHADER, true, workGroupSize, workGroupSize, 1);
+        }
+        finalize();
+    }
 
     void bind(
         const int idx)

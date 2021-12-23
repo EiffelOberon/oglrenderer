@@ -6,24 +6,12 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "imgui.h"
 #include "ini.h"
+#include "oceanfft.h"
 
 
 Renderer::Renderer()
-    : mButterflyOpShader("./spv/butterflyoperation.spv")
-    , mInversionShader("./spv/inversion.spv")
-    , mPrecomputeButterflyTexShader("./spv/precomputebutterfly.spv")
-    , mPrecomputeCloudShader("./spv/precomputecloud.spv")
-    , mPrecomputeEnvironmentShader("./spv/vert.spv", "./spv/precomputeenvironment.spv")
-    , mPrecomputeOceanH0Shader("./spv/oceanheightfield.spv")
-    , mPrecomputeOceanHShader("./spv/oceanhfinal.spv")
-    , mPrerenderQuadShader("./spv/vert.spv", "./spv/frag.spv")
-    , mTexturedQuadShader("./spv/vert.spv", "./spv/texturedQuadFrag.spv")
-    , mCloudNoiseQuadShader("./spv/vert.spv", "./spv/cloudnoisefrag.spv")
-    , mPerlinNoiseQuadShader("./spv/vert.spv", "./spv/perlinnoisefrag.spv")
-    , mWorleyNoiseQuadShader("./spv/vert.spv", "./spv/worleynoisefrag.spv")
-    , mWaterShader("./spv/watervert.spv", "./spv/waterfrag.spv")
-    , mCloudTexture(CLOUD_RESOLUTION, CLOUD_RESOLUTION, CLOUD_RESOLUTION, 32, false)
-    , mOceanFFT(OCEAN_RESOLUTION)
+    : mCloudTexture(CLOUD_RESOLUTION, CLOUD_RESOLUTION, CLOUD_RESOLUTION, 32, false)
+    , mOceanFFT(nullptr)
     , mOceanNoiseTexture(nullptr)
     , mButterFlyTexture((int)(log(float(OCEAN_RESOLUTION)) / log(2.0f)), OCEAN_RESOLUTION, GL_NEAREST, false, 32, false, nullptr)
     , mButterflyIndicesBuffer(OCEAN_RESOLUTION * sizeof(int))
@@ -46,6 +34,20 @@ Renderer::Renderer()
     , mFrameCount(0)
     , mWaterGrid()
 {
+    mShaders[BUTTERFLY_SHADER] = std::make_unique<ShaderProgram>("./spv/butterflyoperation.spv");
+    mShaders[INVERSION_SHADER] = std::make_unique<ShaderProgram>("./spv/inversion.spv");
+    mShaders[PRECOMP_BUTTERFLY_SHADER] = std::make_unique<ShaderProgram>("./spv/precomputebutterfly.spv");
+    mShaders[PRECOMP_CLOUD_SHADER] = std::make_unique<ShaderProgram>("./spv/precomputecloud.spv");
+    mShaders[PRECOMP_ENV_SHADER] = std::make_unique<ShaderProgram>("./spv/vert.spv", "./spv/precomputeenvironment.spv");
+    mShaders[PRECOMP_OCEAN_H0_SHADER] = std::make_unique<ShaderProgram>("./spv/oceanheightfield.spv");
+    mShaders[PRECOMP_OCEAN_H_SHADER] = std::make_unique<ShaderProgram>("./spv/oceanhfinal.spv");
+    mShaders[PRE_RENDER_QUAD_SHADER] = std::make_unique<ShaderProgram>("./spv/vert.spv", "./spv/frag.spv");
+    mShaders[TEXTURED_QUAD_SHADER] = std::make_unique<ShaderProgram>("./spv/vert.spv", "./spv/texturedQuadFrag.spv");
+    mShaders[CLOUD_NOISE_SHADER] = std::make_unique<ShaderProgram>("./spv/vert.spv", "./spv/cloudnoisefrag.spv");
+    mShaders[PERLIN_NOISE_SHADER] = std::make_unique<ShaderProgram>("./spv/vert.spv", "./spv/perlinnoisefrag.spv");
+    mShaders[WORLEY_NOISE_SHADER] = std::make_unique<ShaderProgram>("./spv/vert.spv", "./spv/worleynoisefrag.spv");
+    mShaders[WATER_SHADER] = std::make_unique<ShaderProgram>("./spv/watervert.spv", "./spv/waterfrag.spv");
+
     // cloud noise textures
     mCloudNoiseRenderTexture[0] = nullptr;
     mCloudNoiseRenderTexture[1] = nullptr;
@@ -112,14 +114,15 @@ Renderer::Renderer()
     mRenderCubemapTexture = std::make_unique<RenderCubemapTexture>(mEnvironmentResolution.x);
 
     // ocean related noise texture and other shader buffers
+    mOceanFFT = std::make_unique<OceanFFT>(OCEAN_RESOLUTION);
     updateOceanNoiseTexture();
-    mButterflyIndicesBuffer.upload(mOceanFFT.bitReversedIndices());
+    mButterflyIndicesBuffer.upload(mOceanFFT->bitReversedIndices());
 
     // compute butterfly indices
     mButterflyIndicesBuffer.bind(BUTTERFLY_INDICES);
     mButterFlyTexture.bindImageTexture(PRECOMPUTE_BUTTERFLY_OUTPUT, GL_WRITE_ONLY);
     const int workGroupSize = int(float(OCEAN_RESOLUTION) / float(PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE));
-    mPrecomputeButterflyTexShader.dispatch(true, mOceanFFT.passes(), workGroupSize, 1);
+    mShaders[PRECOMP_BUTTERFLY_SHADER]->dispatch(true, mOceanFFT->passes(), workGroupSize, 1);
 
     // compute water geometry
     updateWaterGrid();
@@ -265,22 +268,22 @@ void Renderer::preRender()
     {
         mCloudTexture.bindImageTexture(PRECOMPUTE_CLOUD_CLOUD_TEX, GL_WRITE_ONLY);
         const int workGroupSize = int(float(CLOUD_RESOLUTION) / float(PRECOMPUTE_CLOUD_LOCAL_SIZE));
-        mPrecomputeCloudShader.dispatch(true, workGroupSize, workGroupSize, workGroupSize);
+        mShaders[PRECOMP_CLOUD_SHADER]->dispatch(true, workGroupSize, workGroupSize, workGroupSize);
 
         // render quarter sized render texture
         glViewport(0, 0, 100, 100);
         {
 
             mPerlinNoiseRenderTexture->bind();
-            mPerlinNoiseQuadShader.use();
+            mShaders[PERLIN_NOISE_SHADER]->use();
             mQuad.draw();
-            mPerlinNoiseQuadShader.disable();
+            mShaders[PERLIN_NOISE_SHADER]->disable();
             mPerlinNoiseRenderTexture->unbind();
 
             mWorleyNoiseRenderTexture->bind();
-            mWorleyNoiseQuadShader.use();
+            mShaders[WORLEY_NOISE_SHADER]->use();
             mQuad.draw();
-            mWorleyNoiseQuadShader.disable();
+            mShaders[WORLEY_NOISE_SHADER]->disable();
             mWorleyNoiseRenderTexture->unbind();
 
             for (int i = 0; i < 4; ++i)
@@ -290,9 +293,9 @@ void Renderer::preRender()
 
                 mCloudTexture.bindTexture(CLOUD_NOISE_CLOUD_TEX);
                 mCloudNoiseRenderTexture[i]->bind();
-                mCloudNoiseQuadShader.use();
+                mShaders[CLOUD_NOISE_SHADER]->use();
                 mQuad.draw();
-                mCloudNoiseQuadShader.disable();
+                mShaders[CLOUD_NOISE_SHADER]->disable();
                 mCloudNoiseRenderTexture[i]->unbind();
             }
         }
@@ -301,52 +304,7 @@ void Renderer::preRender()
     // ocean waves precomputation
     if(mOceanNoiseTexture != nullptr)
     {
-        const int workGroupSize = int(float(OCEAN_RESOLUTION) / float(PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE));
-        // pass 1
-        mOceanNoiseTexture->bindTexture(OCEAN_HEIGHTFIELD_NOISE);
-        mOceanFFT.bindPass1(false);
-        mPrecomputeOceanH0Shader.dispatch(true, workGroupSize, workGroupSize, 1);
-
-        // pass 2
-        mOceanFFT.bindPass2();
-        mPrecomputeOceanHShader.dispatch(true, workGroupSize, workGroupSize, 1);
-
-        for (int texIdx = 0; texIdx < 3; ++texIdx)
-        {
-            mButterFlyTexture.bindImageTexture(BUTTERFLY_INPUT_TEX, GL_READ_ONLY);
-            // 0 = dx, 1 = dy, 2 = dz
-            mOceanFFT.bindPass3(texIdx);
-
-            for (int i = 0; i < mOceanFFT.passes(); ++i)
-            {
-                mOceanParams.mPingPong.y = i;
-                mOceanParams.mPingPong.z = 0;
-                updateUniform(OCEAN_PARAMS, offsetof(OceanParams, mPingPong), sizeof(glm::ivec4), mOceanParams.mPingPong);
-
-                mButterflyOpShader.dispatch(true, workGroupSize, workGroupSize, 1);
-
-                mOceanParams.mPingPong.x++;
-                mOceanParams.mPingPong.x = mOceanParams.mPingPong.x % 2;
-            }
-
-            for (int i = 0; i < mOceanFFT.passes(); ++i)
-            {
-                mOceanParams.mPingPong.y = i;
-                mOceanParams.mPingPong.z = 1;
-                updateUniform(OCEAN_PARAMS, offsetof(OceanParams, mPingPong), sizeof(glm::ivec4), mOceanParams.mPingPong);
-
-                mButterflyOpShader.dispatch(true, workGroupSize, workGroupSize, 1);
-
-                mOceanParams.mPingPong.x++;
-                mOceanParams.mPingPong.x = mOceanParams.mPingPong.x % 2;
-            }
-
-            mOceanParams.mPingPong.w = texIdx;
-            updateUniform(OCEAN_PARAMS, offsetof(OceanParams, mPingPong), sizeof(glm::ivec4), mOceanParams.mPingPong);
-            mOceanFFT.bindPass4(texIdx);
-            mInversionShader.dispatch(true, workGroupSize, workGroupSize, 1);
-        }
-        mOceanFFT.finalize();
+        mOceanFFT->precompute(*this, mOceanParams, *mOceanNoiseTexture, mButterFlyTexture);
     }
 
     // render quarter sized render texture
@@ -354,7 +312,7 @@ void Renderer::preRender()
     {
         glViewport(0, 0, int(mEnvironmentResolution.x), int(mEnvironmentResolution.y));
 
-        mPrecomputeEnvironmentShader.use();
+        mShaders[PRECOMP_ENV_SHADER]->use();
         for (int i = 0; i < 6; ++i)
         {
             mSkyParams.mPrecomputeSettings.x = i;
@@ -363,7 +321,7 @@ void Renderer::preRender()
             mRenderCubemapTexture->bind(i);
             mQuad.draw();
         }
-        mPrecomputeEnvironmentShader.disable();
+        mShaders[PRECOMP_ENV_SHADER]->disable();
         mRenderCubemapTexture->unbind();
         mUpdateEnvironment = false;
     }
@@ -390,26 +348,26 @@ void Renderer::render()
     mRenderTexture->bind();
     mCloudTexture.bindTexture(QUAD_CLOUD_TEX);
     mRenderCubemapTexture->bindTexture(QUAD_ENV_TEX, 0);
-    mPrerenderQuadShader.use();
+    mShaders[PRE_RENDER_QUAD_SHADER]->use();
     mQuad.draw();
-    mPrerenderQuadShader.disable();
+    mShaders[PRE_RENDER_QUAD_SHADER]->disable();
     mRenderTexture->unbind();
 
     // render final quad
     glViewport(0, 0, int(mResolution.x), int(mResolution.y));
-    mTexturedQuadShader.use();
+    mShaders[TEXTURED_QUAD_SHADER]->use();
     mRenderTexture->bindTexture(SCREEN_QUAD_TEX, 0);
     mQuad.draw();
-    mTexturedQuadShader.disable();
+    mShaders[TEXTURED_QUAD_SHADER]->disable();
     
     // enable depth mask
     glEnable (GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);
 
-    mWaterShader.use();
+    mShaders[WATER_SHADER]->use();
     mRenderCubemapTexture->bindTexture(WATER_ENV_TEX, 0);
-    mOceanFFT.bind(WATER_DISPLACEMENT_TEX);
+    mOceanFFT->bind(WATER_DISPLACEMENT_TEX);
     if (mOceanWireframe)
     {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -419,7 +377,7 @@ void Renderer::render()
     {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
-    mWaterShader.disable();
+    mShaders[WATER_SHADER]->disable();
     
     glDisable(GL_DEPTH_TEST);
 }
@@ -651,7 +609,7 @@ void Renderer::renderGUI()
                 const float textureWidth = 100;
                 const float textureHeight = 100;
                 ImGui::Text("Ocean spectrum: %.0fx%.0f", textureWidth, textureHeight);
-                ImTextureID oceanSpectrumTexId = (ImTextureID)mOceanFFT.h0TexId();
+                ImTextureID oceanSpectrumTexId = (ImTextureID)mOceanFFT->h0TexId();
                 {
                     ImVec2 pos = ImGui::GetCursorScreenPos();
                     ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
@@ -661,7 +619,7 @@ void Renderer::renderGUI()
                     ImGui::Image(oceanSpectrumTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
                 }
 
-                ImTextureID oceanHDxSpectrumTexId = (ImTextureID)mOceanFFT.dxTexId();
+                ImTextureID oceanHDxSpectrumTexId = (ImTextureID)mOceanFFT->dxTexId();
                 {
                     ImVec2 pos = ImGui::GetCursorScreenPos();
                     ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
@@ -672,7 +630,7 @@ void Renderer::renderGUI()
                 }
                 ImGui::SameLine();
 
-                ImTextureID oceanHDySpectrumTexId = (ImTextureID)mOceanFFT.dyTexId();
+                ImTextureID oceanHDySpectrumTexId = (ImTextureID)mOceanFFT->dyTexId();
                 {
                     ImVec2 pos = ImGui::GetCursorScreenPos();
                     ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
@@ -684,7 +642,7 @@ void Renderer::renderGUI()
                 ImGui::SameLine();
 
 
-                ImTextureID oceanHDzSpectrumTexId = (ImTextureID)mOceanFFT.dzTexId();
+                ImTextureID oceanHDzSpectrumTexId = (ImTextureID)mOceanFFT->dzTexId();
                 {
                     ImVec2 pos = ImGui::GetCursorScreenPos();
                     ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
@@ -704,7 +662,7 @@ void Renderer::renderGUI()
                     ImGui::Image(butterflyTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
                 }
 
-                ImTextureID displacementTexId = (ImTextureID)mOceanFFT.displacementTexId();
+                ImTextureID displacementTexId = (ImTextureID)mOceanFFT->displacementTexId();
                 {
                     ImVec2 pos = ImGui::GetCursorScreenPos();
                     ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left

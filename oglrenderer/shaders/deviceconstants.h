@@ -1,6 +1,21 @@
 #ifndef DEVICECONSTANTS_H
 #define DEVICECONSTANTS_H
 
+// shader program Id
+# define BUTTERFLY_SHADER         0
+# define INVERSION_SHADER         1
+# define PRECOMP_ENV_SHADER       2
+# define PRECOMP_CLOUD_SHADER     3
+# define PRECOMP_OCEAN_H0_SHADER  4
+# define PRECOMP_OCEAN_H_SHADER   5
+# define PRECOMP_BUTTERFLY_SHADER 6
+# define PRE_RENDER_QUAD_SHADER   7
+# define TEXTURED_QUAD_SHADER     8
+# define WORLEY_NOISE_SHADER      9
+# define PERLIN_NOISE_SHADER      10
+# define CLOUD_NOISE_SHADER       11
+# define WATER_SHADER             12
+
 // uniform binding points
 # define ORTHO_MATRIX    0
 # define CAMERA_PARAMS   1
