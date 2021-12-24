@@ -143,6 +143,9 @@ private:
     bool mShowPerformanceWindow;
     bool mShowSkyWindow;
 
+    // booleans for rendering
+    bool mRenderWater;
+
     // MVP matrix
     MVPMatrix mMVPMatrix;
 

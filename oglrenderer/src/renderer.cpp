@@ -27,6 +27,7 @@ Renderer::Renderer()
     , mShowSkyWindow(true)
     , mOceanWireframe(false)
     , mUpdateEnvironment(true)
+    , mRenderWater(true)
     , mDeltaTime(0.0f)
     , mLowResFactor(0.5f)
     , mTime(0.0f)
@@ -287,9 +288,12 @@ void Renderer::preRender()
     }
 
     // ocean waves precomputation
-    mOceanFFTHighRes->precompute(*this, mOceanParams);
-    mOceanFFTMidRes->precompute(*this, mOceanParams);
-    mOceanFFTLowRes->precompute(*this, mOceanParams);
+    if (mRenderWater)
+    {
+        mOceanFFTHighRes->precompute(*this, mOceanParams);
+        mOceanFFTMidRes->precompute(*this, mOceanParams);
+        mOceanFFTLowRes->precompute(*this, mOceanParams);
+    }
 
     // render quarter sized render texture
     if (mUpdateEnvironment)
@@ -362,26 +366,29 @@ void Renderer::render()
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);
 
-    mShaders[WATER_SHADER]->use();
-    switch (mSkyParams.mPrecomputeSettings.y)
+    if (mRenderWater)
     {
-    case NISHITA_SKY: mRenderCubemapTexture->bindTexture(WATER_ENV_TEX, 0); break;
-    case HOSEK_SKY:   mHosekSkyModel->bind(WATER_ENV_TEX);                  break;
-    }
-    mOceanFFTHighRes->bind(WATER_DISPLACEMENT1_TEX);
-    mOceanFFTMidRes->bind(WATER_DISPLACEMENT2_TEX);
-    mOceanFFTLowRes->bind(WATER_DISPLACEMENT3_TEX);
+        mShaders[WATER_SHADER]->use();
+        switch (mSkyParams.mPrecomputeSettings.y)
+        {
+        case NISHITA_SKY: mRenderCubemapTexture->bindTexture(WATER_ENV_TEX, 0); break;
+        case HOSEK_SKY:   mHosekSkyModel->bind(WATER_ENV_TEX);                  break;
+        }
+        mOceanFFTHighRes->bind(WATER_DISPLACEMENT1_TEX);
+        mOceanFFTMidRes->bind(WATER_DISPLACEMENT2_TEX);
+        mOceanFFTLowRes->bind(WATER_DISPLACEMENT3_TEX);
 
-    if (mOceanWireframe)
-    {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        if (mOceanWireframe)
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+        mClipmap.draw();
+        if (mOceanWireframe)
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+        mShaders[WATER_SHADER]->disable();
     }
-    mClipmap.draw();
-    if (mOceanWireframe)
-    {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
-    mShaders[WATER_SHADER]->disable();
     
     glDisable(GL_DEPTH_TEST);
 }
@@ -618,6 +625,8 @@ void Renderer::renderGUI()
             }
             if (ImGui::BeginTabItem("Ocean"))
             {
+                ImGui::Checkbox("Enabled", &mRenderWater);
+
                 if (ImGui::ColorEdit3("Reflection", &mOceanParams.mReflection[0], ImGuiColorEditFlags_None))
                 {
                     updateUniform(OCEAN_PARAMS, mOceanParams);
