@@ -70,7 +70,7 @@ void main()
 
 	vec3 radiance = vec3(0.0f);
 	vec3 rayDir = normalize(reflect(-viewDir, n));
-	rayDir.y = max(rayDir.y, 0.0f);
+	rayDir.y = max(rayDir.y, 0.1f);
 	
 	distanceToCamera = clamp(length(position - camParams.mEye.xyz), 0.0f, oceanParams.mTransmission.w) / oceanParams.mTransmission.w;
     const float waveHeight = mix(clamp(d.y, 0.0f, oceanParams.mWaveSettings.x) / oceanParams.mWaveSettings.x, 0, distanceToCamera);
@@ -87,7 +87,7 @@ void main()
 
 	// direct specular + indirect specular + transmission
 	radiance += directSpecular;
-	radiance += mix(transmission, indirectReflection, f);
+	radiance += mix(transmission, oceanParams.mReflection.xyz * indirectReflection, f);
 
 	c = vec4(radiance, 1.0f);
 }

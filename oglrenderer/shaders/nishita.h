@@ -126,10 +126,10 @@ void nishitaSky(
 	float Hm = 1200.0f; // Mie scale height
 	float g = 0.76f;    // Anisotropy term for Mie scattering.
 
-	vec3 BetaR = vec3(5.8e-6, 13.0e-6, 22.4e-6);
+    const vec3 BetaR = vec3(3.8e-6, 13.5e-6, 33.1e-6);
 	vec3 BetaM_max = vec3(9.73e-6);
 	vec3 BetaM_min = vec3(13.28e-6);
-	vec3 BetaM = vec3(20e-6);
+	vec3 BetaM = vec3(21e-6);
 
 	//Clean up inputs:
 	vec3 SunDirection = normalize(sunDirFromOrigin);
@@ -181,7 +181,7 @@ void nishitaSky(
 
 	// Create samples along view ray.
 	int numSamples = 32;
-	int numSamplesL = 16;
+	int numSamplesL = 8;
 
 	float segmentLength = length(Pu - Pv) / numSamples;
 	float opticalDepthR = 0;

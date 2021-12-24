@@ -105,6 +105,7 @@ Renderer::Renderer()
     mOceanParams.mHeightSettings = glm::ivec4(OCEAN_RESOLUTION_1, OCEAN_DIMENSIONS_1, 0, 0);
     mOceanParams.mPingPong = glm::ivec4(0, 0, 0, 0);
     mOceanParams.mWaveSettings = glm::vec4(4.0f, 40.0f, 1.0f, 1.0f);
+    mOceanParams.mReflection = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     mOceanParams.mTransmission = glm::vec4(0.0f, 0.0f, 1.0f, 2000.0f);
     mOceanParams.mTransmission2 = glm::vec4(0.0f, 0.0f, 1.0f, 4.0f);
     addUniform(OCEAN_PARAMS, mOceanParams);
@@ -617,6 +618,10 @@ void Renderer::renderGUI()
             }
             if (ImGui::BeginTabItem("Ocean"))
             {
+                if (ImGui::ColorEdit3("Reflection", &mOceanParams.mReflection[0], ImGuiColorEditFlags_None))
+                {
+                    updateUniform(OCEAN_PARAMS, mOceanParams);
+                }
                 if (ImGui::ColorEdit3("Transmission", &mOceanParams.mTransmission[0], ImGuiColorEditFlags_None))
                 {
                     updateUniform(OCEAN_PARAMS, mOceanParams);
