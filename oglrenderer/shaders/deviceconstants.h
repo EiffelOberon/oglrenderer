@@ -55,7 +55,7 @@
 # define OCEAN_RESOLUTION_2 128
 # define OCEAN_DIMENSIONS_2 128
 # define OCEAN_RESOLUTION_3 64
-# define OCEAN_DIMENSIONS_3 64
+# define OCEAN_DIMENSIONS_3 128
 
 // compute shader
 # define PRECOMPUTE_CLOUD_LOCAL_SIZE       4

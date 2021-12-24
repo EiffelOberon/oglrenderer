@@ -32,9 +32,9 @@ layout(location = 2) out vec2 uv;
 
 void main()
 {
-	const vec2 testUV1 = vertexPos.xz / OCEAN_DIMENSIONS_1;
-	const vec2 testUV2 = vertexPos.xz / OCEAN_DIMENSIONS_2;
-	const vec2 testUV3 = vertexPos.xz / OCEAN_DIMENSIONS_3;
+	const vec2 testUV1 = vertexPos.xz / OCEAN_RESOLUTION_1;
+	const vec2 testUV2 = vertexPos.xz / OCEAN_RESOLUTION_2;
+	const vec2 testUV3 = vertexPos.xz / OCEAN_RESOLUTION_3;
     const vec3 d1 = texture(displacement1, testUV1).xyz;
     const vec3 d2 = texture(displacement2, testUV2).xyz;
     const vec3 d3 = texture(displacement3, testUV3).xyz;
