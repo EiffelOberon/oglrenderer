@@ -32,7 +32,6 @@ Renderer::Renderer()
     , mTime(0.0f)
     , mFrameCount(0)
     , mWaterGrid()
-    , mActiveSkyModel(0)
 {
     mShaders[BUTTERFLY_SHADER] = std::make_unique<ShaderProgram>("./spv/butterflyoperation.spv");
     mShaders[INVERSION_SHADER] = std::make_unique<ShaderProgram>("./spv/inversion.spv");
@@ -78,6 +77,7 @@ Renderer::Renderer()
     mSkyParams.mSunSetting = glm::vec4(0.0f, 1.0f, 0.0f, 20.0f);
     mSkyParams.mNishitaSetting = glm::vec4(20.0f, 20.0f, 0.0f, 0.0f);
     mSkyParams.mPrecomputeSettings.x = 0;
+    mSkyParams.mPrecomputeSettings.y = 0;
     addUniform(SKY_PARAMS, mSkyParams);
 
     // initialize noise
@@ -295,7 +295,7 @@ void Renderer::preRender()
     {
         glViewport(0, 0, int(mEnvironmentResolution.x), int(mEnvironmentResolution.y));
 
-        if (mActiveSkyModel == NISHITA_SKY)
+        if (mSkyParams.mPrecomputeSettings.y == NISHITA_SKY)
         {
             mCloudTexture.bindTexture(PRECOMPUTE_ENVIRONENT_CLOUD_TEX);
             mShaders[PRECOMP_ENV_SHADER]->use();
@@ -310,8 +310,9 @@ void Renderer::preRender()
             mShaders[PRECOMP_ENV_SHADER]->disable();
             mRenderCubemapTexture->unbind();
         }
-        else if(mActiveSkyModel == HOSEK_SKY)
+        else if(mSkyParams.mPrecomputeSettings.y == HOSEK_SKY)
         {
+            updateUniform(SKY_PARAMS, mSkyParams);
             mHosekSkyModel->update(glm::vec3(mSkyParams.mSunSetting.x, mSkyParams.mSunSetting.y, mSkyParams.mSunSetting.z));
         }
         mUpdateEnvironment = false;
@@ -338,7 +339,7 @@ void Renderer::render()
     glViewport(0, 0, mResolution.x * mLowResFactor, mResolution.y * mLowResFactor);
     mRenderTexture->bind();
     mCloudTexture.bindTexture(QUAD_CLOUD_TEX);
-    switch (mActiveSkyModel)
+    switch (mSkyParams.mPrecomputeSettings.y)
     {
     case NISHITA_SKY: mRenderCubemapTexture->bindTexture(QUAD_ENV_TEX, 0); break;
     case HOSEK_SKY:   mHosekSkyModel->bind(QUAD_ENV_TEX);                  break;
@@ -361,7 +362,7 @@ void Renderer::render()
     glDepthFunc(GL_LESS);
 
     mShaders[WATER_SHADER]->use();
-    switch (mActiveSkyModel)
+    switch (mSkyParams.mPrecomputeSettings.y)
     {
     case NISHITA_SKY: mRenderCubemapTexture->bindTexture(WATER_ENV_TEX, 0); break;
     case HOSEK_SKY:   mHosekSkyModel->bind(WATER_ENV_TEX);                  break;
@@ -447,15 +448,15 @@ void Renderer::renderGUI()
             if (ImGui::BeginTabItem("Sky"))
             {
                 const static char* items[] = { "Nishita", "Hosek" };
-                const char* comboLabel = items[mActiveSkyModel];  // Label to preview before opening the combo (technically it could be anything)
+                const char* comboLabel = items[mSkyParams.mPrecomputeSettings.y];  // Label to preview before opening the combo (technically it could be anything)
                 if (ImGui::BeginCombo("Sky model", comboLabel))
                 {
                     for (int n = 0; n < IM_ARRAYSIZE(items); n++)
                     {
-                        const bool selected = (mActiveSkyModel == n);
+                        const bool selected = (mSkyParams.mPrecomputeSettings.y == n);
                         if (ImGui::Selectable(items[n], selected))
                         {
-                            mActiveSkyModel    = n;
+                            mSkyParams.mPrecomputeSettings.y = n;
                             mUpdateEnvironment = true;
                         }
 
@@ -640,7 +641,7 @@ void Renderer::renderGUI()
                 {
                     updateUniform(OCEAN_PARAMS, mOceanParams);
                 }
-                if (ImGui::SliderFloat("Dampening distance", &mOceanParams.mTransmission.w, 1000.0f, 5000.0f))
+                if (ImGui::SliderFloat("Dampening distance", &mOceanParams.mTransmission.w, 1000.0f, 8000.0f))
                 {
                     updateUniform(OCEAN_PARAMS, mOceanParams);
                 }

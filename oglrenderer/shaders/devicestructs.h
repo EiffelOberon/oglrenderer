@@ -26,7 +26,7 @@ struct SkyParams
     vec4 mSunSetting;
     // x: rayleigh intensity, y: mie intensity
     vec4 mNishitaSetting;
-    // x: i-th cubemap texture, y,z,w: empty
+    // x: i-th cubemap texture, y: active model z,w: empty
     ivec4 mPrecomputeSettings;
 };
 
@@ -59,10 +59,8 @@ struct OceanParams
 {
     // x: N, y: L, z: empty, w: empty
     ivec4 mHeightSettings;
-
     // x: ping pong, y: stage, z: direction, w: dX, dY, or dZ (0, 1, 2)
     ivec4 mPingPong;
-
     // x: amplitude, y: wind speed z & w: wind direction
     vec4 mWaveSettings;
 

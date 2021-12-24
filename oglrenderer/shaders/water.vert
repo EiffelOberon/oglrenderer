@@ -38,7 +38,10 @@ void main()
     const vec3 d1 = texture(displacement1, testUV1).xyz;
     const vec3 d2 = texture(displacement2, testUV2).xyz;
     const vec3 d3 = texture(displacement3, testUV3).xyz;
-	const vec3 newVertexPos = vertexPos + d1 + d2 + d3;
+	vec3 newVertexPos = vertexPos + d1 + d2 + d3;
+	
+	const float distanceToCamera = clamp(length(newVertexPos - camParams.mEye.xyz), 0.4f, oceanParams.mTransmission.w) / oceanParams.mTransmission.w;
+	newVertexPos = mix(vertexPos, newVertexPos, distanceToCamera);
 
 	gl_Position =  mvpMatrix.mProjectionMatrix * mvpMatrix.mViewMatrix * vec4(newVertexPos, 1.0);
 	

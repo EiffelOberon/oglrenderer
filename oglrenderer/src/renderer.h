@@ -159,5 +159,4 @@ private:
     Clipmap mClipmap;
     int mClipmapLevel;
 
-    uint32_t mActiveSkyModel;
 };
