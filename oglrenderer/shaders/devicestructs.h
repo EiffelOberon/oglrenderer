@@ -24,6 +24,8 @@ struct SkyParams
 {
     // x, y, z: dir w: intensity
     vec4 mSunSetting;
+    // x: rayleigh intensity, y: mie intensity
+    vec4 mNishitaSetting;
     // x: i-th cubemap texture, y,z,w: empty
     ivec4 mPrecomputeSettings;
 };

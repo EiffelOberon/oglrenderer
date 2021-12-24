@@ -63,4 +63,102 @@ float perlinWorley3D(
     return 1-noise;
 }
 
+
+#define CLOUD_COVERAGE .8
+
+// Hash functions by Dave_Hoskins
+float hash12(vec2 p)
+{
+    uvec2 q = uvec2(ivec2(p)) * uvec2(1597334673U, 3812015801U);
+    uint n = (q.x ^ q.y) * 1597334673U;
+    return float(n) * (1.0 / float(0xffffffffU));
+}
+
+
+vec2 hash22(vec2 p)
+{
+    uvec2 q = uvec2(ivec2(p)) * uvec2(1597334673U, 3812015801U);
+    q = (q.x ^ q.y) * uvec2(1597334673U, 3812015801U);
+    return vec2(q) * (1.0 / float(0xffffffffU));
+}
+
+
+struct Box
+{
+    vec3 mMin;
+    vec3 mMax;
+};
+
+
+struct Ray
+{
+    vec3 mOrigin;
+    vec3 mDir;
+};
+
+bool intersect(
+    const in Box b,
+    const in Ray r,
+    out float minDist,
+    out float maxDist)
+{
+    minDist = -1.0f;
+    maxDist = -1.0f;
+    float tmin = (b.mMin.x - r.mOrigin.x) / r.mDir.x;
+    float tmax = (b.mMax.x - r.mOrigin.x) / r.mDir.x;
+    if (tmin > tmax)
+    {
+        float temp = tmin;
+        tmin = tmax;
+        tmax = temp;
+    }
+    float tymin = (b.mMin.y - r.mOrigin.y) / r.mDir.y;
+    float tymax = (b.mMax.y - r.mOrigin.y) / r.mDir.y;
+    if (tymin > tymax)
+    {
+        float temp = tymin;
+        tymin = tymax;
+        tymax = temp;
+    }
+    if ((tmin > tymax) || (tymin > tmax))
+    {
+        return false;
+    }
+    if (tymin > tmin)
+    {
+        tmin = tymin;
+    }
+    if (tymax < tmax)
+    {
+        tmax = tymax;
+    }
+
+    float tzmin = (b.mMin.z - r.mOrigin.z) / r.mDir.z;
+    float tzmax = (b.mMax.z - r.mOrigin.z) / r.mDir.z;
+
+    if (tzmin > tzmax)
+    {
+        float temp = tzmin;
+        tzmin = tzmax;
+        tzmax = temp;
+    }
+    if ((tmin > tzmax) || (tzmin > tmax))
+    {
+        return false;
+    }
+    if (tzmin > tmin)
+    {
+        tmin = tzmin;
+    }
+    if (tzmax < tmax)
+    {
+        tmax = tzmax;
+    }
+
+    minDist = tmin;
+    maxDist = tmax;
+    return true;
+}
+
+
 #endif

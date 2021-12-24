@@ -109,9 +109,10 @@ vec3 lmax(
 }
 
 
-void nishita_sky(
+void nishitaSky(
 	float      altitude         /*= 1*/,
-	float      intensity        /*= 20*/,
+	float      rayleighIntensity/*= 20*/,
+	float      mieIntensity     /*= 20*/,
 	vec3       sunDirFromOrigin /*= vec3(0.0f, 0.0f,1.0f)*/,
 	vec3       rayDir           /*= vec3(0.0f, 1.0f, 0.0f)*/,
 	inout vec3 rayleigh,
@@ -256,8 +257,8 @@ void nishita_sky(
 		}
 	}
 
-	rayleigh = (SumR * phaseR * BetaR) * 20.0f;
-	mie = (SumM * phaseM * BetaM) * intensity;
+	rayleigh = (SumR * phaseR * BetaR) * rayleighIntensity;
+	mie = (SumM * phaseM * BetaM) * mieIntensity;
 	sky = rayleigh + mie;
 }
 

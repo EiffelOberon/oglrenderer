@@ -209,3 +209,57 @@ public:
 private:
     int mDepth;
 };
+
+
+class TextureCubemap : public Texture
+{
+public:
+    TextureCubemap(
+        int textureSize)
+    {
+        mWidth = textureSize;
+        mHeight = textureSize;
+
+        glGenTextures(1, &mTex);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, mTex);
+
+        for (int i = 0; i < 6; ++i)
+        {
+            // TODO: make something else other than 32bit floating point textures
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA32F, mWidth, mHeight, 0, GL_RGBA, GL_FLOAT, nullptr);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+
+        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    }
+
+
+    ~TextureCubemap()
+    {
+        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+        glDeleteTextures(1, &mTex);
+    }
+
+    
+    void upload(
+        int  side,
+        void *data)
+    {
+
+        glBindTexture(GL_TEXTURE_CUBE_MAP, mTex);
+
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + side, 0, GL_RGBA32F, mWidth, mHeight, 0, GL_RGBA, GL_FLOAT, data);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    }
+
+private:
+
+};

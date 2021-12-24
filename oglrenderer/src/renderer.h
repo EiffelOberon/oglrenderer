@@ -10,6 +10,7 @@
 #include "clipmap.h"
 #include "deviceconstants.h" 
 #include "devicestructs.h"
+#include "hosek.h"
 #include "quad.h"
 #include "rendertexture.h"
 #include "shader.h"
@@ -153,6 +154,10 @@ private:
 
     std::map<uint32_t, std::unique_ptr<UniformBuffer>> mUniforms;
 
+    std::unique_ptr<Hosek> mHosekSkyModel;
+
     Clipmap mClipmap;
     int mClipmapLevel;
+
+    uint32_t mActiveSkyModel;
 };

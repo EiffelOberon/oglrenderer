@@ -16,6 +16,10 @@
 # define CLOUD_NOISE_SHADER       11
 # define WATER_SHADER             12
 
+// sky models
+# define NISHITA_SKY 0
+# define HOSEK_SKY   1
+
 // uniform binding points
 # define ORTHO_MATRIX    0
 # define CAMERA_PARAMS   1
@@ -83,6 +87,9 @@
 
 // precompute cloud shader
 # define PRECOMPUTE_CLOUD_CLOUD_TEX 1
+
+// precompute environment shader
+# define PRECOMPUTE_ENVIRONENT_CLOUD_TEX 1
 
 // ocean height field shader
 # define OCEAN_HEIGHTFIELD_NOISE 1

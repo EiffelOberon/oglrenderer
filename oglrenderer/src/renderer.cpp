@@ -14,7 +14,7 @@ Renderer::Renderer()
     , mOceanFFTHighRes(nullptr)
     , mOceanFFTMidRes(nullptr)
     , mOceanFFTLowRes(nullptr)
-    , mEnvironmentResolution(2048.0f, 2048.0f)
+    , mEnvironmentResolution(1024, 1024)
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mClipmap(6)
     , mClipmapLevel(0)
@@ -32,6 +32,7 @@ Renderer::Renderer()
     , mTime(0.0f)
     , mFrameCount(0)
     , mWaterGrid()
+    , mActiveSkyModel(0)
 {
     mShaders[BUTTERFLY_SHADER] = std::make_unique<ShaderProgram>("./spv/butterflyoperation.spv");
     mShaders[INVERSION_SHADER] = std::make_unique<ShaderProgram>("./spv/inversion.spv");
@@ -75,6 +76,7 @@ Renderer::Renderer()
 
     // initialize sun
     mSkyParams.mSunSetting = glm::vec4(0.0f, 1.0f, 0.0f, 20.0f);
+    mSkyParams.mNishitaSetting = glm::vec4(20.0f, 20.0f, 0.0f, 0.0f);
     mSkyParams.mPrecomputeSettings.x = 0;
     addUniform(SKY_PARAMS, mSkyParams);
 
@@ -126,6 +128,9 @@ Renderer::Renderer()
     mMVPMatrix.mProjectionMatrix = projMatrix;
     mMVPMatrix.mViewMatrix = viewMatrix;
     addUniform(MVP_MATRIX, mMVPMatrix);
+
+    // hosek
+    mHosekSkyModel = std::make_unique<Hosek>(glm::vec3(mSkyParams.mSunSetting.x, mSkyParams.mSunSetting.y, mSkyParams.mSunSetting.z), 512);
 }
 
 Renderer::~Renderer()
@@ -290,17 +295,25 @@ void Renderer::preRender()
     {
         glViewport(0, 0, int(mEnvironmentResolution.x), int(mEnvironmentResolution.y));
 
-        mShaders[PRECOMP_ENV_SHADER]->use();
-        for (int i = 0; i < 6; ++i)
+        if (mActiveSkyModel == NISHITA_SKY)
         {
-            mSkyParams.mPrecomputeSettings.x = i;
-            updateUniform(SKY_PARAMS, mSkyParams);
+            mCloudTexture.bindTexture(PRECOMPUTE_ENVIRONENT_CLOUD_TEX);
+            mShaders[PRECOMP_ENV_SHADER]->use();
+            for (int i = 0; i < 6; ++i)
+            {
+                mSkyParams.mPrecomputeSettings.x = i;
+                updateUniform(SKY_PARAMS, mSkyParams);
 
-            mRenderCubemapTexture->bind(i);
-            mQuad.draw();
+                mRenderCubemapTexture->bind(i);
+                mQuad.draw();
+            }
+            mShaders[PRECOMP_ENV_SHADER]->disable();
+            mRenderCubemapTexture->unbind();
         }
-        mShaders[PRECOMP_ENV_SHADER]->disable();
-        mRenderCubemapTexture->unbind();
+        else if(mActiveSkyModel == HOSEK_SKY)
+        {
+            mHosekSkyModel->update(glm::vec3(mSkyParams.mSunSetting.x, mSkyParams.mSunSetting.y, mSkyParams.mSunSetting.z));
+        }
         mUpdateEnvironment = false;
     }
 }
@@ -325,7 +338,11 @@ void Renderer::render()
     glViewport(0, 0, mResolution.x * mLowResFactor, mResolution.y * mLowResFactor);
     mRenderTexture->bind();
     mCloudTexture.bindTexture(QUAD_CLOUD_TEX);
-    mRenderCubemapTexture->bindTexture(QUAD_ENV_TEX, 0);
+    switch (mActiveSkyModel)
+    {
+    case NISHITA_SKY: mRenderCubemapTexture->bindTexture(QUAD_ENV_TEX, 0); break;
+    case HOSEK_SKY:   mHosekSkyModel->bind(QUAD_ENV_TEX);                  break;
+    }
     mShaders[PRE_RENDER_QUAD_SHADER]->use();
     mQuad.draw();
     mShaders[PRE_RENDER_QUAD_SHADER]->disable();
@@ -344,7 +361,11 @@ void Renderer::render()
     glDepthFunc(GL_LESS);
 
     mShaders[WATER_SHADER]->use();
-    mRenderCubemapTexture->bindTexture(WATER_ENV_TEX, 0);
+    switch (mActiveSkyModel)
+    {
+    case NISHITA_SKY: mRenderCubemapTexture->bindTexture(WATER_ENV_TEX, 0); break;
+    case HOSEK_SKY:   mHosekSkyModel->bind(WATER_ENV_TEX);                  break;
+    }
     mOceanFFTHighRes->bind(WATER_DISPLACEMENT1_TEX);
     mOceanFFTMidRes->bind(WATER_DISPLACEMENT2_TEX);
     mOceanFFTLowRes->bind(WATER_DISPLACEMENT3_TEX);
@@ -425,7 +446,29 @@ void Renderer::renderGUI()
         {
             if (ImGui::BeginTabItem("Sky"))
             {
-                ImGui::Text("Sun Direction");
+                const static char* items[] = { "Nishita", "Hosek" };
+                const char* comboLabel = items[mActiveSkyModel];  // Label to preview before opening the combo (technically it could be anything)
+                if (ImGui::BeginCombo("Sky model", comboLabel))
+                {
+                    for (int n = 0; n < IM_ARRAYSIZE(items); n++)
+                    {
+                        const bool selected = (mActiveSkyModel == n);
+                        if (ImGui::Selectable(items[n], selected))
+                        {
+                            mActiveSkyModel    = n;
+                            mUpdateEnvironment = true;
+                        }
+
+                        // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                        if (selected)
+                        {
+                            ImGui::SetItemDefaultFocus();
+                        }
+                    }
+                    ImGui::EndCombo();
+                }
+
+                ImGui::Text("Sun direction");
                 if (ImGui::SliderFloat("x", &mSkyParams.mSunSetting.x, -1.0f, 1.0f))
                 {
                     mUpdateEnvironment = true;
@@ -441,10 +484,22 @@ void Renderer::renderGUI()
                     mUpdateEnvironment = true;
                 }
 
-                if (ImGui::SliderFloat("intensity", &mSkyParams.mSunSetting.w, 0.0f, 20.0f))
+                if (ImGui::SliderFloat("intensity", &mSkyParams.mSunSetting.w, 0.0f, 100.0f))
                 {
                     mUpdateEnvironment = true;
                 }
+                ImGui::Text("Sky");
+
+                if (ImGui::SliderFloat("Rayleigh", &mSkyParams.mNishitaSetting.x, 0.0f, 40.0f))
+                {
+                    mUpdateEnvironment = true;
+                }
+
+                if (ImGui::SliderFloat("Mie", &mSkyParams.mNishitaSetting.y, 0.0f, 40.0f))
+                {
+                    mUpdateEnvironment = true;
+                }
+
 
                 ImGui::EndTabItem();
             }
@@ -503,48 +558,59 @@ void Renderer::renderGUI()
                 if (ImGui::Checkbox("Worley invert", &mWorleyNoiseParams.mInvert))
                 {
                     updateUniform(WORLEY_PARAMS, mWorleyNoiseParams);
+                    mUpdateEnvironment = true;
                 }
                 if (ImGui::SliderInt("Perlin octaves", &mPerlinNoiseParams.mNoiseOctaves, 1, 8))
                 {
                     updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
+                    mUpdateEnvironment = true;
                 }
 
                 if (ImGui::SliderFloat("Perlin freq", &mPerlinNoiseParams.mSettings.z, 0.0f, 100.0f, " %.3f", ImGuiSliderFlags_Logarithmic))
                 {
                     updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
+                    mUpdateEnvironment = true;
                 }
                 if (ImGui::SliderFloat("Cloud cutoff", &mRenderParams.mCloudSettings.x, 0.0f, 1.0f))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
+                    mUpdateEnvironment = true;
                 }
                 if (ImGui::SliderFloat("Cloud speed", &mRenderParams.mCloudSettings.y, 0.0f, 1.0f))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
+                    mUpdateEnvironment = true;
                 }
                 if (ImGui::SliderFloat("Cloud density", &mRenderParams.mCloudSettings.z, 0.0001f, 100.0f, "%.3f", ImGuiSliderFlags_Logarithmic))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
+                    mUpdateEnvironment = true;
                 }
                 if (ImGui::SliderFloat("Cloud BBox height", &mRenderParams.mCloudSettings.w, 100.0f, 100000.0f))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
+                    mUpdateEnvironment = true;
                 }
                 if (ImGui::SliderFloat("Cloud UV width", &mRenderParams.mCloudMapping.x, 1.0f, 1000.0f))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
+                    mUpdateEnvironment = true;
                 }
                 if (ImGui::SliderFloat("Cloud UV height", &mRenderParams.mCloudMapping.y, 1.0f, 1000.0f))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
+                    mUpdateEnvironment = true;
                 }
                 if (ImGui::SliderInt("Max steps", &mRenderParams.mSteps.x, 4, 1024))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
+                    mUpdateEnvironment = true;
                 }
 
                 if (ImGui::SliderInt("Max shadow steps", &mRenderParams.mSteps.y, 2, 32))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
+                    mUpdateEnvironment = true;
                 }
                 ImGui::EndTabItem();
             }
@@ -709,6 +775,9 @@ void Renderer::saveStates()
     ini["skyparams"]["x"] = std::to_string(mSkyParams.mSunSetting.x);
     ini["skyparams"]["y"] = std::to_string(mSkyParams.mSunSetting.y);
     ini["skyparams"]["z"] = std::to_string(mSkyParams.mSunSetting.z);
+    ini["skyparams"]["sunintensity"] = std::to_string(mSkyParams.mSunSetting.w);
+    ini["skyparams"]["nishitarayleigh"] = std::to_string(mSkyParams.mNishitaSetting.x);
+    ini["skyparams"]["nishitamie"] = std::to_string(mSkyParams.mNishitaSetting.y);
 
     ini["renderparams"]["cutoff"] = std::to_string(mRenderParams.mCloudSettings.x);
     ini["renderparams"]["speed"] = std::to_string(mRenderParams.mCloudSettings.y);
@@ -756,6 +825,9 @@ void Renderer::loadStates()
             mSkyParams.mSunSetting.x = std::stof(ini["skyparams"]["x"]);
             mSkyParams.mSunSetting.y = std::stof(ini["skyparams"]["y"]);
             mSkyParams.mSunSetting.z = std::stof(ini["skyparams"]["z"]);
+            mSkyParams.mSunSetting.w = std::stof(ini["skyparams"]["sunintensity"]);
+            mSkyParams.mNishitaSetting.x = std::stof(ini["skyparams"]["nishitarayleigh"]);
+            mSkyParams.mNishitaSetting.y = std::stof(ini["skyparams"]["nishitamie"]);
         }
 
         updateUniform(SKY_PARAMS, mSkyParams);
@@ -795,7 +867,7 @@ void Renderer::loadStates()
             mOceanParams.mTransmission.x = std::stof(ini["oceanparams"]["transmissionX"]);
             mOceanParams.mTransmission.y = std::stof(ini["oceanparams"]["transmissionY"]);
             mOceanParams.mTransmission.z = std::stof(ini["oceanparams"]["transmissionZ"]);
-            //mOceanParams.mTransmission.w = std::stof(ini["oceanparams"]["dampeningdistance"]);
+            mOceanParams.mTransmission.w = std::stof(ini["oceanparams"]["dampeningdistance"]);
             
             mOceanParams.mTransmission2.x = std::stof(ini["oceanparams"]["transmission2X"]);
             mOceanParams.mTransmission2.y = std::stof(ini["oceanparams"]["transmission2Y"]);

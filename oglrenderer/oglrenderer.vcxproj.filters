@@ -19,6 +19,9 @@
     <Filter Include="Imgui">
       <UniqueIdentifier>{a9423de7-f35e-432e-9c48-fc3b336d0532}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Hosek">
+      <UniqueIdentifier>{91b9d4f6-a6bd-48b2-b248-4100cb455c5a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -50,6 +53,9 @@
     </ClCompile>
     <ClCompile Include="include\imgui\imgui_impl_glut.cpp">
       <Filter>Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="include\HosekSky\ArHosekSkyModel.cpp">
+      <Filter>Hosek</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -145,6 +151,24 @@
     </ClInclude>
     <ClInclude Include="src\clipmap.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HosekSky\ArHosekSkyModel.h">
+      <Filter>Hosek</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HosekSky\ArHosekSkyModelData_CIEXYZ.h">
+      <Filter>Hosek</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HosekSky\ArHosekSkyModelData_RGB.h">
+      <Filter>Hosek</Filter>
+    </ClInclude>
+    <ClInclude Include="include\HosekSky\ArHosekSkyModelData_Spectral.h">
+      <Filter>Hosek</Filter>
+    </ClInclude>
+    <ClInclude Include="src\hosek.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="shaders\raymarch.h">
+      <Filter>Shaders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -146,6 +146,7 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="include\HosekSky\ArHosekSkyModel.cpp" />
     <ClCompile Include="include\imgui\imgui.cpp" />
     <ClCompile Include="include\imgui\imgui_demo.cpp" />
     <ClCompile Include="include\imgui\imgui_draw.cpp" />
@@ -158,6 +159,10 @@
     <ClCompile Include="src\renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\HosekSky\ArHosekSkyModel.h" />
+    <ClInclude Include="include\HosekSky\ArHosekSkyModelData_CIEXYZ.h" />
+    <ClInclude Include="include\HosekSky\ArHosekSkyModelData_RGB.h" />
+    <ClInclude Include="include\HosekSky\ArHosekSkyModelData_Spectral.h" />
     <ClInclude Include="include\imgui\imconfig.h" />
     <ClInclude Include="include\imgui\imgui.h" />
     <ClInclude Include="include\imgui\imgui_impl_glut.h" />
@@ -175,9 +180,11 @@
     <ClInclude Include="shaders\nishita.h" />
     <ClInclude Include="shaders\perlin.h" />
     <ClInclude Include="shaders\random.h" />
+    <ClInclude Include="shaders\raymarch.h" />
     <ClInclude Include="shaders\worley.h" />
     <ClInclude Include="src\camera.h" />
     <ClInclude Include="src\clipmap.h" />
+    <ClInclude Include="src\hosek.h" />
     <ClInclude Include="src\ini.h" />
     <ClInclude Include="src\oceanfft.h" />
     <ClInclude Include="src\quad.h" />
