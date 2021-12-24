@@ -83,7 +83,7 @@ void main()
 						  texture(environmentTex, skyParams.mSunSetting.xyz).xyz : 
 						  vec3(1.0f);
 	const vec3 directSpecular = pow(clamp(dot(reflect(-sunDir, n), viewDir), 0.0f, 1.0f), skyParams.mSunSetting.w) * sunColor;
-	const vec3 indirectReflection = max(texture(environmentTex, rayDir).xyz - directSpecular, 0.0f);
+	const vec3 indirectReflection = max(texture(environmentTex, rayDir).xyz, 0.0f);
 
 	// direct specular + indirect specular + transmission
 	radiance += directSpecular;
