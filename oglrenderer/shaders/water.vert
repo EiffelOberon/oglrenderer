@@ -41,7 +41,7 @@ void main()
 	vec3 newVertexPos = vertexPos + d1 + d2 + d3;
 	
 	const float distanceToCamera = clamp(length(newVertexPos - camParams.mEye.xyz), 0.4f, oceanParams.mTransmission.w) / oceanParams.mTransmission.w;
-	newVertexPos = mix(vertexPos, newVertexPos, distanceToCamera);
+	newVertexPos = mix(newVertexPos, vertexPos, distanceToCamera);
 
 	gl_Position =  mvpMatrix.mProjectionMatrix * mvpMatrix.mViewMatrix * vec4(newVertexPos, 1.0);
 	

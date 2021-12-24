@@ -629,11 +629,11 @@ void Renderer::renderGUI()
                 {
                     updateUniform(OCEAN_PARAMS, mOceanParams);
                 }
-                if (ImGui::SliderFloat("Wave amplitude", &mOceanParams.mWaveSettings.x, 0.01f, 20.0f))
+                if (ImGui::SliderFloat("Wave amplitude", &mOceanParams.mWaveSettings.x, 0.01f, 100.0f))
                 {
                     updateUniform(OCEAN_PARAMS, mOceanParams);
                 }
-                if (ImGui::SliderFloat("Wind speed", &mOceanParams.mWaveSettings.y, 0.0f, 200.0f))
+                if (ImGui::SliderFloat("Wind speed", &mOceanParams.mWaveSettings.y, 0.0f, 400.0f))
                 {
                     updateUniform(OCEAN_PARAMS, mOceanParams);
                 }
