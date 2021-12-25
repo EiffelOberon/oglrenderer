@@ -26,6 +26,8 @@ struct SkyParams
     vec4 mSunSetting;
     // x: rayleigh intensity, y: mie intensity
     vec4 mNishitaSetting;
+    // x: min fog dist, y: max fog dist, z,w: empty
+    vec4 mFogSettings;
     // x: i-th cubemap texture, y: active model z,w: empty
     ivec4 mPrecomputeSettings;
 };

@@ -77,6 +77,7 @@ Renderer::Renderer()
     // initialize sun
     mSkyParams.mSunSetting = glm::vec4(0.0f, 1.0f, 0.0f, 20.0f);
     mSkyParams.mNishitaSetting = glm::vec4(20.0f, 20.0f, 0.0f, 0.0f);
+    mSkyParams.mFogSettings = glm::vec4(3000.0f, 5000.0f, 0.0f, 0.0f);
     mSkyParams.mPrecomputeSettings.x = 0;
     mSkyParams.mPrecomputeSettings.y = 0;
     addUniform(SKY_PARAMS, mSkyParams);
@@ -366,6 +367,8 @@ void Renderer::render()
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     if (mRenderWater)
     {
         mShaders[WATER_SHADER]->use();
@@ -389,7 +392,7 @@ void Renderer::render()
         }
         mShaders[WATER_SHADER]->disable();
     }
-    
+    glDisable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
 }
 
@@ -508,7 +511,16 @@ void Renderer::renderGUI()
                 {
                     mUpdateEnvironment = true;
                 }
+                
+                if (ImGui::SliderFloat("Fog min dist", &mSkyParams.mFogSettings.x, 100.0f, 10000.0f))
+                {
+                    updateUniform(SKY_PARAMS, mSkyParams);
+                }
 
+                if (ImGui::SliderFloat("Fog max dist", &mSkyParams.mFogSettings.y, 200.0f, 10000.0f))
+                {
+                    updateUniform(SKY_PARAMS, mSkyParams);
+                }
 
                 ImGui::EndTabItem();
             }

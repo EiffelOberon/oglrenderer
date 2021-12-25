@@ -89,5 +89,7 @@ void main()
 	radiance += directSpecular;
 	radiance += mix(transmission, oceanParams.mReflection.xyz * indirectReflection, f);
 
-	c = vec4(radiance, 1.0f);
+    const float distance = length(camParams.mEye.xyz - position);
+    float alpha = 1 - clamp(distance - skyParams.mFogSettings.x, 0.0f, 1.0f) / (skyParams.mFogSettings.y - skyParams.mFogSettings.x);
+	c = vec4(radiance, alpha);
 }
