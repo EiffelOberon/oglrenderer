@@ -819,6 +819,7 @@ void Renderer::saveStates()
     ini["perlinparams"]["octaves"] = std::to_string(mPerlinNoiseParams.mNoiseOctaves);
     ini["worleyparams"]["invert"] = std::to_string(mWorleyNoiseParams.mInvert);
 
+    ini["oceanparams"]["enabled"] = std::to_string((int)mRenderWater);
     ini["oceanparams"]["transmissionX"] = std::to_string(mOceanParams.mTransmission.x);
     ini["oceanparams"]["transmissionY"] = std::to_string(mOceanParams.mTransmission.y);
     ini["oceanparams"]["transmissionZ"] = std::to_string(mOceanParams.mTransmission.z);
@@ -891,6 +892,7 @@ void Renderer::loadStates()
 
         if(ini.has("oceanparams"))
         {
+            mRenderWater = std::stoi(ini["oceanparams"]["enabled"]);
             mOceanParams.mTransmission.x = std::stof(ini["oceanparams"]["transmissionX"]);
             mOceanParams.mTransmission.y = std::stof(ini["oceanparams"]["transmissionY"]);
             mOceanParams.mTransmission.z = std::stof(ini["oceanparams"]["transmissionZ"]);
