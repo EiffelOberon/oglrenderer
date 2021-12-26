@@ -90,6 +90,6 @@ void main()
 	radiance += mix(transmission, oceanParams.mReflection.xyz * indirectReflection, f);
 
     const float distance = length(camParams.mEye.xyz - position);
-    float alpha = 1 - clamp(distance - skyParams.mFogSettings.x, 0.0f, 1.0f) / (skyParams.mFogSettings.y - skyParams.mFogSettings.x);
+    float alpha = 1 - clamp((distance - skyParams.mFogSettings.x) / (skyParams.mFogSettings.y - skyParams.mFogSettings.x), 0.0f, 1.0f);
 	c = vec4(radiance, alpha);
 }
