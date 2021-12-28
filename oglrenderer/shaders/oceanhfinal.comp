@@ -60,7 +60,7 @@ void main()
     complex hDz = mul(dy, hDy);
 
     imageStore(hDxTexture, ivec2(gl_GlobalInvocationID.xy), vec4(hDx.mComponent.xy, 0.0f, 1.0f));
-    imageStore(hDyTexture, ivec2(gl_GlobalInvocationID.xy), vec4(hDy.mComponent.xy, 0.0f, 1.0f));
+    imageStore(hDyTexture, ivec2(gl_GlobalInvocationID.xy), vec4(-hDy.mComponent.xy, 0.0f, 1.0f));
     imageStore(hDzTexture, ivec2(gl_GlobalInvocationID.xy), vec4(hDz.mComponent.xy, 0.0f, 1.0f));
 
 }

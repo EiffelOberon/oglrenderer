@@ -671,7 +671,7 @@ void Renderer::renderGUI()
                 {
                     updateUniform(OCEAN_PARAMS, mOceanParams);
                 }
-                if (ImGui::SliderFloat("Choppiness", &mOceanParams.mReflection.w, 1.0f, 3.0f))
+                if (ImGui::SliderFloat("Choppiness", &mOceanParams.mReflection.w, 1.0f, 10.0f))
                 {
                     updateUniform(OCEAN_PARAMS, mOceanParams);
                 }
