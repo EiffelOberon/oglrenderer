@@ -676,92 +676,96 @@ void Renderer::renderGUI()
 
                 }
 
-                const float textureWidth = 100;
-                const float textureHeight = 100;
-                ImGui::Text("Ocean spectrum: %.0fx%.0f", textureWidth, textureHeight);
-                ImTextureID oceanSpectrumTexId = (ImTextureID)mOceanFFTHighRes->h0TexId();
+                if (mRenderWater)
                 {
-                    ImVec2 pos = ImGui::GetCursorScreenPos();
-                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-                    ImGui::Image(oceanSpectrumTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
-                }
 
-                ImTextureID oceanHDxSpectrumTexId = (ImTextureID)mOceanFFTHighRes->dxTexId();
-                {
-                    ImVec2 pos = ImGui::GetCursorScreenPos();
-                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-                    ImGui::Image(oceanHDxSpectrumTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
-                }
-                ImGui::SameLine();
+                    const float textureWidth = 100;
+                    const float textureHeight = 100;
+                    ImGui::Text("Ocean spectrum: %.0fx%.0f", textureWidth, textureHeight);
+                    ImTextureID oceanSpectrumTexId = (ImTextureID)mOceanFFTHighRes->h0TexId();
+                    {
+                        ImVec2 pos = ImGui::GetCursorScreenPos();
+                        ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                        ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                        ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                        ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                        ImGui::Image(oceanSpectrumTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                    }
 
-                ImTextureID oceanHDySpectrumTexId = (ImTextureID)mOceanFFTHighRes->dyTexId();
-                {
-                    ImVec2 pos = ImGui::GetCursorScreenPos();
-                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-                    ImGui::Image(oceanHDySpectrumTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
-                }
-                ImGui::SameLine();
+                    ImTextureID oceanHDxSpectrumTexId = (ImTextureID)mOceanFFTHighRes->dxTexId();
+                    {
+                        ImVec2 pos = ImGui::GetCursorScreenPos();
+                        ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                        ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                        ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                        ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                        ImGui::Image(oceanHDxSpectrumTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                    }
+                    ImGui::SameLine();
+
+                    ImTextureID oceanHDySpectrumTexId = (ImTextureID)mOceanFFTHighRes->dyTexId();
+                    {
+                        ImVec2 pos = ImGui::GetCursorScreenPos();
+                        ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                        ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                        ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                        ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                        ImGui::Image(oceanHDySpectrumTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                    }
+                    ImGui::SameLine();
 
 
-                ImTextureID oceanHDzSpectrumTexId = (ImTextureID)mOceanFFTHighRes->dzTexId();
-                {
-                    ImVec2 pos = ImGui::GetCursorScreenPos();
-                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-                    ImGui::Image(oceanHDzSpectrumTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
-                }
+                    ImTextureID oceanHDzSpectrumTexId = (ImTextureID)mOceanFFTHighRes->dzTexId();
+                    {
+                        ImVec2 pos = ImGui::GetCursorScreenPos();
+                        ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                        ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                        ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                        ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                        ImGui::Image(oceanHDzSpectrumTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                    }
 
-                ImTextureID butterflyTexId = (ImTextureID)mOceanFFTHighRes->butterflyTexId();
-                {
-                    ImVec2 pos = ImGui::GetCursorScreenPos();
-                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-                    ImGui::Image(butterflyTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
-                }
+                    ImTextureID butterflyTexId = (ImTextureID)mOceanFFTHighRes->butterflyTexId();
+                    {
+                        ImVec2 pos = ImGui::GetCursorScreenPos();
+                        ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                        ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                        ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                        ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                        ImGui::Image(butterflyTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                    }
 
-                ImTextureID displacementTexId = (ImTextureID)mOceanFFTHighRes->displacementTexId();
-                {
-                    ImVec2 pos = ImGui::GetCursorScreenPos();
-                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-                    ImGui::Image(displacementTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
-                }
-                ImGui::SameLine();
-                displacementTexId = (ImTextureID)mOceanFFTMidRes->displacementTexId();
-                {
-                    ImVec2 pos = ImGui::GetCursorScreenPos();
-                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-                    ImGui::Image(displacementTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
-                }
-                ImGui::SameLine();
-                displacementTexId = (ImTextureID)mOceanFFTLowRes->displacementTexId();
-                {
-                    ImVec2 pos = ImGui::GetCursorScreenPos();
-                    ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
-                    ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
-                    ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-                    ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-                    ImGui::Image(displacementTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
-                }
+                    ImTextureID displacementTexId = (ImTextureID)mOceanFFTHighRes->displacementTexId();
+                    {
+                        ImVec2 pos = ImGui::GetCursorScreenPos();
+                        ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                        ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                        ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                        ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                        ImGui::Image(displacementTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                    }
+                    ImGui::SameLine();
+                    displacementTexId = (ImTextureID)mOceanFFTMidRes->displacementTexId();
+                    {
+                        ImVec2 pos = ImGui::GetCursorScreenPos();
+                        ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                        ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                        ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                        ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                        ImGui::Image(displacementTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                    }
+                    ImGui::SameLine();
+                    displacementTexId = (ImTextureID)mOceanFFTLowRes->displacementTexId();
+                    {
+                        ImVec2 pos = ImGui::GetCursorScreenPos();
+                        ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+                        ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+                        ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+                        ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+                        ImGui::Image(displacementTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+                    }
 
+                }
                 ImGui::EndTabItem();
             }
             ImGui::EndTabBar();
