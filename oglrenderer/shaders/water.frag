@@ -31,24 +31,24 @@ layout(location = 0) out vec4 c;
 
 void main()
 {	
-	const vec2 testUV1 = uv / OCEAN_RESOLUTION_1;
-	const vec2 testUV2 = uv / OCEAN_RESOLUTION_2;
-	const vec2 testUV3 = uv / OCEAN_RESOLUTION_3;
+	const vec2 testUV1 = uv / OCEAN_DIMENSIONS_1;
+	const vec2 testUV2 = uv / OCEAN_DIMENSIONS_2;
+	const vec2 testUV3 = uv / OCEAN_DIMENSIONS_3;
 
 	// calculate normal per pixel
-    const vec3 d1 = texture(displacement1, testUV1).xyz;
-	const vec3 d2 = texture(displacement2, testUV2).xyz;
-	const vec3 d3 = texture(displacement3, testUV3).xyz;
+    const vec3 d1 = oceanParams.mReflection.w * texture(displacement1, testUV1).xyz;
+    const vec3 d2 = oceanParams.mReflection.w * texture(displacement2, testUV2).xyz;
+    const vec3 d3 = oceanParams.mReflection.w * texture(displacement3, testUV3).xyz;
 	const vec3 d = d1 + d2 + d3;
 
 	const vec3 neighborX = vec3(1, 0, 0) + 
-						   texture(displacement1, testUV1 + vec2(1.0f / OCEAN_RESOLUTION_1, 0)).xyz +
-						   texture(displacement2, testUV2 + vec2(1.0f / OCEAN_RESOLUTION_2, 0)).xyz +
-						   texture(displacement3, testUV3 + vec2(1.0f / OCEAN_RESOLUTION_3, 0)).xyz;
+        oceanParams.mReflection.w * texture(displacement1, testUV1 + vec2(1.0f / OCEAN_DIMENSIONS_1, 0)).xyz +
+        oceanParams.mReflection.w * texture(displacement2, testUV2 + vec2(1.0f / OCEAN_DIMENSIONS_2, 0)).xyz +
+        oceanParams.mReflection.w * texture(displacement3, testUV3 + vec2(1.0f / OCEAN_DIMENSIONS_3, 0)).xyz;
 	const vec3 neighborY = vec3(0, 0, 1) + 
-	                       texture(displacement1, testUV1 + vec2(0.0f, 1.0f / OCEAN_RESOLUTION_1)).xyz +
-						   texture(displacement2, testUV2 + vec2(0.0f, 1.0f / OCEAN_RESOLUTION_2)).xyz +
-						   texture(displacement3, testUV3 + vec2(0.0f, 1.0f / OCEAN_RESOLUTION_3)).xyz;
+        oceanParams.mReflection.w * texture(displacement1, testUV1 + vec2(0.0f, 1.0f / OCEAN_DIMENSIONS_1)).xyz +
+        oceanParams.mReflection.w * texture(displacement2, testUV2 + vec2(0.0f, 1.0f / OCEAN_DIMENSIONS_2)).xyz +
+        oceanParams.mReflection.w * texture(displacement3, testUV3 + vec2(0.0f, 1.0f / OCEAN_DIMENSIONS_3)).xyz;
 
 	const vec3 tangent = normalize(neighborX - d);
 	const vec3 bitangent = normalize(neighborY - d);
