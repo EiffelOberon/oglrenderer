@@ -107,6 +107,6 @@ void main()
 	if(jacobian < oceanParams.mFoamSettings.y)
 	{
 		const float foam = pow(texture(foamTex, uv / oceanParams.mFoamSettings.x).x, 2.2f);
-		c = vec4(vec3(foam * oceanParams.mReflection.w * 0.5f * clamp(dot(reflect(-sunDir, n), viewDir), 0.0f, 1.0f)) + radiance - directSpecular, alpha);
+		c = vec4(mix(radiance - directSpecular, vec3(foam * oceanParams.mReflection.w), foam), alpha);
 	}
 }
