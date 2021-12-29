@@ -37,10 +37,12 @@ struct RendererParams
 {
     // x = time, y = aspect ratio, z = empty, w = empty;
     vec4 mSettings;
-    // x = cut off, y = speed, z = density, w = height;
+    // x = anisotropy, y = speed, z = density, w = height;
     vec4 mCloudSettings;
     // x = u, y = v, z = empty, w = empty;
     vec4 mCloudMapping;
+    // x = absorption, y, z, w = empty;
+    vec4 mCloudAbsorption;
     // x = max steps, y = shadow max steps, z = empty, w = empty;
     ivec4 mSteps;
 };

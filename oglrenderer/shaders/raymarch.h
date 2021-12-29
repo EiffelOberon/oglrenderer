@@ -3,6 +3,14 @@
 
 #include "cloud.h"
 
+float phase(
+    const float cosTheta, 
+    const float g)
+{
+    return (1.0f - g * g) / (pow(1. + g * g - 2.0f * g * cosTheta, 1.5f) * 4.0f * PI);
+}
+
+
 void raymarchCloud(
     in Ray      r,
     in Box      b,
@@ -35,7 +43,7 @@ void raymarchCloud(
             float base = remap(noise.x, 1.0f - coverage, 1.0f, 0.0f, 1.0f) * coverage;
             base = remap(base, (lowFreqFBM - 1.0f) * 0.64f, 1.0f, 0.0f, 1.0f);
             base = max(0.0f, base);
-            transmittance *= exp(-stepLength * base * densityScale);
+            transmittance *= exp(-stepLength * base * densityScale * renderParams.mCloudAbsorption.x);
 
             Ray shadowRay;
             shadowRay.mOrigin = r.mOrigin;
@@ -62,7 +70,7 @@ void raymarchCloud(
                         float base = remap(noise.x, 1.0f - coverage, 1.0f, 0.0f, 1.0f) * coverage;
                         base = remap(base, (lowFreqFBM - 1.0f) * 0.64f, 1.0f, 0.0f, 1.0f);
                         base = max(0.0f, base);
-                        lightTransmittance *= exp(-shadowStepLength * base * densityScale);
+                        lightTransmittance *= exp(-shadowStepLength * base * densityScale * renderParams.mCloudAbsorption.x);
                     }
                     else
                     {
@@ -70,16 +78,15 @@ void raymarchCloud(
                     }
                     shadowRay.mOrigin = shadowRay.mOrigin + shadowStepLength * shadowRay.mDir;
 
-                    if (length(lightTransmittance) < 0.05f)
+                    if (length(lightTransmittance) < 0.1f)
                     {
                         break;
                     }
                 }
             }
+            cloudColor += (transmittance * lightTransmittance * stepLength * base * densityScale);
 
-            cloudColor *= lightTransmittance;
-
-            if (length(transmittance) < 0.05f)
+            if (length(transmittance) < 0.1f)
             {
                 break;
             }

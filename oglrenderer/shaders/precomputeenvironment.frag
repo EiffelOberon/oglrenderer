@@ -88,7 +88,7 @@ void main()
     vec3 sunPos = skyParams.mSunSetting.xyz * 800000.0f;
     
     bool hasClouds = false;
-    vec4 cloudColor = vec4(1.0f);
+    vec4 cloudColor = vec4(0.0f);
     float transmittance = 1.0f;
 
     if(foundIntersection)
@@ -108,9 +108,6 @@ void main()
             cloudColor, 
             transmittance);
     }
-
-    cloudColor.xyz *= sky.xyz;
-    cloudColor.xyz = max(vec3(renderParams.mCloudSettings.x), cloudColor.xyz);
 
     transmittance = clamp(transmittance, 0.0f, 1.0f);
     if(transmittance < 1.0f)

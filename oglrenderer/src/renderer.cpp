@@ -94,12 +94,13 @@ Renderer::Renderer()
     // initialize render params
     mRenderParams.mSettings.x = 0.0f;
     mRenderParams.mSettings.y = (1600.0f / 900.0f);
-    mRenderParams.mCloudSettings.x = 0.4f;
+    mRenderParams.mCloudSettings.x = 0.0f;
     mRenderParams.mCloudSettings.y = 0.01f;
     mRenderParams.mCloudSettings.z = 1.0f;
     mRenderParams.mCloudSettings.w = 10000.0f;
     mRenderParams.mCloudMapping.x = 4.0f;
     mRenderParams.mCloudMapping.y = 4.0f;
+    mRenderParams.mCloudAbsorption.x = 1.0f;
     mRenderParams.mSteps.x = 1024;
     mRenderParams.mSteps.y = 8;
     addUniform(RENDERER_PARAMS, mRenderParams);
@@ -639,7 +640,12 @@ void Renderer::renderGUI()
                     updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
                     mUpdateEnvironment = true;
                 }
-                if (ImGui::SliderFloat("Cloud cutoff", &mRenderParams.mCloudSettings.x, 0.0f, 1.0f))
+                if (ImGui::SliderFloat("Absorption", &mRenderParams.mCloudAbsorption.x, 0.0f, 1.0f))
+                {
+                    updateUniform(RENDERER_PARAMS, mRenderParams);
+                    mUpdateEnvironment = true;
+                }
+                if (ImGui::SliderFloat("Anisotropy", &mRenderParams.mCloudSettings.x, -1.0f, 1.0f))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
                     mUpdateEnvironment = true;
@@ -674,7 +680,6 @@ void Renderer::renderGUI()
                     updateUniform(RENDERER_PARAMS, mRenderParams);
                     mUpdateEnvironment = true;
                 }
-
                 if (ImGui::SliderInt("Max shadow steps", &mRenderParams.mSteps.y, 2, 32))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
@@ -883,7 +888,7 @@ void Renderer::saveStates()
     ini["skyparams"]["fogmin"] = std::to_string(mSkyParams.mFogSettings.x);
     ini["skyparams"]["fogmax"] = std::to_string(mSkyParams.mFogSettings.y);
 
-    ini["renderparams"]["cutoff"] = std::to_string(mRenderParams.mCloudSettings.x);
+    ini["renderparams"]["anisotropy"] = std::to_string(mRenderParams.mCloudSettings.x);
     ini["renderparams"]["speed"] = std::to_string(mRenderParams.mCloudSettings.y);
     ini["renderparams"]["density"] = std::to_string(mRenderParams.mCloudSettings.z);
     ini["renderparams"]["height"] = std::to_string(mRenderParams.mCloudSettings.w);
@@ -950,7 +955,7 @@ void Renderer::loadStates()
 
         if (ini.has("renderparams"))
         {
-            mRenderParams.mCloudSettings.x = std::stof(ini["renderparams"]["cutoff"]);
+            //mRenderParams.mCloudSettings.x = std::stof(ini["renderparams"]["anisotropy"]);
             mRenderParams.mCloudSettings.y = std::stof(ini["renderparams"]["speed"]);
             mRenderParams.mCloudSettings.z = std::stof(ini["renderparams"]["density"]);
             mRenderParams.mCloudSettings.w = std::stof(ini["renderparams"]["height"]);
