@@ -147,7 +147,6 @@ private:
 
     // gui
     bool mShowPropertiesWindow;
-    bool mShowPerformanceWindow;
     bool mShowSkyWindow;
 
     // booleans for rendering

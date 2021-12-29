@@ -16,7 +16,7 @@ Renderer::Renderer()
     , mOceanFFTMidRes(nullptr)
     , mOceanFFTLowRes(nullptr)
     , mOceanFoamTexture(nullptr)
-    , mEnvironmentResolution(1024, 1024)
+    , mEnvironmentResolution(512, 512)
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mClipmap(6)
     , mClipmapLevel(0)
@@ -25,7 +25,6 @@ Renderer::Renderer()
     , mWorleyNoiseRenderTexture(nullptr)
     , mCamera()
     , mShowPropertiesWindow(true)
-    , mShowPerformanceWindow(true)
     , mShowSkyWindow(true)
     , mOceanWireframe(false)
     , mUpdateEnvironment(true)
@@ -499,16 +498,6 @@ void Renderer::renderGUI()
         ImGui::EndMainMenuBar();
     }
 
-
-    if (mShowPerformanceWindow)
-    {
-        ImGui::Begin("Performance", &mShowPerformanceWindow);
-        ImGui::Text("Frame time: %f ms", mDeltaTime);
-        ImGui::Text("Frames per sec: %f fps", (1.0f / (mDeltaTime * 0.001f)));
-        ImGui::End();
-    }
-
-
     if (mShowSkyWindow)
     {
         ImGui::Begin("Environment", &mShowSkyWindow);
@@ -843,19 +832,34 @@ void Renderer::renderGUI()
 
     }
 
-    // ocean window
+    // properties window
     if (mShowPropertiesWindow)
     {
-        ImGui::Begin("Properties", &mShowPropertiesWindow);
-        ImGui::Text("Camera");
-        ImGui::NewLine();
-        ImGui::Text("Position");
-        ImGui::Text("x: %.2f y: %.2f z: %.2f", mCamera.getEye().x, mCamera.getEye().y, mCamera.getEye().z);
-        ImGui::Text("Target");
-        ImGui::Text("x: %.2f y: %.2f z: %.2f", mCamera.getTarget().x, mCamera.getTarget().y, mCamera.getTarget().z);
-        ImGui::Text("Distance");
-        ImGui::Text("dist: %.2f", length(mCamera.getTarget() - mCamera.getEye()));
-        ImGui::End();
+        if (ImGui::Begin("Properties", &mShowPropertiesWindow))
+        {
+            if (ImGui::BeginTabBar("Settings", ImGuiTabBarFlags_None))
+            {
+                if (ImGui::BeginTabItem("Performance"))
+                {
+                    ImGui::Text("Frame time: %f ms", mDeltaTime);
+                    ImGui::Text("Frames per sec: %f fps", (1.0f / (mDeltaTime * 0.001f)));
+                    ImGui::EndTabItem();
+                }
+
+                if (ImGui::BeginTabItem("Camera"))
+                {
+                    ImGui::Text("Position");
+                    ImGui::Text("x: %.2f y: %.2f z: %.2f", mCamera.getEye().x, mCamera.getEye().y, mCamera.getEye().z);
+                    ImGui::Text("Target");
+                    ImGui::Text("x: %.2f y: %.2f z: %.2f", mCamera.getTarget().x, mCamera.getTarget().y, mCamera.getTarget().z);
+                    ImGui::Text("Distance");
+                    ImGui::Text("dist: %.2f", length(mCamera.getTarget() - mCamera.getEye()));
+                    ImGui::EndTabItem();
+                }
+                ImGui::EndTabBar();
+            }
+            ImGui::End();
+        }
     }
 
 
