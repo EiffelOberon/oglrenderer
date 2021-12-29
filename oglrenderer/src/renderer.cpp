@@ -876,6 +876,8 @@ void Renderer::saveStates()
     ini["skyparams"]["sunintensity"] = std::to_string(mSkyParams.mSunSetting.w);
     ini["skyparams"]["nishitarayleigh"] = std::to_string(mSkyParams.mNishitaSetting.x);
     ini["skyparams"]["nishitamie"] = std::to_string(mSkyParams.mNishitaSetting.y);
+    ini["skyparams"]["fogmin"] = std::to_string(mSkyParams.mFogSettings.x);
+    ini["skyparams"]["fogmax"] = std::to_string(mSkyParams.mFogSettings.y);
 
     ini["renderparams"]["cutoff"] = std::to_string(mRenderParams.mCloudSettings.x);
     ini["renderparams"]["speed"] = std::to_string(mRenderParams.mCloudSettings.y);
@@ -936,6 +938,8 @@ void Renderer::loadStates()
             mSkyParams.mSunSetting.w = std::stof(ini["skyparams"]["sunintensity"]);
             mSkyParams.mNishitaSetting.x = std::stof(ini["skyparams"]["nishitarayleigh"]);
             mSkyParams.mNishitaSetting.y = std::stof(ini["skyparams"]["nishitamie"]);
+            mSkyParams.mFogSettings.x = std::stof(ini["skyparams"]["fogmin"]);
+            mSkyParams.mFogSettings.y = std::stof(ini["skyparams"]["fogmax"]);
         }
 
         updateUniform(SKY_PARAMS, mSkyParams);
