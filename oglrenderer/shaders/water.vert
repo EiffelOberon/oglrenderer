@@ -35,9 +35,11 @@ void main()
 	const vec2 testUV1 = vertexPos.xz / OCEAN_DIMENSIONS_1;
 	const vec2 testUV2 = vertexPos.xz / OCEAN_DIMENSIONS_2;
 	const vec2 testUV3 = vertexPos.xz / OCEAN_DIMENSIONS_3;
-    const vec3 d1 = oceanParams.mReflection.w * texture(displacement1, testUV1).xyz;
-    const vec3 d2 = oceanParams.mReflection.w * texture(displacement2, testUV2).xyz;
-    const vec3 d3 = oceanParams.mReflection.w * texture(displacement3, testUV3).xyz;
+
+	const vec3 displacementLambda = vec3(oceanParams.mReflection.w, oceanParams.mWaveSettings.x, oceanParams.mReflection.w);
+    const vec3 d1 = displacementLambda * texture(displacement1, testUV1).xyz;
+    const vec3 d2 = displacementLambda * texture(displacement2, testUV2).xyz;
+    const vec3 d3 = displacementLambda * texture(displacement3, testUV3).xyz;
 	vec3 newVertexPos = vertexPos + d1 + d2 + d3;
 	
 	const float distanceToCamera = clamp(length(newVertexPos - camParams.mEye.xyz), 0.4f, oceanParams.mTransmission.w) / oceanParams.mTransmission.w;

@@ -26,6 +26,7 @@ layout(binding = WATER_DISPLACEMENT2_TEX) uniform sampler2D displacement2;
 layout(binding = WATER_DISPLACEMENT3_TEX) uniform sampler2D displacement3;
 
 layout(binding = WATER_ENV_TEX) uniform samplerCube environmentTex;
+layout(binding = WATER_FOAM_TEX) uniform sampler2D foamTex;
 
 layout(location = 0) out vec4 c;
 
@@ -36,19 +37,29 @@ void main()
 	const vec2 testUV3 = uv / OCEAN_DIMENSIONS_3;
 
 	// calculate normal per pixel
-    const vec3 d1 = oceanParams.mReflection.w * texture(displacement1, testUV1).xyz;
-    const vec3 d2 = oceanParams.mReflection.w * texture(displacement2, testUV2).xyz;
-    const vec3 d3 = oceanParams.mReflection.w * texture(displacement3, testUV3).xyz;
+	const vec3 displacementLambda = vec3(oceanParams.mReflection.w, oceanParams.mWaveSettings.x, oceanParams.mReflection.w);
+    const vec3 d1 = displacementLambda * texture(displacement1, testUV1).xyz;
+    const vec3 d2 = displacementLambda * texture(displacement2, testUV2).xyz;
+    const vec3 d3 = displacementLambda * texture(displacement3, testUV3).xyz;
 	const vec3 d = d1 + d2 + d3;
 
 	const vec3 neighborX = vec3(1, 0, 0) + 
-        oceanParams.mReflection.w * texture(displacement1, testUV1 + vec2(1.0f / OCEAN_DIMENSIONS_1, 0)).xyz +
-        oceanParams.mReflection.w * texture(displacement2, testUV2 + vec2(1.0f / OCEAN_DIMENSIONS_2, 0)).xyz +
-        oceanParams.mReflection.w * texture(displacement3, testUV3 + vec2(1.0f / OCEAN_DIMENSIONS_3, 0)).xyz;
+        displacementLambda * texture(displacement1, testUV1 + vec2(1.0f / OCEAN_DIMENSIONS_1, 0)).xyz +
+        displacementLambda * texture(displacement2, testUV2 + vec2(1.0f / OCEAN_DIMENSIONS_2, 0)).xyz +
+        displacementLambda * texture(displacement3, testUV3 + vec2(1.0f / OCEAN_DIMENSIONS_3, 0)).xyz;
 	const vec3 neighborY = vec3(0, 0, 1) + 
-        oceanParams.mReflection.w * texture(displacement1, testUV1 + vec2(0.0f, 1.0f / OCEAN_DIMENSIONS_1)).xyz +
-        oceanParams.mReflection.w * texture(displacement2, testUV2 + vec2(0.0f, 1.0f / OCEAN_DIMENSIONS_2)).xyz +
-        oceanParams.mReflection.w * texture(displacement3, testUV3 + vec2(0.0f, 1.0f / OCEAN_DIMENSIONS_3)).xyz;
+        displacementLambda * texture(displacement1, testUV1 + vec2(0.0f, 1.0f / OCEAN_DIMENSIONS_1)).xyz +
+        displacementLambda * texture(displacement2, testUV2 + vec2(0.0f, 1.0f / OCEAN_DIMENSIONS_2)).xyz +
+        displacementLambda * texture(displacement3, testUV3 + vec2(0.0f, 1.0f / OCEAN_DIMENSIONS_3)).xyz;
+
+	const vec3 dDdx = (neighborX - vec3(1, 0, 0)) - (d);
+	const vec3 dDdy = (neighborY - vec3(0, 0, 1)) - (d);
+	
+	const float jxx = 1 + dDdx.x;
+	const float jyy = 1 + dDdy.z;
+	const float jyx = dDdy.x;
+
+	float jacobian = jxx * jyy - jyx * jyx;
 
 	const vec3 tangent = normalize(neighborX - d);
 	const vec3 bitangent = normalize(neighborY - d);
@@ -92,4 +103,10 @@ void main()
     const float distance = length(camParams.mEye.xyz - position);
     float alpha = 1 - clamp((distance - skyParams.mFogSettings.x) / (skyParams.mFogSettings.y - skyParams.mFogSettings.x), 0.0f, 1.0f);
 	c = vec4(radiance, alpha);
+
+	if(jacobian < oceanParams.mFoamSettings.y)
+	{
+		const float foam = pow(texture(foamTex, uv / oceanParams.mFoamSettings.x).x, 2.2f);
+		c = vec4(vec3(foam * oceanParams.mReflection.w * 0.5f * clamp(dot(reflect(-sunDir, n), viewDir), 0.0f, 1.0f)) + radiance - directSpecular, alpha);
+	}
 }

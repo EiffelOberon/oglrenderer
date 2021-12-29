@@ -113,5 +113,6 @@
 # define WATER_DISPLACEMENT2_TEX 2
 # define WATER_DISPLACEMENT3_TEX 3
 # define WATER_ENV_TEX           4
+# define WATER_FOAM_TEX          5
 
 #endif

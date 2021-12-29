@@ -1,11 +1,14 @@
 #pragma once
 
 #include <math.h>
+#include <memory>
 #include <vector>
+
+#include "glm/glm.hpp"
+#include "FreeImage/FreeImage.h"
 
 #include "deviceconstants.h"
 #include "devicestructs.h"
-#include "glm/glm.hpp"
 #include "renderer.h"
 #include "texture.h"
 
@@ -27,7 +30,7 @@ public:
         , mOceanHDzSpectrumTexture(N, N, GL_NEAREST, false, 32, false)
         , mOceanNoiseTexture(N, N, GL_NEAREST, false, 32, false)
         , mPingPongTexture(N, N, GL_NEAREST, false, 32, false)
-        , mButterFlyTexture((int)(log(float(N)) / log(2.0f)), N, GL_NEAREST, false, 32, false, nullptr)
+        , mButterFlyTexture((int)(log(float(N)) / log(2.0f)), N, GL_NEAREST, false, 32, false, true, nullptr)
         , mButterflyIndicesBuffer(N * sizeof(int))
     {
         // upload random numbers
@@ -163,6 +166,7 @@ public:
     }
 
 private:
+
     void precomputeButterflyIndices(
         Renderer& renderer)
     {

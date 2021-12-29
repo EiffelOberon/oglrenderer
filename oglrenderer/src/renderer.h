@@ -84,6 +84,10 @@ private:
         }
     }
 
+    bool loadFoam(
+        std::unique_ptr<Texture> &tex,
+        const std::string        &fileName);
+
     // initialize uniform white noise [0, 1]
     void updateWaterGrid();
 
@@ -116,6 +120,9 @@ private:
     std::unique_ptr<RenderTexture> mWorleyNoiseRenderTexture;
     std::unique_ptr<RenderTexture> mPerlinNoiseRenderTexture;
     std::unique_ptr<RenderTexture> mCloudNoiseRenderTexture[4];
+
+    // foam textures
+    std::unique_ptr<Texture> mOceanFoamTexture;
 
     // environment cubemap texture
     std::unique_ptr<RenderCubemapTexture> mRenderCubemapTexture;

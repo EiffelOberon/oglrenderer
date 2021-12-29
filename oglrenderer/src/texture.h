@@ -15,11 +15,13 @@ public:
         const bool     mipmap,
         const int      bitsPerChannel,
         const bool     greyScale,
-        const void*    data           = nullptr)
+        const bool     hasAlpha = true,
+        const void*    data     = nullptr)
         : mWidth(width)
         , mHeight(height)
         , mInternalFormat(GL_RGBA8)
         , mIsGreyScale(greyScale)
+        , mHasAlpha(hasAlpha)
     {
         glGenTextures(1, &mTex);
         glBindTexture(GL_TEXTURE_2D, mTex);
@@ -32,12 +34,12 @@ public:
 
         switch (bitsPerChannel)
         {
-        case 8:  mInternalFormat = greyScale ? GL_R8 : GL_RGBA8; break;
-        case 32: mInternalFormat = greyScale ? GL_R32F : GL_RGBA32F; break;
+        case 8:  mInternalFormat = greyScale ? GL_R8 : (hasAlpha ? GL_RGBA8 : GL_RGB8); break;
+        case 32: mInternalFormat = greyScale ? GL_R32F : (hasAlpha ? GL_RGBA32F : GL_RGB32F); break;
         default: assert(false);
         }
 
-        glTexImage2D(GL_TEXTURE_2D, 0, mInternalFormat, width, height, 0, greyScale ? GL_R : GL_RGBA, GL_FLOAT, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, mInternalFormat, width, height, 0, greyScale ? GL_R : (hasAlpha ? GL_RGBA : GL_RGB), bitsPerChannel == 32 ? GL_FLOAT : GL_UNSIGNED_BYTE, data);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
@@ -75,7 +77,7 @@ public:
         void * data)
     {
         glBindTexture(GL_TEXTURE_2D, mTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, mInternalFormat, mWidth, mHeight, 0, mIsGreyScale ? GL_R : GL_RGBA, GL_FLOAT, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, mInternalFormat, mWidth, mHeight, 0, mIsGreyScale ? GL_R : (mHasAlpha ? GL_RGBA : GL_RGB), GL_FLOAT, data);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
@@ -90,6 +92,9 @@ public:
     {
         switch (mInternalFormat)
         {
+        case GL_RGB8:
+        case GL_RGB32F:
+            return 3;
         case GL_RGBA8:
         case GL_RGBA32F:
             return 4;
@@ -124,6 +129,9 @@ public:
     {
         switch (mInternalFormat)
         {
+        case GL_RGB8:
+        case GL_RGB32F:
+            return GL_RGB;
         case GL_RGBA8:
         case GL_RGBA32F:
             return GL_RGBA;
@@ -146,6 +154,7 @@ protected:
     int mHeight;
 
     bool mIsGreyScale;
+    bool mHasAlpha;
 };
 
 

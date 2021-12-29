@@ -3,6 +3,7 @@
 #include <random>
 
 #include "freeglut.h"
+#include "FreeImage/FreeImage.h"
 #include "glm/gtc/matrix_transform.hpp"
 #include "imgui.h"
 #include "ini.h"
@@ -14,6 +15,7 @@ Renderer::Renderer()
     , mOceanFFTHighRes(nullptr)
     , mOceanFFTMidRes(nullptr)
     , mOceanFFTLowRes(nullptr)
+    , mOceanFoamTexture(nullptr)
     , mEnvironmentResolution(1024, 1024)
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mClipmap(6)
@@ -110,6 +112,7 @@ Renderer::Renderer()
     mOceanParams.mReflection = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     mOceanParams.mTransmission = glm::vec4(0.0f, 0.0f, 1.0f, 2000.0f);
     mOceanParams.mTransmission2 = glm::vec4(0.0f, 0.0f, 1.0f, 4.0f);
+    mOceanParams.mFoamSettings = glm::vec4(1.0f, 0.7f, 0.0f, 0.0f);
     addUniform(OCEAN_PARAMS, mOceanParams);
 
     loadStates();
@@ -134,12 +137,66 @@ Renderer::Renderer()
 
     // hosek
     mHosekSkyModel = std::make_unique<Hosek>(glm::vec3(mSkyParams.mSunSetting.x, mSkyParams.mSunSetting.y, mSkyParams.mSunSetting.z), 512);
+
+    // load textures
+    FreeImage_Initialise();
+    bool result = loadFoam(mOceanFoamTexture, "./resources/foamDiffuse.jpg");
+    assert(result);
+    FreeImage_DeInitialise();
 }
 
 Renderer::~Renderer()
 {
 
 }
+
+
+bool Renderer::loadFoam(
+    std::unique_ptr<Texture> &tex,
+    const std::string        &fileName)
+{
+    FIBITMAP* dib(0);
+
+    //check the file signature and deduce its format
+    FREE_IMAGE_FORMAT fif = (FREE_IMAGE_FORMAT) FreeImage_GetFileType(fileName.c_str(), 0);
+    //if still unknown, try to guess the file format from the file extension
+    if (fif == FIF_UNKNOWN)
+    {
+        fif = FreeImage_GetFIFFromFilename(fileName.c_str());
+    }
+    if (fif == FIF_UNKNOWN)
+    {
+        assert(false);
+        return false;
+    }
+
+    //check that the plugin has reading capabilities and load the file
+    if (FreeImage_FIFSupportsReading(fif))
+    {
+        dib = FreeImage_Load(fif, fileName.c_str());
+    }
+
+    if (!dib)
+    {
+        assert(false);
+        return false;
+    }
+    //retrieve the image data
+    BYTE* bits = FreeImage_GetBits(dib);
+    uint32_t width = FreeImage_GetWidth(dib);
+    uint32_t height = FreeImage_GetHeight(dib);
+    if ((bits == 0) || (width == 0) || (height == 0))
+    {
+        assert(false);
+        return false;
+    }
+
+    tex = std::make_unique<Texture>((int)width, (int)height, GL_LINEAR_MIPMAP_LINEAR, true, 8, false, false, (void*)bits);
+    tex->generateMipmap();
+    FreeImage_Unload(dib);
+    return true;
+}
+
 
 
 void Renderer::updateCamera(
@@ -380,6 +437,7 @@ void Renderer::render()
         mOceanFFTHighRes->bind(WATER_DISPLACEMENT1_TEX);
         mOceanFFTMidRes->bind(WATER_DISPLACEMENT2_TEX);
         mOceanFFTLowRes->bind(WATER_DISPLACEMENT3_TEX);
+        mOceanFoamTexture->bindTexture(WATER_FOAM_TEX);
 
         if (mOceanWireframe)
         {
@@ -675,10 +733,15 @@ void Renderer::renderGUI()
                 {
                     updateUniform(OCEAN_PARAMS, mOceanParams);
                 }
+                if (ImGui::SliderFloat("Foam scale", &mOceanParams.mFoamSettings.x, 1.0f, 1000.0f))
+                {
+                    updateUniform(OCEAN_PARAMS, mOceanParams);
+                }
+                if (ImGui::SliderFloat("Foam intensity", &mOceanParams.mFoamSettings.y, 0.0f, 1.0f))
+                {
+                    updateUniform(OCEAN_PARAMS, mOceanParams);
+                }
                 ImGui::Checkbox("Wireframe", &mOceanWireframe);
-
-
-
 
                 if (mRenderWater)
                 {
@@ -849,6 +912,9 @@ void Renderer::saveStates()
     ini["oceanparams"]["dirX"] = std::to_string(mOceanParams.mWaveSettings.z);
     ini["oceanparams"]["dirY"] = std::to_string(mOceanParams.mWaveSettings.w);
 
+    ini["oceanparams"]["foamscale"] = std::to_string(mOceanParams.mFoamSettings.x);
+    ini["oceanparams"]["foamintensity"] = std::to_string(mOceanParams.mFoamSettings.y);
+
     // generate an INI file (overwrites any previous file)
     file.generate(ini);
 }
@@ -927,6 +993,9 @@ void Renderer::loadStates()
             mOceanParams.mWaveSettings.y = std::stof(ini["oceanparams"]["speed"]);
             mOceanParams.mWaveSettings.z = std::stof(ini["oceanparams"]["dirX"]);
             mOceanParams.mWaveSettings.w = std::stof(ini["oceanparams"]["dirY"]);
+
+            mOceanParams.mFoamSettings.x = std::stof(ini["oceanparams"]["foamscale"]);
+            mOceanParams.mFoamSettings.y = std::stof(ini["oceanparams"]["foamintensity"]);
         }
 
         updateUniform(OCEAN_PARAMS, mOceanParams);
