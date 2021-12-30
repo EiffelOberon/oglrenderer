@@ -22,12 +22,14 @@ Renderer::Renderer()
     , mClipmap(6)
     , mClipmapLevel(0)
     , mRenderTexture(nullptr)
-    , mRenderCubemapTexture(nullptr)
+    , mSkyCubemap(nullptr)
+    , mFinalSkyCubemap(nullptr)
     , mWorleyNoiseRenderTexture(nullptr)
     , mCamera()
     , mShowPropertiesWindow(true)
     , mShowSkyWindow(true)
     , mOceanWireframe(false)
+    , mUpdateSky(true)
     , mUpdateEnvironment(true)
     , mRenderWater(true)
     , mDeltaTime(0.0f)
@@ -41,6 +43,7 @@ Renderer::Renderer()
     mShaders[PRECOMP_BUTTERFLY_SHADER] = std::make_unique<ShaderProgram>("./spv/precomputebutterfly.spv");
     mShaders[PRECOMP_CLOUD_SHADER] = std::make_unique<ShaderProgram>("./spv/precomputecloud.spv");
     mShaders[PRECOMP_ENV_SHADER] = std::make_unique<ShaderProgram>("./spv/vert.spv", "./spv/precomputeenvironment.spv");
+    mShaders[PRECOMP_SKY_SHADER] = std::make_unique<ShaderProgram>("./spv/vert.spv", "./spv/precomputesky.spv");
     mShaders[PRECOMP_OCEAN_H0_SHADER] = std::make_unique<ShaderProgram>("./spv/oceanheightfield.spv");
     mShaders[PRECOMP_OCEAN_H_SHADER] = std::make_unique<ShaderProgram>("./spv/oceanhfinal.spv");
     mShaders[PRE_RENDER_QUAD_SHADER] = std::make_unique<ShaderProgram>("./spv/vert.spv", "./spv/frag.spv");
@@ -123,7 +126,8 @@ Renderer::Renderer()
     loadStates();
 
     // cubemap environment
-    mRenderCubemapTexture = std::make_unique<RenderCubemapTexture>(mEnvironmentResolution.x);
+    mSkyCubemap = std::make_unique<RenderCubemapTexture>(mEnvironmentResolution.x);
+    mFinalSkyCubemap = std::make_unique<RenderCubemapTexture>(mEnvironmentResolution.x);
 
     // ocean related noise texture and other shader buffers
     mOceanFFTHighRes = std::make_unique<OceanFFT>(*this, OCEAN_RESOLUTION_1, OCEAN_DIMENSIONS_1);
@@ -364,8 +368,9 @@ void Renderer::preRender()
         mOceanFFTLowRes->precompute(*this, mOceanParams);
     }
 
+
     // render quarter sized render texture
-    //if (mUpdateEnvironment)
+    if (mUpdateSky)
     {
         glViewport(0, 0, int(mEnvironmentResolution.x), int(mEnvironmentResolution.y));
 
@@ -383,20 +388,17 @@ void Renderer::preRender()
                 sky);
             mSkyParams.mSunLuminance = glm::vec4(sky.x, sky.y, sky.z, 1.0f);
             updateUniform(SKY_PARAMS, mSkyParams);
-
-            mCloudTexture.bindTexture(PRECOMPUTE_ENVIRONMENT_CLOUD_TEX);
-            mBlueNoiseTexture->bindTexture(PRECOMPUTE_ENVIRONMENT_NOISE_TEX);
-            mShaders[PRECOMP_ENV_SHADER]->use();
+            mShaders[PRECOMP_SKY_SHADER]->use();
             for (int i = 0; i < 6; ++i)
             {
                 mSkyParams.mPrecomputeSettings.x = i;
                 updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeSettings), sizeof(mSkyParams.mPrecomputeSettings), mSkyParams.mPrecomputeSettings);
 
-                mRenderCubemapTexture->bind(i);
+                mSkyCubemap->bind(i);
                 mQuad.draw();
             }
-            mShaders[PRECOMP_ENV_SHADER]->disable();
-            mRenderCubemapTexture->unbind();
+            mShaders[PRECOMP_SKY_SHADER]->disable();
+            mSkyCubemap->unbind();
         }
         else if(mSkyParams.mPrecomputeSettings.y == HOSEK_SKY)
         {
@@ -404,7 +406,25 @@ void Renderer::preRender()
             updateUniform(SKY_PARAMS, mSkyParams);
             mHosekSkyModel->update(glm::vec3(mSkyParams.mSunSetting.x, mSkyParams.mSunSetting.y, mSkyParams.mSunSetting.z));
         }
-        mUpdateEnvironment = false;
+        mUpdateSky = false;
+    }
+
+    {
+        glViewport(0, 0, int(mEnvironmentResolution.x), int(mEnvironmentResolution.y));
+        mCloudTexture.bindTexture(PRECOMPUTE_ENVIRONMENT_CLOUD_TEX);
+        mBlueNoiseTexture->bindTexture(PRECOMPUTE_ENVIRONMENT_NOISE_TEX);
+        mSkyCubemap->bindTexture(PRECOMPUTE_ENVIRONMENT_SKY_TEX, 0);
+        mShaders[PRECOMP_ENV_SHADER]->use();
+        for (int i = 0; i < 6; ++i)
+        {
+            mSkyParams.mPrecomputeSettings.x = i;
+            updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeSettings), sizeof(mSkyParams.mPrecomputeSettings), mSkyParams.mPrecomputeSettings);
+
+            mFinalSkyCubemap->bind(i);
+            mQuad.draw();
+        }
+        mShaders[PRECOMP_ENV_SHADER]->disable();
+        mFinalSkyCubemap->unbind();
     }
 }
 
@@ -432,7 +452,7 @@ void Renderer::render()
     mCloudTexture.bindTexture(QUAD_CLOUD_TEX);
     switch (mSkyParams.mPrecomputeSettings.y)
     {
-    case NISHITA_SKY: mRenderCubemapTexture->bindTexture(QUAD_ENV_TEX, 0); break;
+    case NISHITA_SKY: mFinalSkyCubemap->bindTexture(QUAD_ENV_TEX, 0); break;
     case HOSEK_SKY:   mHosekSkyModel->bind(QUAD_ENV_TEX);                  break;
     }
     mShaders[PRE_RENDER_QUAD_SHADER]->use();
@@ -459,8 +479,8 @@ void Renderer::render()
         mShaders[WATER_SHADER]->use();
         switch (mSkyParams.mPrecomputeSettings.y)
         {
-        case NISHITA_SKY: mRenderCubemapTexture->bindTexture(WATER_ENV_TEX, 0); break;
-        case HOSEK_SKY:   mHosekSkyModel->bind(WATER_ENV_TEX);                  break;
+        case NISHITA_SKY: mFinalSkyCubemap->bindTexture(WATER_ENV_TEX, 0); break;
+        case HOSEK_SKY:   mHosekSkyModel->bind(WATER_ENV_TEX);             break;
         }
         mOceanFFTHighRes->bind(WATER_DISPLACEMENT1_TEX);
         mOceanFFTMidRes->bind(WATER_DISPLACEMENT2_TEX);
@@ -544,7 +564,7 @@ void Renderer::renderGUI()
                         if (ImGui::Selectable(items[n], selected))
                         {
                             mSkyParams.mPrecomputeSettings.y = n;
-                            mUpdateEnvironment = true;
+                            mUpdateSky = true;
                         }
 
                         // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
@@ -559,33 +579,33 @@ void Renderer::renderGUI()
                 ImGui::Text("Sun direction");
                 if (ImGui::SliderFloat("x", &mSkyParams.mSunSetting.x, -1.0f, 1.0f))
                 {
-                    mUpdateEnvironment = true;
+                    mUpdateSky = true;
                 }
 
                 if (ImGui::SliderFloat("y", &mSkyParams.mSunSetting.y, 0.0f, 1.0f))
                 {
-                    mUpdateEnvironment = true;
+                    mUpdateSky = true;
                 }
 
                 if (ImGui::SliderFloat("z", &mSkyParams.mSunSetting.z, -1.0f, 1.0f))
                 {
-                    mUpdateEnvironment = true;
+                    mUpdateSky = true;
                 }
 
                 if (ImGui::SliderFloat("intensity", &mSkyParams.mSunSetting.w, 0.0f, 100.0f))
                 {
-                    mUpdateEnvironment = true;
+                    mUpdateSky = true;
                 }
                 ImGui::Text("Sky");
 
                 if (ImGui::SliderFloat("Rayleigh", &mSkyParams.mNishitaSetting.x, 0.0f, 40.0f))
                 {
-                    mUpdateEnvironment = true;
+                    mUpdateSky = true;
                 }
 
                 if (ImGui::SliderFloat("Mie", &mSkyParams.mNishitaSetting.y, 0.0f, 40.0f))
                 {
-                    mUpdateEnvironment = true;
+                    mUpdateSky = true;
                 }
                 
                 if (ImGui::SliderFloat("Fog min dist", &mSkyParams.mFogSettings.x, 100.0f, 10000.0f))
@@ -873,31 +893,29 @@ void Renderer::renderGUI()
     // properties window
     if (mShowPropertiesWindow)
     {
-        if (ImGui::Begin("Properties", &mShowPropertiesWindow))
+        ImGui::Begin("Properties", &mShowPropertiesWindow);
+        if (ImGui::BeginTabBar("Settings", ImGuiTabBarFlags_None))
         {
-            if (ImGui::BeginTabBar("Settings", ImGuiTabBarFlags_None))
+            if (ImGui::BeginTabItem("Performance"))
             {
-                if (ImGui::BeginTabItem("Performance"))
-                {
-                    ImGui::Text("Frame time: %f ms", mDeltaTime);
-                    ImGui::Text("Frames per sec: %f fps", (1.0f / (mDeltaTime * 0.001f)));
-                    ImGui::EndTabItem();
-                }
-
-                if (ImGui::BeginTabItem("Camera"))
-                {
-                    ImGui::Text("Position");
-                    ImGui::Text("x: %.2f y: %.2f z: %.2f", mCamera.getEye().x, mCamera.getEye().y, mCamera.getEye().z);
-                    ImGui::Text("Target");
-                    ImGui::Text("x: %.2f y: %.2f z: %.2f", mCamera.getTarget().x, mCamera.getTarget().y, mCamera.getTarget().z);
-                    ImGui::Text("Distance");
-                    ImGui::Text("dist: %.2f", length(mCamera.getTarget() - mCamera.getEye()));
-                    ImGui::EndTabItem();
-                }
-                ImGui::EndTabBar();
+                ImGui::Text("Frame time: %f ms", mDeltaTime);
+                ImGui::Text("Frames per sec: %f fps", (1.0f / (mDeltaTime * 0.001f)));
+                ImGui::EndTabItem();
             }
-            ImGui::End();
+
+            if (ImGui::BeginTabItem("Camera"))
+            {
+                ImGui::Text("Position");
+                ImGui::Text("x: %.2f y: %.2f z: %.2f", mCamera.getEye().x, mCamera.getEye().y, mCamera.getEye().z);
+                ImGui::Text("Target");
+                ImGui::Text("x: %.2f y: %.2f z: %.2f", mCamera.getTarget().x, mCamera.getTarget().y, mCamera.getTarget().z);
+                ImGui::Text("Distance");
+                ImGui::Text("dist: %.2f", length(mCamera.getTarget() - mCamera.getEye()));
+                ImGui::EndTabItem();
+            }
+            ImGui::EndTabBar();
         }
+        ImGui::End();
     }
 
 

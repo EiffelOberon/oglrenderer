@@ -55,7 +55,7 @@ void raymarchCloud(
 
             // only do light marching if transmittance is less than 1
             const float shadowStepLength = (height * 0.5f / float(shadowMaxSteps));
-            //if (transmittance < 1.0f)
+            if (transmittance < 1.0f)
             {
                 for (int j = 0; j < shadowMaxSteps; ++j)
                 {

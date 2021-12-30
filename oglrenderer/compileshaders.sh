@@ -8,6 +8,7 @@
 ./shaderc/glslc.exe ./shaders/perlinworleynoise.frag -o ./spv/perlinworleynoisefrag.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 ./shaderc/glslc.exe ./shaders/precomputecloud.comp -o ./spv/precomputecloud.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 ./shaderc/glslc.exe ./shaders/precomputeenvironment.frag -o ./spv/precomputeenvironment.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
+./shaderc/glslc.exe ./shaders/precomputesky.frag -o ./spv/precomputesky.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 ./shaderc/glslc.exe ./shaders/oceanheightfield.comp -o ./spv/oceanheightfield.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 ./shaderc/glslc.exe ./shaders/oceanhfinal.comp -o ./spv/oceanhfinal.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 ./shaderc/glslc.exe ./shaders/precomputebutterfly.comp -o ./spv/precomputebutterfly.spv --target-env=opengl -std=450core -I "./" -I "./shaders"

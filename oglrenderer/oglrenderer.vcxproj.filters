@@ -220,5 +220,8 @@
     <None Include="shaders\water.vert">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\precomputesky.frag">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

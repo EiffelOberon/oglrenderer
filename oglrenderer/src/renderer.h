@@ -114,6 +114,7 @@ private:
     float         mLowResFactor;
     
     // update boolean
+    bool          mUpdateSky;
     bool          mUpdateEnvironment;
     bool          mOceanWireframe;
 
@@ -128,7 +129,8 @@ private:
     std::unique_ptr<Texture> mBlueNoiseTexture;
 
     // environment cubemap texture
-    std::unique_ptr<RenderCubemapTexture> mRenderCubemapTexture;
+    std::unique_ptr<RenderCubemapTexture> mSkyCubemap;
+    std::unique_ptr<RenderCubemapTexture> mFinalSkyCubemap;
 
     // states
     Camera mCamera;

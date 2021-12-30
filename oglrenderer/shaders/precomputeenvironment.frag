@@ -25,6 +25,7 @@ layout(std430, binding = SKY_PARAMS) uniform SkyParamsUniform
 
 layout (binding = PRECOMPUTE_ENVIRONMENT_CLOUD_TEX) uniform sampler3D cloudTexture;
 layout (binding = PRECOMPUTE_ENVIRONMENT_NOISE_TEX) uniform sampler2D noiseTexture;
+layout (binding = PRECOMPUTE_ENVIRONMENT_SKY_TEX)   uniform samplerCube skyTexture;
 
 layout(location = 0) out vec4 c;
 
@@ -66,12 +67,8 @@ void main()
 	vec2 st = uv * 2.0f - 1.0f;
     vec3 rayDir = normalize(uvToXYZ(skyParams.mPrecomputeSettings.x, st));
     vec3 sunDir = length(skyParams.mSunSetting.xyz) > 0 ? normalize(skyParams.mSunSetting.xyz) : vec3(0, 1, 0);
+	const vec3 sky = texture(skyTexture, rayDir.xyz).xyz;
 
-	vec3 rayleigh;
-	vec3 mie;
-	vec3 sky;
-	nishitaSky(0.001f, skyParams.mNishitaSetting.x, skyParams.mNishitaSetting.y, sunDir, rayDir.xyz,  rayleigh, mie, sky);
-	
     Ray r;
     r.mOrigin = vec3(0, 0, 0);
     r.mDir = rayDir; 

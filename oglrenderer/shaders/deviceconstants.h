@@ -15,6 +15,7 @@
 # define PERLIN_NOISE_SHADER      10
 # define CLOUD_NOISE_SHADER       11
 # define WATER_SHADER             12
+# define PRECOMP_SKY_SHADER       13
 
 // sky models
 # define NISHITA_SKY 0
@@ -93,6 +94,7 @@
 // precompute environment shader
 # define PRECOMPUTE_ENVIRONMENT_CLOUD_TEX 1
 # define PRECOMPUTE_ENVIRONMENT_NOISE_TEX 2
+# define PRECOMPUTE_ENVIRONMENT_SKY_TEX   3
 
 // ocean height field shader
 # define OCEAN_HEIGHTFIELD_NOISE 1

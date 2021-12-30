@@ -208,6 +208,7 @@
     <None Include="shaders\precomputebutterfly.comp" />
     <None Include="shaders\precomputecloud.comp" />
     <None Include="shaders\precomputeenvironment.frag" />
+    <None Include="shaders\precomputesky.frag" />
     <None Include="shaders\quad.frag" />
     <None Include="shaders\quad.vert" />
     <None Include="shaders\texturedQuad.frag" />
