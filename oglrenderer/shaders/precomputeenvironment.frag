@@ -76,7 +76,7 @@ void main()
     r.mDir = rayDir; 
 
     Box b; 
-    float width = 30000.0f;
+    float width = 80000.0f;
     float height = renderParams.mCloudSettings.w;
     b.mMin = vec3(0.0f, 2000.0f, 0.0f) + vec3(-width, 0, -width);
     b.mMax = vec3(0.0f, 2000.0f, 0.0f) + vec3(width, height, width);
@@ -104,6 +104,7 @@ void main()
             tMin, 
             tMax, 
             sunPos, 
+            skyParams.mSunLuminance,
             hasClouds, 
             cloudColor, 
             transmittance);
@@ -113,12 +114,11 @@ void main()
     if(transmittance < 1.0f)
     {
         hasClouds = true;
-        sky.xyz *= transmittance;
     }
 
     if(foundIntersection && hasClouds)
     {
-        c = vec4(mix(vec3(cloudColor.xyz), sky.xyz, transmittance), 1.0f);
+        c = vec4(sky.xyz * transmittance + cloudColor.xyz, 1.0f);
     }
     else
     {

@@ -24,6 +24,8 @@ struct SkyParams
 {
     // x, y, z: dir w: intensity
     vec4 mSunSetting;
+    // x, y, z: luminance w: empty
+    vec4 mSunLuminance;
     // x: rayleigh intensity, y: mie intensity
     vec4 mNishitaSetting;
     // x: min fog dist, y: max fog dist, z,w: empty
@@ -39,7 +41,7 @@ struct RendererParams
     vec4 mSettings;
     // x = anisotropy, y = speed, z = density, w = height;
     vec4 mCloudSettings;
-    // x = u, y = v, z = empty, w = empty;
+    // x = u, y = v, z = coverage, w = empty;
     vec4 mCloudMapping;
     // x = absorption, y, z, w = empty;
     vec4 mCloudAbsorption;

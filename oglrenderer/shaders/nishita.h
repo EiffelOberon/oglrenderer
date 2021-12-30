@@ -1,12 +1,28 @@
 #ifndef NISHITA_H
 #define NISHITA_H
 
+#ifndef GLSL_SHADER
+# include "glm/glm.hpp"
+# include "GL/glew.h"
+# define INOUT_VEC3 vec3 &
+# define mat4       glm::mat4
+# define min        glm::min
+# define max        glm::max
+# define vec4       glm::vec4
+# define vec3       glm::vec3
+# define vec2       glm::vec2
+# define uint       uint32_t
+# define ivec4      glm::ivec4
+#else 
+# define INOUT_VEC3 inout vec3
+#endif
+
 struct linesample
 {
-	bool has_solutions;
-	int  type;
-	vec3 min;
-	vec3 max;
+	bool mHasSolutions;
+	int  mType;
+	vec3 mMin;
+	vec3 mMax;
 };
 
 bool has_solutions(
@@ -115,9 +131,9 @@ void nishitaSky(
 	float      mieIntensity     /*= 20*/,
 	vec3       sunDirFromOrigin /*= vec3(0.0f, 0.0f,1.0f)*/,
 	vec3       rayDir           /*= vec3(0.0f, 1.0f, 0.0f)*/,
-	inout vec3 rayleigh,
-	inout vec3 mie,
-	inout vec3 sky)
+	INOUT_VEC3 rayleigh,
+	INOUT_VEC3 mie,
+	INOUT_VEC3 sky)
 {
 	//Variables:
 	float Re = 6360e3f; // Radius of the earth
@@ -155,27 +171,27 @@ void nishitaSky(
 		Pu = Pc;
 
 		linesample groundline;
-		groundline.has_solutions = has_solutions(Pc, Direction, Re);
-		groundline.type = linetype(Pc, Direction, Re);
-		groundline.min = lmin(Pc, Direction, Re);
-		groundline.max = lmax(Pc, Direction, Re);
+		groundline.mHasSolutions = has_solutions(Pc, Direction, Re);
+		groundline.mType = linetype(Pc, Direction, Re);
+		groundline.mMin = lmin(Pc, Direction, Re);
+		groundline.mMax = lmax(Pc, Direction, Re);
 
 		linesample atmosphereline;
-		atmosphereline.has_solutions = has_solutions(Pc, Direction, Ra);
-		atmosphereline.type = linetype(Pc, Direction, Ra);
-		atmosphereline.min = lmin(Pc, Direction, Ra);
-		atmosphereline.max = lmax(Pc, Direction, Ra);
+		atmosphereline.mHasSolutions = has_solutions(Pc, Direction, Ra);
+		atmosphereline.mType = linetype(Pc, Direction, Ra);
+		atmosphereline.mMin = lmin(Pc, Direction, Ra);
+		atmosphereline.mMax = lmax(Pc, Direction, Ra);
 
-		Pv = atmosphereline.max;
-		if (atmosphereline.has_solutions && atmosphereline.type == 0)
+		Pv = atmosphereline.mMax;
+		if (atmosphereline.mHasSolutions && atmosphereline.mType == 0)
 		{
 			//Line starts outside atmoshere, so Pu becomes Line.min
-			Pu = atmosphereline.min;
+			Pu = atmosphereline.mMin;
 		}
-		if (groundline.has_solutions && groundline.type == 0)
+		if (groundline.mHasSolutions && groundline.mType == 0)
 		{
 			//Line hits ground, Pv becomes point at which line hits ground, which will be Line.min
-			Pv = groundline.min;
+			Pv = groundline.mMin;
 		}
 	}
 
@@ -189,7 +205,7 @@ void nishitaSky(
 
 	for (int i = 0; i < numSamples; i++)
 	{
-		vec3 Px = Pu + segmentLength * Direction * (i + 0.5);
+		vec3 Px = Pu + segmentLength * Direction * float(i + 0.5f);
 		float sampleHeight = length(Px) - Re;
 
 		/* Get optical depth for light at this sample: */
@@ -204,20 +220,20 @@ void nishitaSky(
 		float opticalDepthLM = 0;
 
 		linesample atmosphereline_sample;
-		atmosphereline_sample.has_solutions = has_solutions(Px, SunDirection, Ra);
-		atmosphereline_sample.type = linetype(Px, SunDirection, Ra);
-		atmosphereline_sample.min = lmin(Px, SunDirection, Ra);
-		atmosphereline_sample.max = lmax(Px, SunDirection, Ra);
+		atmosphereline_sample.mHasSolutions = has_solutions(Px, SunDirection, Ra);
+		atmosphereline_sample.mType = linetype(Px, SunDirection, Ra);
+		atmosphereline_sample.mMin = lmin(Px, SunDirection, Ra);
+		atmosphereline_sample.mMax = lmax(Px, SunDirection, Ra);
 
 		linesample groundline_sample;
-		groundline_sample.has_solutions = has_solutions(Px, SunDirection, Re);
-		groundline_sample.type = linetype(Px, SunDirection, Re);
-		groundline_sample.min = lmin(Px, SunDirection, Re);
-		groundline_sample.max = lmax(Px, SunDirection, Re);
+		groundline_sample.mHasSolutions = has_solutions(Px, SunDirection, Re);
+		groundline_sample.mType = linetype(Px, SunDirection, Re);
+		groundline_sample.mMin = lmin(Px, SunDirection, Re);
+		groundline_sample.mMax = lmax(Px, SunDirection, Re);
 
-		vec3 Ps = atmosphereline_sample.max;
+		vec3 Ps = atmosphereline_sample.mMax;
 		int j = 0;
-		if (groundline_sample.has_solutions && groundline_sample.type == 0)
+		if (groundline_sample.mHasSolutions && groundline_sample.mType == 0)
 		{
 			//Light is below horizon from this point. No sample needed.
 			opticalDepthLR += 0;
@@ -229,7 +245,7 @@ void nishitaSky(
 
 			for (j = 0; j < numSamplesL; j++)
 			{
-				vec3 Pl = Px + segmentLengthL * SunDirection * (j + 0.5);
+				vec3 Pl = Px + segmentLengthL * SunDirection * float(j + 0.5);
 				float sampleHeightL = length(Pl) - Re;
 				if (sampleHeightL < 0) break;
 				// ignore sampleheights < 0 they're inside the planet...
@@ -261,5 +277,19 @@ void nishitaSky(
 	mie = (SumM * phaseM * BetaM) * mieIntensity;
 	sky = rayleigh + mie;
 }
+
+
+#ifndef GLSL_SHADER
+# undef INOUT_VEC3 inout vec3
+# undef mat4
+# undef min
+# undef max
+# undef vec4
+# undef vec3
+# undef vec2
+# undef uint
+# undef ivec4
+#endif
+
 
 #endif

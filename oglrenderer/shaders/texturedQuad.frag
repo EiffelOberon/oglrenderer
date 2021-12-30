@@ -27,7 +27,7 @@ void main()
 {
 	// floating point texture -> display sRGB so need to convert
 	vec3 texResult = texture(mainTexture, uv).xyz;
-    //texResult = ACESTonemap(texResult);
+    texResult = ACESTonemap(texResult);
 	texResult = pow(texResult, vec3(1.0f / 2.2f));
 	c = vec4(texResult, 1.0f);
 }

@@ -7,6 +7,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "imgui.h"
 #include "ini.h"
+#include "nishita.h"
 #include "oceanfft.h"
 
 
@@ -100,6 +101,7 @@ Renderer::Renderer()
     mRenderParams.mCloudSettings.w = 10000.0f;
     mRenderParams.mCloudMapping.x = 4.0f;
     mRenderParams.mCloudMapping.y = 4.0f;
+    mRenderParams.mCloudMapping.z = 0.8f;
     mRenderParams.mCloudAbsorption.x = 1.0f;
     mRenderParams.mSteps.x = 1024;
     mRenderParams.mSteps.y = 8;
@@ -308,7 +310,7 @@ void Renderer::preRender()
 {
     mRenderStartTime = std::chrono::high_resolution_clock::now();
 
-    if (mFrameCount % 16 == 0)
+    //if (mFrameCount % 16 == 0)
     {
         mCloudTexture.bindImageTexture(PRECOMPUTE_CLOUD_CLOUD_TEX, GL_WRITE_ONLY);
         const int workGroupSize = int(float(CLOUD_RESOLUTION) / float(PRECOMPUTE_CLOUD_LOCAL_SIZE));
@@ -354,18 +356,31 @@ void Renderer::preRender()
     }
 
     // render quarter sized render texture
-    if (mUpdateEnvironment)
+    //if (mUpdateEnvironment)
     {
         glViewport(0, 0, int(mEnvironmentResolution.x), int(mEnvironmentResolution.y));
 
         if (mSkyParams.mPrecomputeSettings.y == NISHITA_SKY)
         {
+            glm::vec3 rayleigh, mie, sky;
+            nishitaSky(
+                0.001f,
+                mSkyParams.mNishitaSetting.x,
+                mSkyParams.mNishitaSetting.y,
+                glm::vec3(mSkyParams.mSunSetting.x, mSkyParams.mSunSetting.y, mSkyParams.mSunSetting.z),
+                glm::vec3(mSkyParams.mSunSetting.x, mSkyParams.mSunSetting.y, mSkyParams.mSunSetting.z),
+                rayleigh,
+                mie,
+                sky);
+            mSkyParams.mSunLuminance = glm::vec4(sky.x, sky.y, sky.z, 1.0f);
+            updateUniform(SKY_PARAMS, mSkyParams);
+
             mCloudTexture.bindTexture(PRECOMPUTE_ENVIRONENT_CLOUD_TEX);
             mShaders[PRECOMP_ENV_SHADER]->use();
             for (int i = 0; i < 6; ++i)
             {
                 mSkyParams.mPrecomputeSettings.x = i;
-                updateUniform(SKY_PARAMS, mSkyParams);
+                updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeSettings), sizeof(mSkyParams.mPrecomputeSettings), mSkyParams.mPrecomputeSettings);
 
                 mRenderCubemapTexture->bind(i);
                 mQuad.draw();
@@ -375,6 +390,7 @@ void Renderer::preRender()
         }
         else if(mSkyParams.mPrecomputeSettings.y == HOSEK_SKY)
         {
+            mSkyParams.mSunLuminance = glm::vec4(1.0f);
             updateUniform(SKY_PARAMS, mSkyParams);
             mHosekSkyModel->update(glm::vec3(mSkyParams.mSunSetting.x, mSkyParams.mSunSetting.y, mSkyParams.mSunSetting.z));
         }
@@ -655,6 +671,11 @@ void Renderer::renderGUI()
                     updateUniform(RENDERER_PARAMS, mRenderParams);
                     mUpdateEnvironment = true;
                 }
+                if (ImGui::SliderFloat("Cloud coverage", &mRenderParams.mCloudMapping.z, 0.0f, 1.0f))
+                {
+                    updateUniform(RENDERER_PARAMS, mRenderParams);
+                    mUpdateEnvironment = true;
+                }
                 if (ImGui::SliderFloat("Cloud density", &mRenderParams.mCloudSettings.z, 0.0001f, 100.0f, "%.3f", ImGuiSliderFlags_Logarithmic))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
@@ -894,6 +915,7 @@ void Renderer::saveStates()
     ini["renderparams"]["height"] = std::to_string(mRenderParams.mCloudSettings.w);
     ini["renderparams"]["cloudu"] = std::to_string(mRenderParams.mCloudMapping.x);
     ini["renderparams"]["cloudv"] = std::to_string(mRenderParams.mCloudMapping.y);
+    ini["renderparams"]["coverage"] = std::to_string(mRenderParams.mCloudMapping.z);
     ini["renderparams"]["maxsteps"] = std::to_string(mRenderParams.mSteps.x);
     ini["renderparams"]["maxshadowsteps"] = std::to_string(mRenderParams.mSteps.y);
 
@@ -955,12 +977,13 @@ void Renderer::loadStates()
 
         if (ini.has("renderparams"))
         {
-            //mRenderParams.mCloudSettings.x = std::stof(ini["renderparams"]["anisotropy"]);
+            mRenderParams.mCloudSettings.x = std::stof(ini["renderparams"]["anisotropy"]);
             mRenderParams.mCloudSettings.y = std::stof(ini["renderparams"]["speed"]);
             mRenderParams.mCloudSettings.z = std::stof(ini["renderparams"]["density"]);
             mRenderParams.mCloudSettings.w = std::stof(ini["renderparams"]["height"]);
             mRenderParams.mCloudMapping.x = std::stof(ini["renderparams"]["cloudu"]);
             mRenderParams.mCloudMapping.y = std::stof(ini["renderparams"]["cloudv"]);
+            mRenderParams.mCloudMapping.z = std::stof(ini["renderparams"]["coverage"]);
 
             mRenderParams.mSteps.x = std::stoi(ini["renderparams"]["maxsteps"]);
             mRenderParams.mSteps.y = std::stoi(ini["renderparams"]["maxshadowsteps"]);
