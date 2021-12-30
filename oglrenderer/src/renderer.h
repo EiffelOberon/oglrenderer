@@ -84,8 +84,10 @@ private:
         }
     }
 
-    bool loadFoam(
+    bool loadTexture(
         std::unique_ptr<Texture> &tex,
+        const bool               mipmap,
+        const bool               alpha,
         const std::string        &fileName);
 
     // initialize uniform white noise [0, 1]
@@ -123,6 +125,7 @@ private:
 
     // foam textures
     std::unique_ptr<Texture> mOceanFoamTexture;
+    std::unique_ptr<Texture> mBlueNoiseTexture;
 
     // environment cubemap texture
     std::unique_ptr<RenderCubemapTexture> mRenderCubemapTexture;

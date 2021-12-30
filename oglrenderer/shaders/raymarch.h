@@ -14,6 +14,7 @@ float phase(
 void raymarchCloud(
     in Ray      r,
     in Box      b,
+    const float offset,
     const float height,
     const float density,
     const vec2  uv,
@@ -28,7 +29,7 @@ void raymarchCloud(
     inout float transmittance)
 {
     const float stepLength = ((tMax - tMin) / float(maxSteps));
-    r.mOrigin = r.mOrigin + r.mDir * tMin;
+    r.mOrigin = r.mOrigin + r.mDir * (tMin + stepLength * offset);
 
     float densityScale = density * 0.001f;
     if (tMin > 0 && tMax > tMin)
@@ -98,7 +99,7 @@ void raymarchCloud(
                 const float stepTransmittance = exp(-a * shadowStepLength * lightRayDensity * renderParams.mCloudAbsorption.x);
                 luminance += b* sunLuminance* phase(dot(shadowRay.mDir, r.mDir), c * renderParams.mCloudSettings.x)* stepTransmittance;
             }
-            luminance *= base * lightTransmittance;
+            luminance *= base;
 
             float rayTransmittance = exp(-stepLength * base * densityScale * renderParams.mCloudAbsorption.x);
             vec4 integralScattering = (luminance - luminance * rayTransmittance) / max(0.01f, base * renderParams.mCloudAbsorption.x);

@@ -23,7 +23,8 @@ layout(std430, binding = SKY_PARAMS) uniform SkyParamsUniform
 	SkyParams skyParams;
 };
 
-layout (binding = PRECOMPUTE_ENVIRONENT_CLOUD_TEX) uniform sampler3D cloudTexture;
+layout (binding = PRECOMPUTE_ENVIRONMENT_CLOUD_TEX) uniform sampler3D cloudTexture;
+layout (binding = PRECOMPUTE_ENVIRONMENT_NOISE_TEX) uniform sampler2D noiseTexture;
 
 layout(location = 0) out vec4 c;
 
@@ -93,9 +94,12 @@ void main()
 
     if(foundIntersection)
     {
+        float offset = texture(noiseTexture, uv * ENVIRONMENT_RESOLUTION / BLUENOISE_RESOLUTION).x;
+        offset = fract(offset + renderParams.mScreenSettings.z * 1.61803398875f);
         raymarchCloud(
             r, 
             b,
+            offset,
             height,
             renderParams.mCloudSettings.z,
             renderParams.mCloudMapping.xy, 
@@ -118,7 +122,7 @@ void main()
 
     if(foundIntersection && hasClouds)
     {
-        c = vec4(sky.xyz * transmittance + cloudColor.xyz, 1.0f);
+        c = vec4(sky.xyz * transmittance + cloudColor.xyz * (1 - transmittance), 1.0f);
     }
     else
     {

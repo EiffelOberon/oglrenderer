@@ -47,7 +47,9 @@
 # define BUTTERFLY_INDICES   0
 
 // texture resolution
-# define CLOUD_RESOLUTION 128
+# define CLOUD_RESOLUTION       128
+# define ENVIRONMENT_RESOLUTION 512
+# define BLUENOISE_RESOLUTION   512
 
 // ocean resolution
 # define OCEAN_RESOLUTION_1 256
@@ -89,7 +91,8 @@
 # define PRECOMPUTE_CLOUD_CLOUD_TEX 1
 
 // precompute environment shader
-# define PRECOMPUTE_ENVIRONENT_CLOUD_TEX 1
+# define PRECOMPUTE_ENVIRONMENT_CLOUD_TEX 1
+# define PRECOMPUTE_ENVIRONMENT_NOISE_TEX 2
 
 // ocean height field shader
 # define OCEAN_HEIGHTFIELD_NOISE 1

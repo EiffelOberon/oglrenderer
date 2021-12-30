@@ -17,7 +17,7 @@ Renderer::Renderer()
     , mOceanFFTMidRes(nullptr)
     , mOceanFFTLowRes(nullptr)
     , mOceanFoamTexture(nullptr)
-    , mEnvironmentResolution(512, 512)
+    , mEnvironmentResolution(ENVIRONMENT_RESOLUTION, ENVIRONMENT_RESOLUTION)
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mClipmap(6)
     , mClipmapLevel(0)
@@ -105,6 +105,9 @@ Renderer::Renderer()
     mRenderParams.mCloudAbsorption.x = 1.0f;
     mRenderParams.mSteps.x = 1024;
     mRenderParams.mSteps.y = 8;
+    mRenderParams.mScreenSettings.x = 1600;
+    mRenderParams.mScreenSettings.y = 900;
+    mRenderParams.mScreenSettings.z = 0;
     addUniform(RENDERER_PARAMS, mRenderParams);
 
     // initialize ocean params
@@ -142,7 +145,9 @@ Renderer::Renderer()
 
     // load textures
     FreeImage_Initialise();
-    bool result = loadFoam(mOceanFoamTexture, "./resources/foamDiffuse.jpg");
+    bool result = loadTexture(mOceanFoamTexture, true, false, "./resources/foamDiffuse.jpg");
+    assert(result);
+    result = result && loadTexture(mBlueNoiseTexture, false, true, "./resources/blueNoise512.png");
     assert(result);
     FreeImage_DeInitialise();
 }
@@ -153,8 +158,10 @@ Renderer::~Renderer()
 }
 
 
-bool Renderer::loadFoam(
+bool Renderer::loadTexture(
     std::unique_ptr<Texture> &tex,
+    const bool               mipmap,
+    const bool               alpha,
     const std::string        &fileName)
 {
     FIBITMAP* dib(0);
@@ -192,8 +199,8 @@ bool Renderer::loadFoam(
         assert(false);
         return false;
     }
-
-    tex = std::make_unique<Texture>((int)width, (int)height, GL_LINEAR_MIPMAP_LINEAR, true, 8, false, false, (void*)bits);
+    
+    tex = std::make_unique<Texture>((int)width, (int)height, mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST, mipmap, 8, false, alpha, (void*)bits);
     tex->generateMipmap();
     FreeImage_Unload(dib);
     return true;
@@ -283,6 +290,8 @@ void Renderer::resize(
         // update resolution
         mResolution = glm::vec2(width, height);
         mRenderParams.mSettings.y = (mResolution.x / mResolution.y);
+        mRenderParams.mScreenSettings.x = 1600;
+        mRenderParams.mScreenSettings.y = 900;
         updateUniform(RENDERER_PARAMS, mRenderParams);
 
         // reallocate render texture
@@ -375,7 +384,8 @@ void Renderer::preRender()
             mSkyParams.mSunLuminance = glm::vec4(sky.x, sky.y, sky.z, 1.0f);
             updateUniform(SKY_PARAMS, mSkyParams);
 
-            mCloudTexture.bindTexture(PRECOMPUTE_ENVIRONENT_CLOUD_TEX);
+            mCloudTexture.bindTexture(PRECOMPUTE_ENVIRONMENT_CLOUD_TEX);
+            mBlueNoiseTexture->bindTexture(PRECOMPUTE_ENVIRONMENT_NOISE_TEX);
             mShaders[PRECOMP_ENV_SHADER]->use();
             for (int i = 0; i < 6; ++i)
             {
@@ -410,6 +420,8 @@ void Renderer::render()
 
     mRenderParams.mSettings.x = mTime * 0.001f;
     updateUniform(RENDERER_PARAMS, 0, sizeof(float), mRenderParams);
+    mRenderParams.mScreenSettings.z = (mRenderParams.mScreenSettings.z + 1) % 100000;
+    updateUniform(RENDERER_PARAMS, offsetof(RendererParams, mScreenSettings), sizeof(glm::ivec4), mRenderParams.mScreenSettings);
 
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
