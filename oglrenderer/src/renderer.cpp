@@ -519,42 +519,53 @@ void Renderer::preRender()
         }
         mShaders[PRECOMP_ENV_SHADER]->disable();
 
-        /*switch (mSkyParams.mPrecomputeSettings.x)
+        mPrecomputeCamParams.mEye = glm::vec4(0, 40, 0, 1);
+        mPrecomputeCamParams.mUp = glm::vec4(0, 1, 0, 0);
+        switch (mSkyParams.mPrecomputeSettings.x)
         {
             case 0:
             {
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 40, 0), glm::vec3(0, 40, 0) + glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
+                mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(1, 0, 0, 0);
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mEye));
                 break;
             }
             case 1:
             {
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 40, 0), glm::vec3(0, 40, 0) + glm::vec3(-1, 0, 0), glm::vec3(0, 1, 0));
+                mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(-1, 0, 0, 0);
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mEye));
                 break;
             }
             case 2:
             {
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 40, 0), glm::vec3(0, 40, 0) + glm::vec3(0, 1, 0), glm::vec3(0, 1, 0));
+                mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(0, 1, 0, 0);
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mEye));
                 break;
             }
             case 3:
             {
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 40, 0), glm::vec3(0, 40, 0) + glm::vec3(0, -1, 0), glm::vec3(1, 0, 0));
+                mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(0, -1, 0, 0);
+                mPrecomputeCamParams.mUp = glm::vec4(1, 0, 0, 0);
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mEye));
                 break;
             }
             case 4:
             {
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 40, 0), glm::vec3(0, 40, 0) + glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
+                mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(0, 0, 1, 0);
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mEye));
                 break;
             }
             case 5:
             {
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 40, 0), glm::vec3(0, 40, 0) + glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
+                mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(0, 0, -1, 0);
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(0, 40, 0) + glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
                 break;
             }
         }
+        updateUniform(CAMERA_PARAMS, mPrecomputeCamParams);
         updateUniform(MVP_MATRIX, mPrecomputeMatrix);
         renderWater(true);
-        updateUniform(MVP_MATRIX, mMVPMatrix);*/
+        updateUniform(MVP_MATRIX, mMVPMatrix);
+        updateUniform(CAMERA_PARAMS, mCamParams);
 
         mFinalSkyCubemap->unbind();
     }

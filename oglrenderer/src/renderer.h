@@ -142,6 +142,7 @@ private:
     // states
     Camera mCamera;
     CameraParams mCamParams;
+    CameraParams mPrecomputeCamParams;
     RendererParams mRenderParams;
     SkyParams mSkyParams;
     OceanParams mOceanParams;
