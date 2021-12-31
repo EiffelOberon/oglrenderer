@@ -636,6 +636,7 @@ void Renderer::postRender()
     }
 
     const float fps = (1.0f / (mDeltaTime * 0.001f));
+    mFrameTimes[mFrameCount % FRAMETIMES_COUNT] = mDeltaTime;
     mFpsRecords[mFrameCount % FRAMETIMES_COUNT] = fps;
     if (fps > mMaxFps)
     {
@@ -1032,6 +1033,10 @@ void Renderer::renderGUI()
             if (ImGui::BeginTabItem("Performance"))
             {
                 ImGui::Text("Frame time: %f ms", mDeltaTime);
+                {
+                    ImGui::PlotLines("Time", &mFrameTimes[0], IM_ARRAYSIZE(mFrameTimes), 0, 0, 0.0f, 30.0f, ImVec2(0, 80));
+                }
+
                 ImGui::Text("Frames per sec: %.2f fps", (1.0f / (mDeltaTime * 0.001f)));
 
                 {

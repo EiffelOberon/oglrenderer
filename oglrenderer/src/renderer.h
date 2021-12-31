@@ -170,6 +170,7 @@ private:
 
     float mDeltaTime;
     float mTime;
+    float mFrameTimes[FRAMETIMES_COUNT];
     float mFpsRecords[FRAMETIMES_COUNT];
     float mMinFps;
     float mMaxFps;
