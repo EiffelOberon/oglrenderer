@@ -26,6 +26,7 @@ layout(std430, binding = SKY_PARAMS) uniform SkyParamsUniform
 };
 layout (binding = QUAD_CLOUD_TEX) uniform sampler3D cloudTexture;
 layout (binding = QUAD_ENV_TEX) uniform samplerCube environmentTexture;
+layout (binding = QUAD_NOISE_TEX) uniform sampler2D noiseTexture;
 
 layout(location = 0) out vec4 c;
 
@@ -41,11 +42,8 @@ void main()
     vec3 sunDir = length(skyParams.mSunSetting.xyz) > 0 ? normalize(skyParams.mSunSetting.xyz) : vec3(0, 1, 0);
     vec3 sky = texture(environmentTexture, r.mDir.xyz).xyz;
     
-    c = vec4(sky, 1.0f);
-    /*
-    // disabled - we are not doing raymarching in real time anymore
     Box b; 
-    float width = 30000.0f;
+    float width = 80000.0f;
     float height = renderParams.mCloudSettings.w;
     b.mMin = vec3(0.0f, 2000.0f, 0.0f) + vec3(-width, 0, -width);
     b.mMax = vec3(0.0f, 2000.0f, 0.0f) + vec3(width, height, width);
@@ -57,14 +55,17 @@ void main()
     vec3 sunPos = skyParams.mSunSetting.xyz * 800000.0f;
     
     bool hasClouds = false;
-    vec4 cloudColor = vec4(1.0f);
+    vec4 cloudColor = vec4(0.0f);
     float transmittance = 1.0f;
 
     if(foundIntersection)
     {
+        float offset = texture(noiseTexture, uv * renderParams.mScreenSettings.xy / BLUENOISE_RESOLUTION).x;
+        offset = fract(offset + renderParams.mScreenSettings.z * 1.61803398875f);
         raymarchCloud(
             r, 
             b,
+            offset,
             height,
             renderParams.mCloudSettings.z,
             renderParams.mCloudMapping.xy, 
@@ -73,13 +74,11 @@ void main()
             tMin, 
             tMax, 
             sunPos, 
+            skyParams.mSunLuminance,
             hasClouds, 
             cloudColor, 
             transmittance);
     }
-
-    cloudColor *= texture(environmentTexture, sunDir.xyz);
-    cloudColor.xyz = max(vec3(renderParams.mCloudSettings.x), cloudColor.xyz);
 
     transmittance = clamp(transmittance, 0.0f, 1.0f);
     if(transmittance < 1.0f)
@@ -89,11 +88,10 @@ void main()
 
     if(foundIntersection && hasClouds)
     {
-        c = vec4(mix(vec3(cloudColor.xyz), sky.xyz, transmittance), 1.0f);
+        c = vec4(sky.xyz * transmittance + cloudColor.xyz * (1 - transmittance), 1.0f);
     }
     else
     {
         c = vec4(sky, 1.0f);
     }
-    */
 }

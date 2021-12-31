@@ -475,10 +475,11 @@ void Renderer::render()
         glViewport(0, 0, mResolution.x * mLowResFactor, mResolution.y * mLowResFactor);
         mRenderTexture->bind();
         mCloudTexture.bindTexture(QUAD_CLOUD_TEX);
+        mBlueNoiseTexture->bindTexture(QUAD_NOISE_TEX);
         switch (mSkyParams.mPrecomputeSettings.y)
         {
-        case NISHITA_SKY: mFinalSkyCubemap->bindTexture(QUAD_ENV_TEX, 0); break;
-        case HOSEK_SKY:   mHosekSkyModel->bind(QUAD_ENV_TEX);             break;
+        case NISHITA_SKY: mSkyCubemap->bindTexture(QUAD_ENV_TEX, 0); break;
+        case HOSEK_SKY:   mHosekSkyModel->bind(QUAD_ENV_TEX);        break;
         }
         mShaders[PRE_RENDER_QUAD_SHADER]->use();
         mQuad.draw();

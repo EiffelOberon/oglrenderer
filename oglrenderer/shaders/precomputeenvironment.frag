@@ -91,7 +91,7 @@ void main()
 
     if(foundIntersection)
     {
-        float offset = texture(noiseTexture, uv * ENVIRONMENT_RESOLUTION / BLUENOISE_RESOLUTION).x;
+        float offset = texture(noiseTexture, uv).x;
         offset = fract(offset + renderParams.mScreenSettings.z * 1.61803398875f);
         raymarchCloud(
             r, 

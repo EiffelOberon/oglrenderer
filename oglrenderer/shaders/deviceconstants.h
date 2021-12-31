@@ -50,7 +50,7 @@
 
 // texture resolution
 # define CLOUD_RESOLUTION       128
-# define ENVIRONMENT_RESOLUTION 512
+# define ENVIRONMENT_RESOLUTION 128
 # define BLUENOISE_RESOLUTION   512
 
 // ocean resolution
@@ -110,6 +110,7 @@
 // quad.frag
 # define QUAD_CLOUD_TEX 1
 # define QUAD_ENV_TEX   2
+# define QUAD_NOISE_TEX 3
 
 // texturedQuad.frag
 # define SCREEN_QUAD_TEX 1
