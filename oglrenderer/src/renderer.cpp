@@ -523,32 +523,32 @@ void Renderer::preRender()
         {
             case 0:
             {
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 10, 0), glm::vec3(0, 10, 0) + glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 40, 0), glm::vec3(0, 40, 0) + glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
                 break;
             }
             case 1:
             {
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 10, 0), glm::vec3(0, 10, 0) + glm::vec3(-1, 0, 0), glm::vec3(0, 1, 0));
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 40, 0), glm::vec3(0, 40, 0) + glm::vec3(-1, 0, 0), glm::vec3(0, 1, 0));
                 break;
             }
             case 2:
             {
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 10, 0), glm::vec3(0, 10, 0) + glm::vec3(0, 1, 0), glm::vec3(0, 1, 0));
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 40, 0), glm::vec3(0, 40, 0) + glm::vec3(0, 1, 0), glm::vec3(0, 1, 0));
                 break;
             }
             case 3:
             {
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 10, 0), glm::vec3(0, 10, 0) + glm::vec3(0, -1, 0), glm::vec3(1, 0, 0));
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 40, 0), glm::vec3(0, 40, 0) + glm::vec3(0, -1, 0), glm::vec3(1, 0, 0));
                 break;
             }
             case 4:
             {
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 10, 0), glm::vec3(0, 10, 0) + glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 40, 0), glm::vec3(0, 40, 0) + glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
                 break;
             }
             case 5:
             {
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 10, 0), glm::vec3(0, 10, 0) + glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 40, 0), glm::vec3(0, 40, 0) + glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
                 break;
             }
         }
