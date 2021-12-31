@@ -94,6 +94,7 @@ private:
 
     // initialize uniform white noise [0, 1]
     void updateWaterGrid();
+    void renderWater(const bool precompute);
 
     // methods for saving/loading settings
     void saveStates();
@@ -165,6 +166,7 @@ private:
 
     // MVP matrix
     MVPMatrix mMVPMatrix;
+    MVPMatrix mPrecomputeMatrix;
 
     float mDeltaTime;
     float mTime;

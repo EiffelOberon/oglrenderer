@@ -144,11 +144,16 @@ Renderer::Renderer()
     //updateWaterGrid();
     mClipmap.generateGeometry();
 
+    // compute camera and projection matrix for normal camera
     glm::mat4 projMatrix = glm::perspective(glm::radians(60.0f), 1600.0f / 900.0f, 0.1f, 10000.0f);
     glm::mat4 viewMatrix = mCamera.getViewMatrix();
     mMVPMatrix.mProjectionMatrix = projMatrix;
     mMVPMatrix.mViewMatrix = viewMatrix;
     addUniform(MVP_MATRIX, mMVPMatrix);
+
+    mPrecomputeMatrix.mProjectionMatrix = glm::perspective(glm::radians(60.0f), 1.0f, 0.1f, 10000.0f);
+    mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 1, 0), glm::vec3(0, 1, 0) + glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
+
 
     // hosek
     mHosekSkyModel = std::make_unique<Hosek>(glm::vec3(mSkyParams.mSunSetting.x, mSkyParams.mSunSetting.y, mSkyParams.mSunSetting.z), 512);
@@ -290,6 +295,60 @@ void Renderer::updateWaterGrid()
     }
 
     mWaterGrid.update(vertices.size() * sizeof(Vertex), indices.size() * sizeof(uint32_t), vertices.data(), indices.data());
+}
+
+
+void Renderer::renderWater(
+    const bool precompute)
+{
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LESS);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    if (mRenderWater)
+    {
+        mShaders[WATER_SHADER]->use();
+        switch (mSkyParams.mPrecomputeSettings.y)
+        {
+            case NISHITA_SKY: 
+            {
+                if (precompute)
+                {
+                    mSkyCubemap->bindTexture(WATER_ENV_TEX, 0);
+                }
+                else
+                {
+                    mFinalSkyCubemap->bindTexture(WATER_ENV_TEX, 0);
+                }
+                break;
+            }
+            case HOSEK_SKY:  
+            {
+                mHosekSkyModel->bind(WATER_ENV_TEX);             
+                break;
+            }
+        }
+        mOceanFFTHighRes->bind(WATER_DISPLACEMENT1_TEX);
+        mOceanFFTMidRes->bind(WATER_DISPLACEMENT2_TEX);
+        mOceanFFTLowRes->bind(WATER_DISPLACEMENT3_TEX);
+        mOceanFoamTexture->bindTexture(WATER_FOAM_TEX);
+
+        if (mOceanWireframe && !precompute)
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+        mClipmap.draw();
+        if (mOceanWireframe && !precompute)
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+        mShaders[WATER_SHADER]->disable();
+    }
+    glDisable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
 }
 
 
@@ -459,6 +518,44 @@ void Renderer::preRender()
             updateUniform(RENDERER_PARAMS, offsetof(RendererParams, mSteps), sizeof(mRenderParams.mSteps.x), mRenderParams.mSteps.x);
         }
         mShaders[PRECOMP_ENV_SHADER]->disable();
+
+        /*switch (mSkyParams.mPrecomputeSettings.x)
+        {
+            case 0:
+            {
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 10, 0), glm::vec3(0, 10, 0) + glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
+                break;
+            }
+            case 1:
+            {
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 10, 0), glm::vec3(0, 10, 0) + glm::vec3(-1, 0, 0), glm::vec3(0, 1, 0));
+                break;
+            }
+            case 2:
+            {
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 10, 0), glm::vec3(0, 10, 0) + glm::vec3(0, 1, 0), glm::vec3(0, 1, 0));
+                break;
+            }
+            case 3:
+            {
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 10, 0), glm::vec3(0, 10, 0) + glm::vec3(0, -1, 0), glm::vec3(1, 0, 0));
+                break;
+            }
+            case 4:
+            {
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 10, 0), glm::vec3(0, 10, 0) + glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
+                break;
+            }
+            case 5:
+            {
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 10, 0), glm::vec3(0, 10, 0) + glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
+                break;
+            }
+        }
+        updateUniform(MVP_MATRIX, mPrecomputeMatrix);
+        renderWater(true);
+        updateUniform(MVP_MATRIX, mMVPMatrix);*/
+
         mFinalSkyCubemap->unbind();
     }
     mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(PRECOMP_ENV_SHADER);
@@ -511,41 +608,9 @@ void Renderer::render()
     mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(TEXTURED_QUAD_SHADER);
     
     // enable depth mask
-    glEnable (GL_DEPTH_TEST);
-    glDepthMask(GL_TRUE);
-    glDepthFunc(GL_LESS);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(WATER_SHADER);
-    if (mRenderWater)
-    {
-        mShaders[WATER_SHADER]->use();
-        switch (mSkyParams.mPrecomputeSettings.y)
-        {
-        case NISHITA_SKY: mFinalSkyCubemap->bindTexture(WATER_ENV_TEX, 0); break;
-        case HOSEK_SKY:   mHosekSkyModel->bind(WATER_ENV_TEX);             break;
-        }
-        mOceanFFTHighRes->bind(WATER_DISPLACEMENT1_TEX);
-        mOceanFFTMidRes->bind(WATER_DISPLACEMENT2_TEX);
-        mOceanFFTLowRes->bind(WATER_DISPLACEMENT3_TEX);
-        mOceanFoamTexture->bindTexture(WATER_FOAM_TEX);
-
-        if (mOceanWireframe)
-        {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        }
-        mClipmap.draw();
-        if (mOceanWireframe)
-        {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        }
-        mShaders[WATER_SHADER]->disable();
-    }
+    renderWater(false);
     mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(WATER_SHADER);
-    glDisable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
 }
 
 
