@@ -64,6 +64,24 @@ float perlinWorley3D(
 }
 
 
+float perlinWorley3D(
+    const vec3  worley,
+    const vec3  st,
+    const float time,
+    float       freq,
+    const int   octaves,
+    const bool  invert)
+{
+    const float perlinNoise = perlinFBM(st, time, freq, octaves);
+    const float worleyNoise =
+        worley.x * 0.625f +
+        worley.y * 0.25f +
+        worley.z * 0.125f;
+    float noise = remap(abs(perlinNoise * 2 - 1), (1 - worleyNoise), 1.0f, 0.0f, 1.0f);
+    return 1 - noise;
+}
+
+
 #define CLOUD_COVERAGE .8
 
 // Hash functions by Dave_Hoskins
