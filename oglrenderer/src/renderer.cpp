@@ -154,7 +154,6 @@ Renderer::Renderer()
     mPrecomputeMatrix.mProjectionMatrix = glm::perspective(glm::radians(60.0f), 1.0f, 0.1f, 10000.0f);
     mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 1, 0), glm::vec3(0, 1, 0) + glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
 
-
     // hosek
     mHosekSkyModel = std::make_unique<Hosek>(glm::vec3(mSkyParams.mSunSetting.x, mSkyParams.mSunSetting.y, mSkyParams.mSunSetting.z), 512);
 
@@ -493,24 +492,30 @@ void Renderer::preRender()
     }
     mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(PRECOMP_SKY_SHADER);
 
+    // bind fbo for the following
+    mSkyParams.mPrecomputeSettings.x = mFrameCount % 6;
+    updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeSettings), sizeof(mSkyParams.mPrecomputeSettings), mSkyParams.mPrecomputeSettings);
+    mFinalSkyCubemap->bind(mSkyParams.mPrecomputeSettings.x);
+
+    // 1. render environment sky box
     mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(PRECOMP_ENV_SHADER);
     {
         glViewport(0, 0, int(mEnvironmentResolution.x), int(mEnvironmentResolution.y));
+
+        // make sure we clear buffer as we render water geometry in this pass
+        glClearColor(0, 0, 0, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
         mCloudTexture.bindTexture(PRECOMPUTE_ENVIRONMENT_CLOUD_TEX);
         mBlueNoiseTexture->bindTexture(PRECOMPUTE_ENVIRONMENT_NOISE_TEX);
         mSkyCubemap->bindTexture(PRECOMPUTE_ENVIRONMENT_SKY_TEX, 0);
         mShaders[PRECOMP_ENV_SHADER]->use();
         {
-            // render 1 side of the cubemap per frame
-            mSkyParams.mPrecomputeSettings.x = mFrameCount % 6;
-            updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeSettings), sizeof(mSkyParams.mPrecomputeSettings), mSkyParams.mPrecomputeSettings);
-
             // force 100 max steps for cubemap since it's low resolution
             const int oldMaxSteps = mRenderParams.mSteps.x;
             mRenderParams.mSteps.x = 100;
             updateUniform(RENDERER_PARAMS, offsetof(RendererParams, mSteps), sizeof(mRenderParams.mSteps.x), mRenderParams.mSteps.x);
 
-            mFinalSkyCubemap->bind(mSkyParams.mPrecomputeSettings.x);
             mQuad.draw();
 
             // restore max steps to what it was before
@@ -519,53 +524,59 @@ void Renderer::preRender()
         }
         mShaders[PRECOMP_ENV_SHADER]->disable();
 
-        mPrecomputeCamParams.mEye = glm::vec4(0, 40, 0, 1);
-        mPrecomputeCamParams.mUp = glm::vec4(0, 1, 0, 0);
+        // 2. render water
+        mPrecomputeCamParams.mEye = glm::vec4(0, 50, 0, 1);
+        mPrecomputeCamParams.mUp = glm::vec4(0, -1, 0, 0);
         switch (mSkyParams.mPrecomputeSettings.x)
         {
             case 0:
             {
                 mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(1, 0, 0, 0);
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mEye));
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mUp));
                 break;
             }
             case 1:
             {
                 mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(-1, 0, 0, 0);
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mEye));
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mUp));
                 break;
             }
             case 2:
             {
-                mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(0, 1, 0, 0);
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mEye));
+                // we are skipping this case
+                mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(0, -1, 0, 0);
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mUp));
                 break;
             }
             case 3:
             {
                 mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(0, -1, 0, 0);
                 mPrecomputeCamParams.mUp = glm::vec4(1, 0, 0, 0);
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mEye));
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mUp));
                 break;
             }
             case 4:
             {
                 mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(0, 0, 1, 0);
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mEye));
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mUp));
                 break;
             }
             case 5:
             {
                 mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(0, 0, -1, 0);
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(0, 40, 0) + glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
+                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mUp));
                 break;
             }
         }
-        updateUniform(CAMERA_PARAMS, mPrecomputeCamParams);
-        updateUniform(MVP_MATRIX, mPrecomputeMatrix);
-        renderWater(true);
-        updateUniform(MVP_MATRIX, mMVPMatrix);
-        updateUniform(CAMERA_PARAMS, mCamParams);
+
+        if (mSkyParams.mPrecomputeSettings.x != 2)
+        {
+            updateUniform(CAMERA_PARAMS, mPrecomputeCamParams);
+            updateUniform(MVP_MATRIX, mPrecomputeMatrix);
+            renderWater(true);
+            updateUniform(MVP_MATRIX, mMVPMatrix);
+            updateUniform(CAMERA_PARAMS, mCamParams);
+        }
 
         mFinalSkyCubemap->unbind();
     }
