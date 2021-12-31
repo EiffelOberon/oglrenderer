@@ -25,6 +25,7 @@ Renderer::Renderer()
     , mFinalSkyCubemap(nullptr)
     , mWorleyNoiseRenderTexture(nullptr)
     , mCamera()
+    , mShowBuffersWindow(false)
     , mShowPropertiesWindow(true)
     , mShowSkyWindow(true)
     , mOceanWireframe(false)
@@ -609,6 +610,7 @@ void Renderer::render()
         mScreenRenderTextures[mFrameCount % SCREEN_BUFFER_COUNT]->bind();
         mCloudTexture.bindTexture(QUAD_CLOUD_TEX);
         mBlueNoiseTexture->bindTexture(QUAD_NOISE_TEX);
+        mScreenRenderTextures[(mFrameCount + 1) % SCREEN_BUFFER_COUNT]->bindTexture(QUAD_PREV_SCREEN_TEX, 0);
         switch (mSkyParams.mPrecomputeSettings.y)
         {
         case NISHITA_SKY: mSkyCubemap->bindTexture(QUAD_ENV_TEX, 0); break;
@@ -632,7 +634,7 @@ void Renderer::render()
     }
     mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(TEXTURED_QUAD_SHADER);
     
-    // enable depth mask
+    // enable depth mask for rendering objects in world space
     mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(WATER_SHADER);
     renderWater(false);
     mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(WATER_SHADER);
@@ -700,6 +702,15 @@ void Renderer::renderGUI()
             {
                 exit(0);
                 return;
+            }
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Tools"))
+        {
+            if (ImGui::MenuItem("Buffers"))
+            {
+                mShowBuffersWindow = !mShowBuffersWindow;
             }
             ImGui::EndMenu();
         }
@@ -1099,8 +1110,43 @@ void Renderer::renderGUI()
                 ImGui::Text("dist: %.2f", length(mCamera.getTarget() - mCamera.getEye()));
                 ImGui::EndTabItem();
             }
+
             ImGui::EndTabBar();
         }
+        ImGui::End();
+    }
+
+    if (mShowBuffersWindow)
+    {
+        ImGui::Begin("Buffers", &mShowBuffersWindow);
+
+        // the buffer we are rendering to
+        const float textureWidth = 100 * mRenderParams.mSettings.y;
+        const float textureHeight = 100;
+        ImGui::Text("Main pass");
+        ImTextureID screenBuffer = (ImTextureID)mScreenRenderTextures[mFrameCount % SCREEN_BUFFER_COUNT]->getTextureId(0);
+        {
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+            ImGui::Image(screenBuffer, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+        }
+
+        ImGui::SameLine();
+
+        // the buffer in previous iteration
+        screenBuffer = (ImTextureID)mScreenRenderTextures[(mFrameCount + 1) % SCREEN_BUFFER_COUNT]->getTextureId(0);
+        {
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+            ImGui::Image(screenBuffer, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+        }
+
         ImGui::End();
     }
 

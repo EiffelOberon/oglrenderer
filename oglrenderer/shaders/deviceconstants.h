@@ -112,9 +112,10 @@
 # define OCEAN_HEIGHT_FINAL_H_Z 6
 
 // quad.frag
-# define QUAD_CLOUD_TEX 1
-# define QUAD_ENV_TEX   2
-# define QUAD_NOISE_TEX 3
+# define QUAD_CLOUD_TEX       1
+# define QUAD_ENV_TEX         2
+# define QUAD_NOISE_TEX       3
+# define QUAD_PREV_SCREEN_TEX 4
 
 // texturedQuad.frag
 # define SCREEN_QUAD_TEX 1

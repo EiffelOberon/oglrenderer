@@ -27,6 +27,7 @@ layout(std430, binding = SKY_PARAMS) uniform SkyParamsUniform
 layout (binding = QUAD_CLOUD_TEX) uniform sampler3D cloudTexture;
 layout (binding = QUAD_ENV_TEX) uniform samplerCube environmentTexture;
 layout (binding = QUAD_NOISE_TEX) uniform sampler2D noiseTexture;
+layout (binding = QUAD_PREV_SCREEN_TEX) uniform sampler2D prevMainTexture;
 
 layout(location = 0) out vec4 c;
 

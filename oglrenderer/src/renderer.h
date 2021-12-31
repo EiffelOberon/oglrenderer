@@ -161,6 +161,7 @@ private:
     // gui
     bool mShowPropertiesWindow;
     bool mShowSkyWindow;
+    bool mShowBuffersWindow;
 
     // booleans for rendering
     bool mRenderWater;
