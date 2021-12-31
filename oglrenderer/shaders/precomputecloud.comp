@@ -40,25 +40,24 @@ void main()
 	{
 		case 0:	
 		{
-			color.x = perlinWorley3D(uvw, renderParams.mSettings.x * renderParams.mCloudSettings.y, perlinParams.mSettings.z, perlinParams.mNoiseOctaves, true); 
-
+			color.y = worley3D(uvw * perlinParams.mSettings.z, renderParams.mSettings.x * renderParams.mCloudSettings.y * perlinParams.mSettings.z, true); 
 			break;
 		}
 		case 1:	
 		{
-			color.y = worley3D(uvw * perlinParams.mSettings.z, renderParams.mSettings.x * renderParams.mCloudSettings.y * perlinParams.mSettings.z, true); 
-			break;
-		}
-		case 2:	
-		{
 			color.z = worley3D(uvw * 2 * perlinParams.mSettings.z, renderParams.mSettings.x * 2 * renderParams.mCloudSettings.y * perlinParams.mSettings.z, true); 
 			break;
 		}
-		case 3: 
+		case 2: 
 		{
 			color.w = worley3D(uvw * 4 * perlinParams.mSettings.z, renderParams.mSettings.x * 4 * renderParams.mCloudSettings.y * perlinParams.mSettings.z, true); 
 			break;
 		}
+        case 3:
+        {
+            color.x = perlinWorley3D(color.yzw, uvw, renderParams.mSettings.x * renderParams.mCloudSettings.y, perlinParams.mSettings.z, perlinParams.mNoiseOctaves, true);
+            break;
+        }
 	}
     imageStore(cloudTexture, ivec3(gl_GlobalInvocationID.xyz), color);
 }
