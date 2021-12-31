@@ -23,7 +23,7 @@ layout(std430, binding = WORLEY_PARAMS) uniform WorleyParamsUniform
 {
 	NoiseParams worleyParams;
 };
-layout (binding = PRECOMPUTE_CLOUD_CLOUD_TEX, rgba32f) uniform writeonly image3D cloudTexture;
+layout (binding = PRECOMPUTE_CLOUD_CLOUD_TEX, rgba32f) uniform image3D cloudTexture;
 
 void main()
 {
@@ -34,13 +34,31 @@ void main()
 
     vec3 uvw = gl_GlobalInvocationID.xyz / vec3(CLOUD_RESOLUTION, CLOUD_RESOLUTION, CLOUD_RESOLUTION);
 
-    const float perlinWorley = perlinWorley3D(
-		uvw, renderParams.mSettings.x * renderParams.mCloudSettings.y, perlinParams.mSettings.z, perlinParams.mNoiseOctaves, true);
+    const int count = renderParams.mScreenSettings.z % 4;
+    vec4 color = imageLoad(cloudTexture, ivec3(gl_GlobalInvocationID.xyz));
+	switch (count)
+	{
+		case 0:	
+		{
+			color.x = perlinWorley3D(uvw, renderParams.mSettings.x * renderParams.mCloudSettings.y, perlinParams.mSettings.z, perlinParams.mNoiseOctaves, true); 
 
-    const float worley1 = worley3D(uvw * perlinParams.mSettings.z, renderParams.mSettings.x * renderParams.mCloudSettings.y * perlinParams.mSettings.z, true);
-    const float worley2 = worley3D(uvw * 2 * perlinParams.mSettings.z, renderParams.mSettings.x * 2 * renderParams.mCloudSettings.y * perlinParams.mSettings.z, true);
-    const float worley3 = worley3D(uvw * 4 * perlinParams.mSettings.z, renderParams.mSettings.x * 4 * renderParams.mCloudSettings.y * perlinParams.mSettings.z, true);
-
-    imageStore(cloudTexture, ivec3(gl_GlobalInvocationID.xyz), vec4(perlinWorley, worley1, worley2, worley3));
-
+			break;
+		}
+		case 1:	
+		{
+			color.y = worley3D(uvw * perlinParams.mSettings.z, renderParams.mSettings.x * renderParams.mCloudSettings.y * perlinParams.mSettings.z, true); 
+			break;
+		}
+		case 2:	
+		{
+			color.z = worley3D(uvw * 2 * perlinParams.mSettings.z, renderParams.mSettings.x * 2 * renderParams.mCloudSettings.y * perlinParams.mSettings.z, true); 
+			break;
+		}
+		case 3: 
+		{
+			color.w = worley3D(uvw * 4 * perlinParams.mSettings.z, renderParams.mSettings.x * 4 * renderParams.mCloudSettings.y * perlinParams.mSettings.z, true); 
+			break;
+		}
+	}
+    imageStore(cloudTexture, ivec3(gl_GlobalInvocationID.xyz), color);
 }

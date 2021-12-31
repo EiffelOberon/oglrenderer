@@ -28,9 +28,12 @@ public:
     
     // Vertex / Fragment constructor
     ShaderProgram(
+        const std::string &name,
         const std::string &vertPath,
         const std::string &fragPath)
     {
+        mName = name;
+
         // Generate a unique Id / handle for the shader program
         // Note: We MUST have a valid rendering context before generating
         // the programId or it causes a segfault!
@@ -62,8 +65,10 @@ public:
 
     // Compute constructor
     ShaderProgram(
+        const std::string& name,
         const std::string& computePath)
     {
+        mName = name;
         // Generate a unique Id / handle for the shader program
         // Note: We MUST have a valid rendering context before generating
         // the programId or it causes a segfault!
@@ -133,6 +138,11 @@ public:
         return mProgramId;
     }
 
+    const char* name() const
+    {
+        return mName.c_str();
+    }
+
 private:
     
     // Method to link the shader program and display the link status
@@ -158,6 +168,7 @@ private:
     // Variables keeping track of the program
     GLuint mProgramId;       // The unique ID / handle for the shader program
     GLuint mShaderCount;     // How many shaders are attached to the shader program
+    std::string mName;
 
      // List of attached shaders and uniforms to the program
     std::vector<std::unique_ptr<Shader>> mAttachedShaders;

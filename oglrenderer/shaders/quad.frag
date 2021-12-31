@@ -50,7 +50,7 @@ void main()
 
     float tMin = 0.0f;
     float tMax = 0.0f;
-    const bool foundIntersection = intersect(b, r, tMin, tMax);
+    const bool foundIntersection = r.mDir.y > 0 && intersect(b, r, tMin, tMax);
     
     vec3 sunPos = skyParams.mSunSetting.xyz * 800000.0f;
     

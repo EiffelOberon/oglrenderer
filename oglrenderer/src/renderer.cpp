@@ -42,20 +42,20 @@ Renderer::Renderer()
     mTimeQueries.push_back(std::make_unique<TimeQuery>(SHADER_COUNT));
     mTimeQueries.push_back(std::make_unique<TimeQuery>(SHADER_COUNT));
 
-    mShaders[BUTTERFLY_SHADER] = std::make_unique<ShaderProgram>("./spv/butterflyoperation.spv");
-    mShaders[INVERSION_SHADER] = std::make_unique<ShaderProgram>("./spv/inversion.spv");
-    mShaders[PRECOMP_BUTTERFLY_SHADER] = std::make_unique<ShaderProgram>("./spv/precomputebutterfly.spv");
-    mShaders[PRECOMP_CLOUD_SHADER] = std::make_unique<ShaderProgram>("./spv/precomputecloud.spv");
-    mShaders[PRECOMP_ENV_SHADER] = std::make_unique<ShaderProgram>("./spv/vert.spv", "./spv/precomputeenvironment.spv");
-    mShaders[PRECOMP_SKY_SHADER] = std::make_unique<ShaderProgram>("./spv/vert.spv", "./spv/precomputesky.spv");
-    mShaders[PRECOMP_OCEAN_H0_SHADER] = std::make_unique<ShaderProgram>("./spv/oceanheightfield.spv");
-    mShaders[PRECOMP_OCEAN_H_SHADER] = std::make_unique<ShaderProgram>("./spv/oceanhfinal.spv");
-    mShaders[PRE_RENDER_QUAD_SHADER] = std::make_unique<ShaderProgram>("./spv/vert.spv", "./spv/frag.spv");
-    mShaders[TEXTURED_QUAD_SHADER] = std::make_unique<ShaderProgram>("./spv/vert.spv", "./spv/texturedQuadFrag.spv");
-    mShaders[CLOUD_NOISE_SHADER] = std::make_unique<ShaderProgram>("./spv/vert.spv", "./spv/cloudnoisefrag.spv");
-    mShaders[PERLIN_NOISE_SHADER] = std::make_unique<ShaderProgram>("./spv/vert.spv", "./spv/perlinnoisefrag.spv");
-    mShaders[WORLEY_NOISE_SHADER] = std::make_unique<ShaderProgram>("./spv/vert.spv", "./spv/worleynoisefrag.spv");
-    mShaders[WATER_SHADER] = std::make_unique<ShaderProgram>("./spv/watervert.spv", "./spv/waterfrag.spv");
+    mShaders[BUTTERFLY_SHADER] = std::make_unique<ShaderProgram>("butterfly", "./spv/butterflyoperation.spv");
+    mShaders[INVERSION_SHADER] = std::make_unique<ShaderProgram>("fft", "./spv/inversion.spv");
+    mShaders[PRECOMP_BUTTERFLY_SHADER] = std::make_unique<ShaderProgram>("precomputebutterfly", "./spv/precomputebutterfly.spv");
+    mShaders[PRECOMP_CLOUD_SHADER] = std::make_unique<ShaderProgram>("precomputecloud", "./spv/precomputecloud.spv");
+    mShaders[PRECOMP_ENV_SHADER] = std::make_unique<ShaderProgram>("precomputeenv", "./spv/vert.spv", "./spv/precomputeenvironment.spv");
+    mShaders[PRECOMP_SKY_SHADER] = std::make_unique<ShaderProgram>("precomputesky", "./spv/vert.spv", "./spv/precomputesky.spv");
+    mShaders[PRECOMP_OCEAN_H0_SHADER] = std::make_unique<ShaderProgram>("oceanspectrum", "./spv/oceanheightfield.spv");
+    mShaders[PRECOMP_OCEAN_H_SHADER] = std::make_unique<ShaderProgram>("heightf", "./spv/oceanhfinal.spv");
+    mShaders[PRE_RENDER_QUAD_SHADER] = std::make_unique<ShaderProgram>("quad", "./spv/vert.spv", "./spv/frag.spv");
+    mShaders[TEXTURED_QUAD_SHADER] = std::make_unique<ShaderProgram>("post", "./spv/vert.spv", "./spv/texturedQuadFrag.spv");
+    mShaders[CLOUD_NOISE_SHADER] = std::make_unique<ShaderProgram>("cloudnoise", "./spv/vert.spv", "./spv/cloudnoisefrag.spv");
+    mShaders[PERLIN_NOISE_SHADER] = std::make_unique<ShaderProgram>("perlin", "./spv/vert.spv", "./spv/perlinnoisefrag.spv");
+    mShaders[WORLEY_NOISE_SHADER] = std::make_unique<ShaderProgram>("worley", "./spv/vert.spv", "./spv/worleynoisefrag.spv");
+    mShaders[WATER_SHADER] = std::make_unique<ShaderProgram>("water", "./spv/watervert.spv", "./spv/waterfrag.spv");
 
     // cloud noise textures
     mCloudNoiseRenderTexture[0] = nullptr;
@@ -333,7 +333,7 @@ void Renderer::preRender()
     {
         mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(PRECOMP_CLOUD_SHADER);
         {
-            mCloudTexture.bindImageTexture(PRECOMPUTE_CLOUD_CLOUD_TEX, GL_WRITE_ONLY);
+            mCloudTexture.bindImageTexture(PRECOMPUTE_CLOUD_CLOUD_TEX, GL_READ_WRITE);
             const int workGroupSize = int(float(CLOUD_RESOLUTION) / float(PRECOMPUTE_CLOUD_LOCAL_SIZE));
             mShaders[PRECOMP_CLOUD_SHADER]->dispatch(true, workGroupSize, workGroupSize, workGroupSize);
         }
@@ -958,7 +958,7 @@ void Renderer::renderGUI()
                         ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
 
 
-                        sprintf(buf, "shader %d", i);
+                        sprintf(buf, "%s", mShaders[i]->name());
                         ImGui::Text(buf);
                     }
                 }
