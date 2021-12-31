@@ -20,7 +20,8 @@
 # define CLOUD_NOISE_SHADER       11
 # define WATER_SHADER             12
 # define PRECOMP_SKY_SHADER       13
-# define SHADER_COUNT             (PRECOMP_SKY_SHADER + 1)
+# define TEMPORAL_QUAD_SHADER     14
+# define SHADER_COUNT             (TEMPORAL_QUAD_SHADER + 1)
 
 // sky models
 # define NISHITA_SKY 0
@@ -36,6 +37,7 @@
 # define PERLIN_PARAMS   6
 # define OCEAN_PARAMS    7
 # define MVP_MATRIX      8
+# define PREV_MVP_MATRIX 9
 
 // texture binding points
 //# define SCREEN_QUAD         0

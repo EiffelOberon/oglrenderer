@@ -16,3 +16,5 @@
 ./shaderc/glslc.exe ./shaders/inversion.comp -o ./spv/inversion.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 ./shaderc/glslc.exe ./shaders/water.vert -o ./spv/watervert.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 ./shaderc/glslc.exe ./shaders/water.frag -o ./spv/waterfrag.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
+./shaderc/glslc.exe ./shaders/temporalquad.vert -o ./spv/temporalvert.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
+./shaderc/glslc.exe ./shaders/temporalquad.frag -o ./spv/temporalfrag.spv --target-env=opengl -std=450core -I "./" -I "./shaders"

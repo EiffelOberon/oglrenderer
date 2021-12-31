@@ -168,6 +168,7 @@ private:
 
     // MVP matrix
     MVPMatrix mMVPMatrix;
+    MVPMatrix mPreviousMVPMatrix;
     MVPMatrix mPrecomputeMatrix;
 
     float mDeltaTime;

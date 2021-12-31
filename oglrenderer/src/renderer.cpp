@@ -58,6 +58,7 @@ Renderer::Renderer()
     mShaders[PERLIN_NOISE_SHADER] = std::make_unique<ShaderProgram>("perlin", "./spv/vert.spv", "./spv/perlinnoisefrag.spv");
     mShaders[WORLEY_NOISE_SHADER] = std::make_unique<ShaderProgram>("worley", "./spv/vert.spv", "./spv/worleynoisefrag.spv");
     mShaders[WATER_SHADER] = std::make_unique<ShaderProgram>("water", "./spv/watervert.spv", "./spv/waterfrag.spv");
+    mShaders[TEMPORAL_QUAD_SHADER] = std::make_unique<ShaderProgram>("temporal", "./spv/temporalvert.spv", "./spv/temporalfrag.spv");
 
     // cloud noise textures
     mCloudNoiseRenderTexture[0] = nullptr;
@@ -151,6 +152,9 @@ Renderer::Renderer()
     mMVPMatrix.mViewMatrix = viewMatrix;
     addUniform(MVP_MATRIX, mMVPMatrix);
 
+    mPreviousMVPMatrix = mMVPMatrix;
+    addUniform(PREV_MVP_MATRIX, mPreviousMVPMatrix);
+
     mPrecomputeMatrix.mProjectionMatrix = glm::perspective(glm::radians(60.0f), 1.0f, 0.1f, 10000.0f);
     mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 1, 0), glm::vec3(0, 1, 0) + glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
 
@@ -228,6 +232,10 @@ void Renderer::updateCamera(
     const int deltaX, 
     const int deltaY)
 {
+    // update previous matrix to this frame's mvp matrix
+    mPreviousMVPMatrix = mMVPMatrix;
+    updateUniform(PREV_MVP_MATRIX, mPreviousMVPMatrix);
+
     mCamera.update(deltaX * 2.0f * M_PI / mResolution.x, deltaY * M_PI / mResolution.y);
     mCamParams.mEye = glm::vec4(mCamera.getEye(), 0.0f);
     mCamParams.mTarget = glm::vec4(mCamera.getTarget(), 0.0f);
@@ -244,6 +252,10 @@ void Renderer::updateCamera(
 void Renderer::updateCameraZoom(
     const int dir)
 {
+    // update previous matrix to this frame's mvp matrix
+    mPreviousMVPMatrix = mMVPMatrix;
+    updateUniform(PREV_MVP_MATRIX, mPreviousMVPMatrix);
+
     mCamera.updateZoom(dir);
     mCamParams.mEye = glm::vec4(mCamera.getEye(), 0.0f);
     mCamParams.mTarget = glm::vec4(mCamera.getTarget(), 0.0f);
@@ -391,59 +403,61 @@ void Renderer::resize(
 
 void Renderer::preRender()
 {
+    if (!mPerlinNoiseRenderTexture)
+    {
+        return;
+    }
     mRenderStartTime = std::chrono::high_resolution_clock::now();
 
-    //if (mFrameCount % 16 == 0)
+    // precompute cloud's noise textures (perlin worley and worley fbm)
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(PRECOMP_CLOUD_SHADER);
     {
-        mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(PRECOMP_CLOUD_SHADER);
+        mCloudTexture.bindImageTexture(PRECOMPUTE_CLOUD_CLOUD_TEX, GL_READ_WRITE);
+        const int workGroupSize = int(float(CLOUD_RESOLUTION) / float(PRECOMPUTE_CLOUD_LOCAL_SIZE));
+        mShaders[PRECOMP_CLOUD_SHADER]->dispatch(true, workGroupSize, workGroupSize, workGroupSize);
+    }
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PRECOMP_CLOUD_SHADER);
+
+    // render into 100x100 noise textures
+    glViewport(0, 0, 100, 100);
+    {
+        mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(PERLIN_NOISE_SHADER);
         {
-            mCloudTexture.bindImageTexture(PRECOMPUTE_CLOUD_CLOUD_TEX, GL_READ_WRITE);
-            const int workGroupSize = int(float(CLOUD_RESOLUTION) / float(PRECOMPUTE_CLOUD_LOCAL_SIZE));
-            mShaders[PRECOMP_CLOUD_SHADER]->dispatch(true, workGroupSize, workGroupSize, workGroupSize);
+            mPerlinNoiseRenderTexture->bind();
+            mShaders[PERLIN_NOISE_SHADER]->use();
+            mQuad.draw();
+            mShaders[PERLIN_NOISE_SHADER]->disable();
+            mPerlinNoiseRenderTexture->unbind();
         }
-        mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PRECOMP_CLOUD_SHADER);
+        mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PERLIN_NOISE_SHADER);
 
-        // render quarter sized render texture
-        glViewport(0, 0, 100, 100);
+        mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(WORLEY_NOISE_SHADER);
         {
-            mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(PERLIN_NOISE_SHADER);
-            {
-                mPerlinNoiseRenderTexture->bind();
-                mShaders[PERLIN_NOISE_SHADER]->use();
-                mQuad.draw();
-                mShaders[PERLIN_NOISE_SHADER]->disable();
-                mPerlinNoiseRenderTexture->unbind();
-            }
-            mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PERLIN_NOISE_SHADER);
-
-            mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(WORLEY_NOISE_SHADER);
-            {
-                mWorleyNoiseRenderTexture->bind();
-                mShaders[WORLEY_NOISE_SHADER]->use();
-                mQuad.draw();
-                mShaders[WORLEY_NOISE_SHADER]->disable();
-                mWorleyNoiseRenderTexture->unbind();
-            }
-            mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(WORLEY_NOISE_SHADER);
-
-            mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(CLOUD_NOISE_SHADER);
-            for (int i = 0; i < 4; ++i)
-            {
-                mWorleyNoiseParams.mTextureIdx = i;
-                updateUniform(WORLEY_PARAMS, mWorleyNoiseParams);
-
-                mCloudTexture.bindTexture(CLOUD_NOISE_CLOUD_TEX);
-                mCloudNoiseRenderTexture[i]->bind();
-                mShaders[CLOUD_NOISE_SHADER]->use();
-                mQuad.draw();
-                mShaders[CLOUD_NOISE_SHADER]->disable();
-                mCloudNoiseRenderTexture[i]->unbind();
-            }
-            mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(CLOUD_NOISE_SHADER);
+            mWorleyNoiseRenderTexture->bind();
+            mShaders[WORLEY_NOISE_SHADER]->use();
+            mQuad.draw();
+            mShaders[WORLEY_NOISE_SHADER]->disable();
+            mWorleyNoiseRenderTexture->unbind();
         }
+        mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(WORLEY_NOISE_SHADER);
+
+        mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(CLOUD_NOISE_SHADER);
+        for (int i = 0; i < 4; ++i)
+        {
+            mWorleyNoiseParams.mTextureIdx = i;
+            updateUniform(WORLEY_PARAMS, mWorleyNoiseParams);
+
+            mCloudTexture.bindTexture(CLOUD_NOISE_CLOUD_TEX);
+            mCloudNoiseRenderTexture[i]->bind();
+            mShaders[CLOUD_NOISE_SHADER]->use();
+            mQuad.draw();
+            mShaders[CLOUD_NOISE_SHADER]->disable();
+            mCloudNoiseRenderTexture[i]->unbind();
+        }
+        mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(CLOUD_NOISE_SHADER);
     }
 
-    // ocean waves precomputation
+    // ocean waves (iFFT) displacement precomputation
     mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(PRECOMP_OCEAN_H0_SHADER);
     if (mRenderWater)
     {
@@ -453,8 +467,7 @@ void Renderer::preRender()
     }
     mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PRECOMP_OCEAN_H0_SHADER);
 
-
-    // render quarter sized render texture
+    // render cubemap (for reflection and preintegral evaluation)
     mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(PRECOMP_SKY_SHADER);
     if (mUpdateSky)
     {
@@ -536,43 +549,42 @@ void Renderer::preRender()
             case 0:
             {
                 mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(1, 0, 0, 0);
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mUp));
                 break;
             }
             case 1:
             {
                 mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(-1, 0, 0, 0);
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mUp));
                 break;
             }
             case 2:
             {
                 // we are skipping this case
                 mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(0, -1, 0, 0);
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mUp));
                 break;
             }
             case 3:
             {
                 mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(0, -1, 0, 0);
                 mPrecomputeCamParams.mUp = glm::vec4(1, 0, 0, 0);
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mUp));
                 break;
             }
             case 4:
             {
                 mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(0, 0, 1, 0);
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mUp));
                 break;
             }
             case 5:
             {
                 mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(0, 0, -1, 0);
-                mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(mPrecomputeCamParams.mEye), glm::vec3(mPrecomputeCamParams.mTarget), glm::vec3(mPrecomputeCamParams.mUp));
                 break;
             }
         }
+        mPrecomputeMatrix.mViewMatrix = glm::lookAt(
+            glm::vec3(mPrecomputeCamParams.mEye),
+            glm::vec3(mPrecomputeCamParams.mTarget),
+            glm::vec3(mPrecomputeCamParams.mUp));
 
+        // have to use the camera settings for precomputation viewport and camera and then revert it back after finishing
         if (mSkyParams.mPrecomputeSettings.x != 2)
         {
             updateUniform(CAMERA_PARAMS, mPrecomputeCamParams);
@@ -597,14 +609,16 @@ void Renderer::render()
         return;
     }
 
+    // update the time for simulation
     mRenderParams.mSettings.x = mTime * 0.001f;
     updateUniform(RENDERER_PARAMS, 0, sizeof(float), mRenderParams);
 
+    // clear buffers
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // render quarter sized render texture
-    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(PRE_RENDER_QUAD_SHADER);
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(TEMPORAL_QUAD_SHADER);
     {
         glViewport(0, 0, mResolution.x * mLowResFactor, mResolution.y * mLowResFactor);
         mScreenRenderTextures[mFrameCount % SCREEN_BUFFER_COUNT]->bind();
@@ -616,12 +630,12 @@ void Renderer::render()
         case NISHITA_SKY: mSkyCubemap->bindTexture(QUAD_ENV_TEX, 0); break;
         case HOSEK_SKY:   mHosekSkyModel->bind(QUAD_ENV_TEX);        break;
         }
-        mShaders[PRE_RENDER_QUAD_SHADER]->use();
+        mShaders[TEMPORAL_QUAD_SHADER]->use();
         mQuad.draw();
-        mShaders[PRE_RENDER_QUAD_SHADER]->disable();
+        mShaders[TEMPORAL_QUAD_SHADER]->disable();
         mScreenRenderTextures[mFrameCount % SCREEN_BUFFER_COUNT]->unbind();
     }
-    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PRE_RENDER_QUAD_SHADER);
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(TEMPORAL_QUAD_SHADER);
 
     // render final quad
     mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(TEXTURED_QUAD_SHADER);
@@ -643,6 +657,11 @@ void Renderer::render()
 
 void Renderer::postRender()
 {
+    // update previous matrix to this frame's mvp matrix
+    mPreviousMVPMatrix = mMVPMatrix;
+    updateUniform(PREV_MVP_MATRIX, mPreviousMVPMatrix);
+
+    // get the results from the queries
     TimeQuery& timeQuery = *(mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT));
     mTotalShaderTimes = 0.0f;
     for (int i = 0; i < SHADER_COUNT; ++i)
@@ -652,6 +671,7 @@ void Renderer::postRender()
         mTotalShaderTimes += shaderTime;
     }
 
+    // calculate the delta time in milliseconds for this frame
     mRenderEndTime = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float, std::milli> elapsed = (mRenderEndTime - mRenderStartTime);
     mDeltaTime = elapsed.count();
@@ -662,6 +682,7 @@ void Renderer::postRender()
         mTime = fmodf(mTime, 3600000.0f);
     }
 
+    // record the frame time and fps
     const float fps = (1.0f / (mDeltaTime * 0.001f));
     mFrameTimes[mFrameCount % FRAMETIMES_COUNT] = mDeltaTime;
     mFpsRecords[mFrameCount % FRAMETIMES_COUNT] = fps;
@@ -674,6 +695,7 @@ void Renderer::postRender()
         mMinFps = fps;
     }
 
+    // increment frame count since this is the last step of the iteration
     ++mFrameCount;
     if (mFrameCount >= 1000000)
     {

@@ -10,6 +10,7 @@
 layout(location = 1) in vec2 uv;
 layout(location = 2) in vec4 near;
 layout(location = 3) in vec4 far;
+layout(location = 4) in vec2 oldUV;
 
 layout(location = 3) uniform vec3 color;
 layout(std430, binding = RENDERER_PARAMS) uniform RendererParamsUniform
@@ -86,6 +87,22 @@ void main()
     if(foundIntersection && hasClouds)
     {
         c = vec4(sky.xyz * transmittance + cloudColor.xyz * (1 - transmittance), 1.0f);
+
+        // temporal reprojection + taa
+        if (renderParams.mScreenSettings.z > 1 &&
+            oldUV.x >= 0.0f && oldUV.x <= 1.0f &&
+            oldUV.y >= 0.0f && oldUV.y <= 1.0f)
+        {
+            const vec3 prevFrame1 = texture(prevMainTexture, oldUV).xyz;
+            const vec3 prevFrame2 = texture(prevMainTexture, oldUV + vec2(1 / renderParams.mScreenSettings.x, 0.0f)).xyz;
+            const vec3 prevFrame3 = texture(prevMainTexture, oldUV + vec2(0.0f, 1 / renderParams.mScreenSettings.y)).xyz;
+            const vec3 prevFrame4 = texture(prevMainTexture, oldUV - vec2(1 / renderParams.mScreenSettings.x, 0.0f)).xyz;
+            const vec3 prevFrame5 = texture(prevMainTexture, oldUV - vec2(0.0f, 1 / renderParams.mScreenSettings.y)).xyz;
+
+            const vec3 prevFrame = (prevFrame1 * 2 + prevFrame2 + prevFrame3 + prevFrame4 + prevFrame5) / 6;
+
+            c = vec4(mix(prevFrame.xyz, c.xyz, 0.5f), 1.0f);
+        }
     }
     else
     {
