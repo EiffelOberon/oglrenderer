@@ -394,18 +394,18 @@ void Renderer::preRender()
 
     //if (mFrameCount % 16 == 0)
     {
-        mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(PRECOMP_CLOUD_SHADER);
+        mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(PRECOMP_CLOUD_SHADER);
         {
             mCloudTexture.bindImageTexture(PRECOMPUTE_CLOUD_CLOUD_TEX, GL_READ_WRITE);
             const int workGroupSize = int(float(CLOUD_RESOLUTION) / float(PRECOMPUTE_CLOUD_LOCAL_SIZE));
             mShaders[PRECOMP_CLOUD_SHADER]->dispatch(true, workGroupSize, workGroupSize, workGroupSize);
         }
-        mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(PRECOMP_CLOUD_SHADER);
+        mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PRECOMP_CLOUD_SHADER);
 
         // render quarter sized render texture
         glViewport(0, 0, 100, 100);
         {
-            mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(PERLIN_NOISE_SHADER);
+            mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(PERLIN_NOISE_SHADER);
             {
                 mPerlinNoiseRenderTexture->bind();
                 mShaders[PERLIN_NOISE_SHADER]->use();
@@ -413,9 +413,9 @@ void Renderer::preRender()
                 mShaders[PERLIN_NOISE_SHADER]->disable();
                 mPerlinNoiseRenderTexture->unbind();
             }
-            mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(PERLIN_NOISE_SHADER);
+            mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PERLIN_NOISE_SHADER);
 
-            mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(WORLEY_NOISE_SHADER);
+            mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(WORLEY_NOISE_SHADER);
             {
                 mWorleyNoiseRenderTexture->bind();
                 mShaders[WORLEY_NOISE_SHADER]->use();
@@ -423,9 +423,9 @@ void Renderer::preRender()
                 mShaders[WORLEY_NOISE_SHADER]->disable();
                 mWorleyNoiseRenderTexture->unbind();
             }
-            mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(WORLEY_NOISE_SHADER);
+            mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(WORLEY_NOISE_SHADER);
 
-            mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(CLOUD_NOISE_SHADER);
+            mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(CLOUD_NOISE_SHADER);
             for (int i = 0; i < 4; ++i)
             {
                 mWorleyNoiseParams.mTextureIdx = i;
@@ -438,23 +438,23 @@ void Renderer::preRender()
                 mShaders[CLOUD_NOISE_SHADER]->disable();
                 mCloudNoiseRenderTexture[i]->unbind();
             }
-            mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(CLOUD_NOISE_SHADER);
+            mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(CLOUD_NOISE_SHADER);
         }
     }
 
     // ocean waves precomputation
-    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(PRECOMP_OCEAN_H0_SHADER);
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(PRECOMP_OCEAN_H0_SHADER);
     if (mRenderWater)
     {
         mOceanFFTHighRes->precompute(*this, mOceanParams);
         mOceanFFTMidRes->precompute(*this, mOceanParams);
         mOceanFFTLowRes->precompute(*this, mOceanParams);
     }
-    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(PRECOMP_OCEAN_H0_SHADER);
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PRECOMP_OCEAN_H0_SHADER);
 
 
     // render quarter sized render texture
-    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(PRECOMP_SKY_SHADER);
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(PRECOMP_SKY_SHADER);
     if (mUpdateSky)
     {
         glViewport(0, 0, int(mEnvironmentResolution.x), int(mEnvironmentResolution.y));
@@ -493,7 +493,7 @@ void Renderer::preRender()
         }
         mUpdateSky = false;
     }
-    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(PRECOMP_SKY_SHADER);
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PRECOMP_SKY_SHADER);
 
     // bind fbo for the following
     mSkyParams.mPrecomputeSettings.x = mFrameCount % 6;
@@ -501,7 +501,7 @@ void Renderer::preRender()
     mFinalSkyCubemap->bind(mSkyParams.mPrecomputeSettings.x);
 
     // 1. render environment sky box
-    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(PRECOMP_ENV_SHADER);
+    mTimeQueries.at(mFrameCount% QUERY_DOUBLE_BUFFER_COUNT)->start(PRECOMP_ENV_SHADER);
     {
         glViewport(0, 0, int(mEnvironmentResolution.x), int(mEnvironmentResolution.y));
 
@@ -583,7 +583,7 @@ void Renderer::preRender()
 
         mFinalSkyCubemap->unbind();
     }
-    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(PRECOMP_ENV_SHADER);
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PRECOMP_ENV_SHADER);
 }
 
 
@@ -603,7 +603,7 @@ void Renderer::render()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // render quarter sized render texture
-    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(PRE_RENDER_QUAD_SHADER);
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(PRE_RENDER_QUAD_SHADER);
     {
         glViewport(0, 0, mResolution.x * mLowResFactor, mResolution.y * mLowResFactor);
         mScreenRenderTextures[mFrameCount % SCREEN_BUFFER_COUNT]->bind();
@@ -619,10 +619,10 @@ void Renderer::render()
         mShaders[PRE_RENDER_QUAD_SHADER]->disable();
         mScreenRenderTextures[mFrameCount % SCREEN_BUFFER_COUNT]->unbind();
     }
-    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(PRE_RENDER_QUAD_SHADER);
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PRE_RENDER_QUAD_SHADER);
 
     // render final quad
-    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(TEXTURED_QUAD_SHADER);
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(TEXTURED_QUAD_SHADER);
     {
         glViewport(0, 0, int(mResolution.x), int(mResolution.y));
         mShaders[TEXTURED_QUAD_SHADER]->use();
@@ -630,18 +630,18 @@ void Renderer::render()
         mQuad.draw();
         mShaders[TEXTURED_QUAD_SHADER]->disable();
     }
-    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(TEXTURED_QUAD_SHADER);
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(TEXTURED_QUAD_SHADER);
     
     // enable depth mask
-    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(WATER_SHADER);
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(WATER_SHADER);
     renderWater(false);
-    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(WATER_SHADER);
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(WATER_SHADER);
 }
 
 
 void Renderer::postRender()
 {
-    TimeQuery& timeQuery = *(mTimeQueries.at(mFrameCount % 2));
+    TimeQuery& timeQuery = *(mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT));
     mTotalShaderTimes = 0.0f;
     for (int i = 0; i < SHADER_COUNT; ++i)
     {

@@ -1,8 +1,9 @@
 #ifndef DEVICECONSTANTS_H
 #define DEVICECONSTANTS_H
 
-# define FRAMETIMES_COUNT    1000
-# define SCREEN_BUFFER_COUNT 2
+# define FRAMETIMES_COUNT          1000
+# define SCREEN_BUFFER_COUNT       2
+# define QUERY_DOUBLE_BUFFER_COUNT 2
 
 // shader program Id
 # define BUTTERFLY_SHADER         0
