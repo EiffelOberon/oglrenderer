@@ -119,7 +119,7 @@ void main()
 
     if(foundIntersection && hasClouds)
     {
-        c = vec4(sky.xyz * transmittance + cloudColor.xyz * (1 - transmittance), 1.0f);
+        c = vec4(mix(cloudColor.xyz, sky.xyz,  transmittance), 1.0f);
     }
     else
     {

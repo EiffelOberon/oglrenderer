@@ -62,7 +62,7 @@
 # define OCEAN_DIMENSIONS_3 64
 
 // compute shader
-# define PRECOMPUTE_CLOUD_LOCAL_SIZE       4
+# define PRECOMPUTE_CLOUD_LOCAL_SIZE       8
 # define PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE 16
 
 # define PI (3.1415926f)

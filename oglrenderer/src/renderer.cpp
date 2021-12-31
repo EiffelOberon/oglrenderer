@@ -21,7 +21,6 @@ Renderer::Renderer()
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mClipmap(6)
     , mClipmapLevel(0)
-    , mRenderTexture(nullptr)
     , mSkyCubemap(nullptr)
     , mFinalSkyCubemap(nullptr)
     , mWorleyNoiseRenderTexture(nullptr)
@@ -305,7 +304,9 @@ void Renderer::resize(
         updateUniform(RENDERER_PARAMS, mRenderParams);
 
         // reallocate render texture
-        mRenderTexture = std::make_unique<RenderTexture>(1, width * mLowResFactor, height * mLowResFactor);
+        mScreenTextures.resize(2);
+        mScreenTextures.at(0) = std::make_unique<RenderTexture>(1, width * mLowResFactor, height * mLowResFactor);
+        mScreenTextures.at(1) = std::make_unique<RenderTexture>(1, width * mLowResFactor, height * mLowResFactor);
         mCloudNoiseRenderTexture[0] = std::make_unique<RenderTexture>(1, 100, 100);
         mCloudNoiseRenderTexture[1] = std::make_unique<RenderTexture>(1, 100, 100);
         mCloudNoiseRenderTexture[2] = std::make_unique<RenderTexture>(1, 100, 100);
@@ -456,7 +457,7 @@ void Renderer::preRender()
 
 void Renderer::render()
 {
-    if (!mRenderTexture ||
+    if ((mScreenTextures.size() == 0) ||
         mResolution.x <= 0.1f ||
         mResolution.y <= 0.1f)
     {
@@ -473,7 +474,7 @@ void Renderer::render()
     mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(PRE_RENDER_QUAD_SHADER);
     {
         glViewport(0, 0, mResolution.x * mLowResFactor, mResolution.y * mLowResFactor);
-        mRenderTexture->bind();
+        mScreenTextures[mFrameCount%2]->bind();
         mCloudTexture.bindTexture(QUAD_CLOUD_TEX);
         switch (mSkyParams.mPrecomputeSettings.y)
         {
@@ -483,7 +484,7 @@ void Renderer::render()
         mShaders[PRE_RENDER_QUAD_SHADER]->use();
         mQuad.draw();
         mShaders[PRE_RENDER_QUAD_SHADER]->disable();
-        mRenderTexture->unbind();
+        mScreenTextures[mFrameCount % 2]->unbind();;
     }
     mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(PRE_RENDER_QUAD_SHADER);
 
@@ -492,7 +493,7 @@ void Renderer::render()
     {
         glViewport(0, 0, int(mResolution.x), int(mResolution.y));
         mShaders[TEXTURED_QUAD_SHADER]->use();
-        mRenderTexture->bindTexture(SCREEN_QUAD_TEX, 0);
+        mScreenTextures[mFrameCount % 2]->bindTexture(SCREEN_QUAD_TEX, 0);
         mQuad.draw();
         mShaders[TEXTURED_QUAD_SHADER]->disable();
     }
