@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <deque>
 #include <unordered_map>
 #include <memory.h>
 
@@ -167,6 +168,9 @@ private:
 
     float mDeltaTime;
     float mTime;
+    float mFpsRecords[FRAMETIMES_COUNT];
+    float mMinFps;
+    float mMaxFps;
     uint32_t mFrameCount;
     std::chrono::steady_clock::time_point mRenderStartTime;
     std::chrono::steady_clock::time_point mRenderEndTime;

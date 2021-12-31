@@ -38,6 +38,8 @@ Renderer::Renderer()
     , mTotalShaderTimes(0.0f)
     , mFrameCount(0)
     , mWaterGrid()
+    , mMinFps(FLT_MAX)
+    , mMaxFps(FLT_MIN)
 {
     mTimeQueries.push_back(std::make_unique<TimeQuery>(SHADER_COUNT));
     mTimeQueries.push_back(std::make_unique<TimeQuery>(SHADER_COUNT));
@@ -439,13 +441,22 @@ void Renderer::preRender()
         mBlueNoiseTexture->bindTexture(PRECOMPUTE_ENVIRONMENT_NOISE_TEX);
         mSkyCubemap->bindTexture(PRECOMPUTE_ENVIRONMENT_SKY_TEX, 0);
         mShaders[PRECOMP_ENV_SHADER]->use();
-        for (int i = 0; i < 6; ++i)
         {
-            mSkyParams.mPrecomputeSettings.x = i;
+            // render 1 side of the cubemap per frame
+            mSkyParams.mPrecomputeSettings.x = mFrameCount % 6;
             updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeSettings), sizeof(mSkyParams.mPrecomputeSettings), mSkyParams.mPrecomputeSettings);
 
-            mFinalSkyCubemap->bind(i);
+            // force 100 max steps for cubemap since it's low resolution
+            const int oldMaxSteps = mRenderParams.mSteps.x;
+            mRenderParams.mSteps.x = 100;
+            updateUniform(RENDERER_PARAMS, offsetof(RendererParams, mSteps), sizeof(mRenderParams.mSteps.x), mRenderParams.mSteps.x);
+
+            mFinalSkyCubemap->bind(mSkyParams.mPrecomputeSettings.x);
             mQuad.draw();
+
+            // restore max steps to what it was before
+            mRenderParams.mSteps.x = oldMaxSteps;
+            updateUniform(RENDERER_PARAMS, offsetof(RendererParams, mSteps), sizeof(mRenderParams.mSteps.x), mRenderParams.mSteps.x);
         }
         mShaders[PRECOMP_ENV_SHADER]->disable();
         mFinalSkyCubemap->unbind();
@@ -557,6 +568,17 @@ void Renderer::postRender()
     if (mTime > 3600000.0f)
     {
         mTime = fmodf(mTime, 3600000.0f);
+    }
+
+    const float fps = (1.0f / (mDeltaTime * 0.001f));
+    mFpsRecords[mFrameCount % FRAMETIMES_COUNT] = fps;
+    if (fps > mMaxFps)
+    {
+        mMaxFps = fps;
+    }
+    if (fps < mMinFps)
+    {
+        mMinFps = fps;
     }
 
     ++mFrameCount;
@@ -947,7 +969,13 @@ void Renderer::renderGUI()
                 ImGui::Text("Frame time: %f ms", mDeltaTime);
                 ImGui::Text("Frames per sec: %.2f fps", (1.0f / (mDeltaTime * 0.001f)));
 
+                {
+                    ImGui::PlotLines("FPS", &mFpsRecords[0], IM_ARRAYSIZE(mFpsRecords), 0, 0, 0.0f, 300.0f, ImVec2(0, 80));
+                }
+
+
                 ImGui::Text("GPU time");
+
                 char buf[32];
                 for (int i = 0; i < SHADER_COUNT; ++i)
                 {
@@ -962,9 +990,6 @@ void Renderer::renderGUI()
                         ImGui::Text(buf);
                     }
                 }
-
-                ImGui::Text("CPU time");
-
 
                 ImGui::EndTabItem();
             }

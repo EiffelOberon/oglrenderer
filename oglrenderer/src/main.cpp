@@ -260,6 +260,11 @@ int main(
 
         // Setup Dear ImGui style
         ImGui::StyleColorsDark();
+        ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = ImVec4(
+            ImGui::GetStyle().Colors[ImGuiCol_WindowBg].x,
+            ImGui::GetStyle().Colors[ImGuiCol_WindowBg].y,
+            ImGui::GetStyle().Colors[ImGuiCol_WindowBg].z,
+            ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w * 0.333f);
 
         // Setup Platform/Renderer backends
         ImGui_ImplGLUT_Init();

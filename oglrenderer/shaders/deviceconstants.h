@@ -1,6 +1,8 @@
 #ifndef DEVICECONSTANTS_H
 #define DEVICECONSTANTS_H
 
+# define FRAMETIMES_COUNT 1000
+
 // shader program Id
 # define BUTTERFLY_SHADER         0
 # define INVERSION_SHADER         1
