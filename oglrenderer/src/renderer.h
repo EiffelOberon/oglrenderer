@@ -124,7 +124,7 @@ private:
     float         mTotalShaderTimes;
 
     // 2D textures to display
-    std::vector<std::unique_ptr<RenderTexture>> mScreenTextures;
+    std::unique_ptr<RenderTexture> mRenderTexture;
     std::unique_ptr<RenderTexture> mWorleyNoiseRenderTexture;
     std::unique_ptr<RenderTexture> mPerlinNoiseRenderTexture;
     std::unique_ptr<RenderTexture> mCloudNoiseRenderTexture[4];
