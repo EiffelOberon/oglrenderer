@@ -16,6 +16,7 @@
 # define CLOUD_NOISE_SHADER       11
 # define WATER_SHADER             12
 # define PRECOMP_SKY_SHADER       13
+# define SHADER_COUNT             (PRECOMP_SKY_SHADER + 1)
 
 // sky models
 # define NISHITA_SKY 0

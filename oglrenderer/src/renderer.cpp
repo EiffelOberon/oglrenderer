@@ -35,9 +35,13 @@ Renderer::Renderer()
     , mDeltaTime(0.0f)
     , mLowResFactor(0.5f)
     , mTime(0.0f)
+    , mTotalShaderTimes(0.0f)
     , mFrameCount(0)
     , mWaterGrid()
 {
+    mTimeQueries.push_back(std::make_unique<TimeQuery>(SHADER_COUNT));
+    mTimeQueries.push_back(std::make_unique<TimeQuery>(SHADER_COUNT));
+
     mShaders[BUTTERFLY_SHADER] = std::make_unique<ShaderProgram>("./spv/butterflyoperation.spv");
     mShaders[INVERSION_SHADER] = std::make_unique<ShaderProgram>("./spv/inversion.spv");
     mShaders[PRECOMP_BUTTERFLY_SHADER] = std::make_unique<ShaderProgram>("./spv/precomputebutterfly.spv");
@@ -154,6 +158,8 @@ Renderer::Renderer()
     result = result && loadTexture(mBlueNoiseTexture, false, true, "./resources/blueNoise512.png");
     assert(result);
     FreeImage_DeInitialise();
+
+
 }
 
 Renderer::~Renderer()
@@ -325,26 +331,38 @@ void Renderer::preRender()
 
     //if (mFrameCount % 16 == 0)
     {
-        mCloudTexture.bindImageTexture(PRECOMPUTE_CLOUD_CLOUD_TEX, GL_WRITE_ONLY);
-        const int workGroupSize = int(float(CLOUD_RESOLUTION) / float(PRECOMPUTE_CLOUD_LOCAL_SIZE));
-        mShaders[PRECOMP_CLOUD_SHADER]->dispatch(true, workGroupSize, workGroupSize, workGroupSize);
+        mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(PRECOMP_CLOUD_SHADER);
+        {
+            mCloudTexture.bindImageTexture(PRECOMPUTE_CLOUD_CLOUD_TEX, GL_WRITE_ONLY);
+            const int workGroupSize = int(float(CLOUD_RESOLUTION) / float(PRECOMPUTE_CLOUD_LOCAL_SIZE));
+            mShaders[PRECOMP_CLOUD_SHADER]->dispatch(true, workGroupSize, workGroupSize, workGroupSize);
+        }
+        mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(PRECOMP_CLOUD_SHADER);
 
         // render quarter sized render texture
         glViewport(0, 0, 100, 100);
         {
+            mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(PERLIN_NOISE_SHADER);
+            {
+                mPerlinNoiseRenderTexture->bind();
+                mShaders[PERLIN_NOISE_SHADER]->use();
+                mQuad.draw();
+                mShaders[PERLIN_NOISE_SHADER]->disable();
+                mPerlinNoiseRenderTexture->unbind();
+            }
+            mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(PERLIN_NOISE_SHADER);
 
-            mPerlinNoiseRenderTexture->bind();
-            mShaders[PERLIN_NOISE_SHADER]->use();
-            mQuad.draw();
-            mShaders[PERLIN_NOISE_SHADER]->disable();
-            mPerlinNoiseRenderTexture->unbind();
+            mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(WORLEY_NOISE_SHADER);
+            {
+                mWorleyNoiseRenderTexture->bind();
+                mShaders[WORLEY_NOISE_SHADER]->use();
+                mQuad.draw();
+                mShaders[WORLEY_NOISE_SHADER]->disable();
+                mWorleyNoiseRenderTexture->unbind();
+            }
+            mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(WORLEY_NOISE_SHADER);
 
-            mWorleyNoiseRenderTexture->bind();
-            mShaders[WORLEY_NOISE_SHADER]->use();
-            mQuad.draw();
-            mShaders[WORLEY_NOISE_SHADER]->disable();
-            mWorleyNoiseRenderTexture->unbind();
-
+            mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(CLOUD_NOISE_SHADER);
             for (int i = 0; i < 4; ++i)
             {
                 mWorleyNoiseParams.mTextureIdx = i;
@@ -357,19 +375,23 @@ void Renderer::preRender()
                 mShaders[CLOUD_NOISE_SHADER]->disable();
                 mCloudNoiseRenderTexture[i]->unbind();
             }
+            mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(CLOUD_NOISE_SHADER);
         }
     }
 
     // ocean waves precomputation
+    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(PRECOMP_OCEAN_H0_SHADER);
     if (mRenderWater)
     {
         mOceanFFTHighRes->precompute(*this, mOceanParams);
         mOceanFFTMidRes->precompute(*this, mOceanParams);
         mOceanFFTLowRes->precompute(*this, mOceanParams);
     }
+    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(PRECOMP_OCEAN_H0_SHADER);
 
 
     // render quarter sized render texture
+    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(PRECOMP_SKY_SHADER);
     if (mUpdateSky)
     {
         glViewport(0, 0, int(mEnvironmentResolution.x), int(mEnvironmentResolution.y));
@@ -408,7 +430,9 @@ void Renderer::preRender()
         }
         mUpdateSky = false;
     }
+    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(PRECOMP_SKY_SHADER);
 
+    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(PRECOMP_ENV_SHADER);
     {
         glViewport(0, 0, int(mEnvironmentResolution.x), int(mEnvironmentResolution.y));
         mCloudTexture.bindTexture(PRECOMPUTE_ENVIRONMENT_CLOUD_TEX);
@@ -426,6 +450,7 @@ void Renderer::preRender()
         mShaders[PRECOMP_ENV_SHADER]->disable();
         mFinalSkyCubemap->unbind();
     }
+    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(PRECOMP_ENV_SHADER);
 }
 
 
@@ -440,32 +465,38 @@ void Renderer::render()
 
     mRenderParams.mSettings.x = mTime * 0.001f;
     updateUniform(RENDERER_PARAMS, 0, sizeof(float), mRenderParams);
-    mRenderParams.mScreenSettings.z = (mRenderParams.mScreenSettings.z + 1) % 100000;
-    updateUniform(RENDERER_PARAMS, offsetof(RendererParams, mScreenSettings), sizeof(glm::ivec4), mRenderParams.mScreenSettings);
 
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // render quarter sized render texture
-    glViewport(0, 0, mResolution.x * mLowResFactor, mResolution.y * mLowResFactor);
-    mRenderTexture->bind();
-    mCloudTexture.bindTexture(QUAD_CLOUD_TEX);
-    switch (mSkyParams.mPrecomputeSettings.y)
+    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(PRE_RENDER_QUAD_SHADER);
     {
-    case NISHITA_SKY: mFinalSkyCubemap->bindTexture(QUAD_ENV_TEX, 0); break;
-    case HOSEK_SKY:   mHosekSkyModel->bind(QUAD_ENV_TEX);                  break;
+        glViewport(0, 0, mResolution.x * mLowResFactor, mResolution.y * mLowResFactor);
+        mRenderTexture->bind();
+        mCloudTexture.bindTexture(QUAD_CLOUD_TEX);
+        switch (mSkyParams.mPrecomputeSettings.y)
+        {
+        case NISHITA_SKY: mFinalSkyCubemap->bindTexture(QUAD_ENV_TEX, 0); break;
+        case HOSEK_SKY:   mHosekSkyModel->bind(QUAD_ENV_TEX);             break;
+        }
+        mShaders[PRE_RENDER_QUAD_SHADER]->use();
+        mQuad.draw();
+        mShaders[PRE_RENDER_QUAD_SHADER]->disable();
+        mRenderTexture->unbind();
     }
-    mShaders[PRE_RENDER_QUAD_SHADER]->use();
-    mQuad.draw();
-    mShaders[PRE_RENDER_QUAD_SHADER]->disable();
-    mRenderTexture->unbind();
+    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(PRE_RENDER_QUAD_SHADER);
 
     // render final quad
-    glViewport(0, 0, int(mResolution.x), int(mResolution.y));
-    mShaders[TEXTURED_QUAD_SHADER]->use();
-    mRenderTexture->bindTexture(SCREEN_QUAD_TEX, 0);
-    mQuad.draw();
-    mShaders[TEXTURED_QUAD_SHADER]->disable();
+    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(TEXTURED_QUAD_SHADER);
+    {
+        glViewport(0, 0, int(mResolution.x), int(mResolution.y));
+        mShaders[TEXTURED_QUAD_SHADER]->use();
+        mRenderTexture->bindTexture(SCREEN_QUAD_TEX, 0);
+        mQuad.draw();
+        mShaders[TEXTURED_QUAD_SHADER]->disable();
+    }
+    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(TEXTURED_QUAD_SHADER);
     
     // enable depth mask
     glEnable (GL_DEPTH_TEST);
@@ -474,6 +505,8 @@ void Renderer::render()
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->start(WATER_SHADER);
     if (mRenderWater)
     {
         mShaders[WATER_SHADER]->use();
@@ -498,6 +531,7 @@ void Renderer::render()
         }
         mShaders[WATER_SHADER]->disable();
     }
+    mTimeQueries.at(mRenderParams.mScreenSettings.z % 2)->end(WATER_SHADER);
     glDisable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
 }
@@ -505,6 +539,15 @@ void Renderer::render()
 
 void Renderer::postRender()
 {
+    TimeQuery& timeQuery = *(mTimeQueries.at(mFrameCount % 2));
+    mTotalShaderTimes = 0.0f;
+    for (int i = 0; i < SHADER_COUNT; ++i)
+    {
+        const float shaderTime = timeQuery.elapsedTime(i);
+        mShaderTimestamps[i] = shaderTime;
+        mTotalShaderTimes += shaderTime;
+    }
+
     mRenderEndTime = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float, std::milli> elapsed = (mRenderEndTime - mRenderStartTime);
     mDeltaTime = elapsed.count();
@@ -520,6 +563,8 @@ void Renderer::postRender()
     {
         mFrameCount = 0;
     }
+    mRenderParams.mScreenSettings.z = mFrameCount;
+    updateUniform(RENDERER_PARAMS, offsetof(RendererParams, mScreenSettings), sizeof(glm::ivec4), mRenderParams.mScreenSettings);
 }
 
 
@@ -899,7 +944,27 @@ void Renderer::renderGUI()
             if (ImGui::BeginTabItem("Performance"))
             {
                 ImGui::Text("Frame time: %f ms", mDeltaTime);
-                ImGui::Text("Frames per sec: %f fps", (1.0f / (mDeltaTime * 0.001f)));
+                ImGui::Text("Frames per sec: %.2f fps", (1.0f / (mDeltaTime * 0.001f)));
+
+                ImGui::Text("GPU time");
+                char buf[32];
+                for (int i = 0; i < SHADER_COUNT; ++i)
+                {
+                    if (mShaderTimestamps[i] > 0.01f)
+                    {
+                        sprintf(buf, "%.2f ms", mShaderTimestamps[i]);
+                        ImGui::ProgressBar(mShaderTimestamps[i] / mTotalShaderTimes, ImVec2(0.f, 0.f), buf);
+                        ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+
+
+                        sprintf(buf, "shader %d", i);
+                        ImGui::Text(buf);
+                    }
+                }
+
+                ImGui::Text("CPU time");
+
+
                 ImGui::EndTabItem();
             }
 

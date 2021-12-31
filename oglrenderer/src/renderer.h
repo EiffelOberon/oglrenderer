@@ -17,6 +17,7 @@
 #include "shaderbuffer.h"
 #include "shaderprogram.h"
 #include "texture.h"
+#include "timequery.h"
 #include "vertexbuffer.h"
 
 class OceanFFT;
@@ -117,6 +118,10 @@ private:
     bool          mUpdateSky;
     bool          mUpdateEnvironment;
     bool          mOceanWireframe;
+
+    std::vector<std::unique_ptr<TimeQuery>> mTimeQueries;
+    float         mShaderTimestamps[SHADER_COUNT];
+    float         mTotalShaderTimes;
 
     // 2D textures to display
     std::unique_ptr<RenderTexture> mRenderTexture;

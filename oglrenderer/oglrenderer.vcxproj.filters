@@ -170,6 +170,9 @@
     <ClInclude Include="shaders\raymarch.h">
       <Filter>Shaders</Filter>
     </ClInclude>
+    <ClInclude Include="src\timequery.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\quad.frag">
