@@ -235,5 +235,8 @@
     <None Include="shaders\temporalquad.vert">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\precomputefresnel.comp">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
