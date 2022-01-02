@@ -3,6 +3,16 @@
 
 #include "deviceconstants.h"
 
+float fresnel(
+    const float ior,
+    const float cosTheta)
+{
+    float r0 = (ior - 1.0f) / (ior + 1.0f);
+    r0 *= r0;
+
+    return r0 + (1 - r0) * pow((1 - cosTheta), 5);
+}
+
 
 float GGX_D(
     const vec3 wh, 
@@ -10,7 +20,7 @@ float GGX_D(
 {
     const vec2 He = wh.xy / alpha;
     const float denom = dot(He, He) + (wh.z * wh.z);
-    return 1.0 / (M_PI * alpha.x * alpha.y * (denom * denom));
+    return 1.0 / (PI * alpha.x * alpha.y * (denom * denom));
 }
 
 
@@ -26,7 +36,7 @@ float GGX_PDF(
 
 vec3 GGX_sample(
     const vec2 u, 
-    const vec3 wo, 
+    vec3       wo, 
     const vec2 alpha)
 {
     // Transform the view direction to the hemisphere configuration.
@@ -39,7 +49,7 @@ vec3 GGX_sample(
 
     // Parameterization of the projected area.
     float r = sqrt(u.y);
-    float phi = 2.0 * M_PI * u.x;
+    float phi = 2.0 * PI * u.x;
     float t1 = r * cos(phi);
     float t2 = r * sin(phi);
     float s = 0.5 * (1.0 + wo.z);

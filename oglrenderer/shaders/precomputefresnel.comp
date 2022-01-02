@@ -1,0 +1,16 @@
+#version 450 core
+#define GLSL_SHADER
+#extension GL_EXT_scalar_block_layout : require
+
+#include "bsdf.h"
+#include "deviceconstants.h"
+#include "devicestructs.h"
+
+layout(local_size_x = PRECOMPUTE_FRESNEL_LOCAL_SIZE, local_size_y = PRECOMPUTE_FRESNEL_LOCAL_SIZE) in;
+
+
+void main()
+{
+    vec2 uv = gl_GlobalInvocationID.xy;
+
+}

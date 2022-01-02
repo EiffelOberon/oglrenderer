@@ -70,6 +70,7 @@
 // compute shader
 # define PRECOMPUTE_CLOUD_LOCAL_SIZE       4
 # define PRECOMPUTE_OCEAN_WAVES_LOCAL_SIZE 16
+# define PRECOMPUTE_FRESNEL_LOCAL_SIZE     32
 
 # define PI (3.1415926f)
 

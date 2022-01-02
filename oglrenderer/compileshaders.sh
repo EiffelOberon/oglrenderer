@@ -18,3 +18,4 @@
 ./shaderc/glslc.exe ./shaders/water.frag -o ./spv/waterfrag.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 ./shaderc/glslc.exe ./shaders/temporalquad.vert -o ./spv/temporalvert.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 ./shaderc/glslc.exe ./shaders/temporalquad.frag -o ./spv/temporalfrag.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
+./shaderc/glslc.exe ./shaders/precomputefresnel.comp -o ./spv/precomputefresnel.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
