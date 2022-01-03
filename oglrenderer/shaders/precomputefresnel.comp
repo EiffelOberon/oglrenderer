@@ -53,20 +53,40 @@ void main()
     const vec2 uv = gl_GlobalInvocationID.xy / 100.0f;
 
     const float roughness = uv.x;
+    const float roughness2 = roughness * roughness;
     const float cosTheta = uv.y;
     const float theta = acos(cosTheta);
 
     const vec3 wo = normalize(vec3(sin(theta), 0, cosTheta));
+    float albedo = 0.0f;
+    for (int i = 0; i < SAMPLE_COUNT; i++)
+    {
+        // random variables
+        vec4 inputs = vec4(vec3(uv, 0), renderParams.mSettings.x);
+        vec4 inputs2 = vec4(vec3(uv, 1), renderParams.mSettings.x);
+        vec2 u = vec2(random(inputs), random(inputs2));
 
-    // random variables
-    vec4 inputs = vec4(vec3(uv, 0), renderParams.mSettings.x);
-    float u1 = random(inputs);
-    inputs = vec4(vec3(uv, 1), renderParams.mSettings.x);
-    float u2 = random(inputs);
+        // Compute the half vector and incoming light direction.
+        float alpha = roughness2;
+        vec3 wh = GGX_sample(u, wo, vec2(roughness));
+        vec3 wi = -reflect(wo, wh);
 
-    const float roughness2 = roughness * roughness;
-    vec3 wh = GGX_sample(
-        vec2(u1, u2),
-        wo,
-        vec2(roughness2));
+        // Compute dot products for this sample.
+        float nDotL = clamp(wi.z, 0.0f, 1.0);
+        float oDotH = clamp(dot(wo, wh), 0.0f, 1.0);
+
+        // Compute the Fresnel term.
+        float Fc = fresnel(1.5f, oDotH);
+
+        // Compute the sample weight, combining the geometric term, BRDF denominator, and PDF.
+        // https://hal.inria.fr/hal-00996995v2/document, Algorithm 2
+        float weight = G2(nDotL, cosTheta, alpha) / G1(cosTheta, alpha);
+
+        // Add the contribution of this sample.
+        albedo += weight * Fc;
+    }
+
+    // Normalize integrated terms.
+    albedo /= float(SAMPLE_COUNT);
+
 }
