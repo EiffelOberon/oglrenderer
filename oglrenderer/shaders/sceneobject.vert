@@ -37,5 +37,6 @@ layout(location = 2) out vec2 uv;
 void main()
 {
 	gl_Position =  viewProjectionMat.mProjectionMatrix * viewProjectionMat.mViewMatrix * m[sceneObjectParams.mIndices.x] * vec4(vertexPos, 1.0);
+    normal = (transpose(inverse(m[sceneObjectParams.mIndices.x])) * vec4(vertexNormal, 0.0f)).xyz;
 	uv = vertexUV;
 }

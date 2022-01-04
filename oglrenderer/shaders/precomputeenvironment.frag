@@ -92,7 +92,7 @@ void main()
     if(foundIntersection)
     {
         float offset = texture(noiseTexture, uv).x;
-        offset = fract(offset + renderParams.mScreenSettings.z * 1.61803398875f);
+        offset = fract(offset + renderParams.mScreenSettings.z * 1.61803398875f) * 2.0f - 1.0f;
         raymarchCloud(
             r, 
             b,

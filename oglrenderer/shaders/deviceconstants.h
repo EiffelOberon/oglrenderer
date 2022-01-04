@@ -119,6 +119,9 @@
 # define QUAD_NOISE_TEX       3
 # define QUAD_PREV_SCREEN_TEX 4
 
+// scene object shader
+# define SCENE_OBJECT_IRRADIANCE 1
+
 // texturedQuad.frag
 # define SCREEN_QUAD_TEX 1
 
