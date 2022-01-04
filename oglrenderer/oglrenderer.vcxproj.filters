@@ -22,6 +22,9 @@
     <Filter Include="Hosek">
       <UniqueIdentifier>{91b9d4f6-a6bd-48b2-b248-4100cb455c5a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="tinyobjloader">
+      <UniqueIdentifier>{92699e4b-bcf8-4bbe-88df-5e461b2fb26d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -175,6 +178,9 @@
     </ClInclude>
     <ClInclude Include="shaders\bsdf.h">
       <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="include\tinyobjloader\tiny_obj_loader.h">
+      <Filter>tinyobjloader</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

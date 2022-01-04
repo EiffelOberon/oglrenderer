@@ -92,6 +92,9 @@ private:
         const bool               alpha,
         const std::string        &fileName);
 
+    bool loadModel(
+        const std::string& fileName);
+
     // initialize uniform white noise [0, 1]
     void updateWaterGrid();
     void renderWater(const bool precompute);
