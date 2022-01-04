@@ -122,8 +122,13 @@ private:
     
     // update boolean
     bool          mUpdateSky;
-    bool          mUpdateEnvironment;
+    bool          mUpdateIrradiance;
     bool          mOceanWireframe;
+
+    // bit flags to represent what sides of the cube are updated
+    uint32_t      mIrradianceSideUpdated;
+    uint32_t      mSkySideUpdated;
+    uint32_t      mCloudNoiseUpdated;
 
     std::vector<std::unique_ptr<TimeQuery>> mTimeQueries;
     float         mShaderTimestamps[SHADER_COUNT];

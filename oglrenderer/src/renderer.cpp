@@ -35,7 +35,10 @@ Renderer::Renderer()
     , mShowSkyWindow(true)
     , mOceanWireframe(false)
     , mUpdateSky(true)
-    , mUpdateEnvironment(true)
+    , mUpdateIrradiance(true)
+    , mCloudNoiseUpdated(0)
+    , mIrradianceSideUpdated(0)
+    , mSkySideUpdated(0)
     , mRenderWater(true)
     , mDeltaTime(0.0f)
     , mLowResFactor(0.5f)
@@ -519,6 +522,7 @@ void Renderer::preRender()
         mCloudTexture.bindImageTexture(PRECOMPUTE_CLOUD_CLOUD_TEX, GL_READ_WRITE);
         const int workGroupSize = int(float(CLOUD_RESOLUTION) / float(PRECOMPUTE_CLOUD_LOCAL_SIZE));
         mShaders[PRECOMP_CLOUD_SHADER]->dispatch(true, workGroupSize, workGroupSize, workGroupSize);
+        mCloudNoiseUpdated |= (1 << (mFrameCount % 4));
     }
     mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PRECOMP_CLOUD_SHADER);
 
@@ -616,11 +620,12 @@ void Renderer::preRender()
     // bind fbo for the following
     mSkyParams.mPrecomputeSettings.x = mFrameCount % 6;
     updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeSettings), sizeof(mSkyParams.mPrecomputeSettings), mSkyParams.mPrecomputeSettings);
-    mFinalSkyCubemap->bind(mSkyParams.mPrecomputeSettings.x);
 
     // 1. render environment sky box
     mTimeQueries.at(mFrameCount% QUERY_DOUBLE_BUFFER_COUNT)->start(PRECOMP_ENV_SHADER);
+    if(mCloudNoiseUpdated == 0xF)
     {
+        mFinalSkyCubemap->bind(mSkyParams.mPrecomputeSettings.x);
         glViewport(0, 0, int(mEnvironmentResolution.x), int(mEnvironmentResolution.y));
 
         // make sure we clear buffer as we render water geometry in this pass
@@ -697,17 +702,19 @@ void Renderer::preRender()
             updateUniform(MVP_MATRIX, mViewProjectionMat);
             updateUniform(CAMERA_PARAMS, mCamParams);
         }
-
         mFinalSkyCubemap->unbind();
+
+        mSkySideUpdated |= (1 << (mSkyParams.mPrecomputeSettings.x));
     }
     mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PRECOMP_ENV_SHADER);
     
     // 3. preintegrate diffuse
     updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeSettings), sizeof(mSkyParams.mPrecomputeSettings), mSkyParams.mPrecomputeSettings);
-    mIrradianceCubemap->bind(mSkyParams.mPrecomputeSettings.x);
-
-    mTimeQueries.at(mFrameCount% QUERY_DOUBLE_BUFFER_COUNT)->start(PRECOMP_IRRADIANCE_SHADER);
+    if(mUpdateIrradiance && mSkySideUpdated == 0x3F)
     {
+        mIrradianceCubemap->bind(mSkyParams.mPrecomputeSettings.x);
+
+        mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(PRECOMP_IRRADIANCE_SHADER);
         glViewport(0, 0, int(mIrradianceResolution.x), int(mIrradianceResolution.y));
 
         mFinalSkyCubemap->bindTexture(PRECOMPUTE_IRRADIANCE_SKY_TEX, 0);
@@ -715,8 +722,15 @@ void Renderer::preRender()
         mQuad.draw();
         mShaders[PRECOMP_IRRADIANCE_SHADER]->disable();
         mIrradianceCubemap->unbind();
+
+        mIrradianceSideUpdated |= (1 << (mSkyParams.mPrecomputeSettings.x));
+        if (mIrradianceSideUpdated == 0x3F)
+        {
+            mUpdateIrradiance = false;
+            mIrradianceSideUpdated = 0;
+        }
+        mTimeQueries.at(mFrameCount% QUERY_DOUBLE_BUFFER_COUNT)->end(PRECOMP_IRRADIANCE_SHADER);
     }
-    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PRECOMP_IRRADIANCE_SHADER);
 }
 
 
@@ -921,32 +935,50 @@ void Renderer::renderGUI()
                 if (ImGui::SliderFloat("x", &mSkyParams.mSunSetting.x, -1.0f, 1.0f))
                 {
                     mUpdateSky = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
                 }
 
                 if (ImGui::SliderFloat("y", &mSkyParams.mSunSetting.y, 0.0f, 1.0f))
                 {
                     mUpdateSky = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
                 }
 
                 if (ImGui::SliderFloat("z", &mSkyParams.mSunSetting.z, -1.0f, 1.0f))
                 {
                     mUpdateSky = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
                 }
 
                 if (ImGui::SliderFloat("intensity", &mSkyParams.mSunSetting.w, 0.0f, 100.0f))
                 {
                     mUpdateSky = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
                 }
                 ImGui::Text("Sky");
 
                 if (ImGui::SliderFloat("Rayleigh", &mSkyParams.mNishitaSetting.x, 0.0f, 40.0f))
                 {
                     mUpdateSky = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
                 }
 
                 if (ImGui::SliderFloat("Mie", &mSkyParams.mNishitaSetting.y, 0.0f, 40.0f))
                 {
                     mUpdateSky = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
                 }
                 
                 if (ImGui::SliderFloat("Fog min dist", &mSkyParams.mFogSettings.x, 100.0f, 10000.0f))
@@ -1016,68 +1048,107 @@ void Renderer::renderGUI()
                 if (ImGui::Checkbox("Worley invert", &mWorleyNoiseParams.mInvert))
                 {
                     updateUniform(WORLEY_PARAMS, mWorleyNoiseParams);
-                    mUpdateEnvironment = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
+                    mCloudNoiseUpdated = 0;
                 }
                 if (ImGui::SliderInt("Perlin octaves", &mPerlinNoiseParams.mNoiseOctaves, 1, 8))
                 {
                     updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
-                    mUpdateEnvironment = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
+                    mCloudNoiseUpdated = 0;
                 }
 
                 if (ImGui::SliderFloat("Perlin freq", &mPerlinNoiseParams.mSettings.z, 0.0f, 100.0f, " %.3f", ImGuiSliderFlags_Logarithmic))
                 {
                     updateUniform(PERLIN_PARAMS, mPerlinNoiseParams);
-                    mUpdateEnvironment = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
+                    mCloudNoiseUpdated = 0;
                 }
                 if (ImGui::SliderFloat("Absorption", &mRenderParams.mCloudAbsorption.x, 0.0f, 1.0f))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
-                    mUpdateEnvironment = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
+                    mCloudNoiseUpdated = 0;
                 }
                 if (ImGui::SliderFloat("Anisotropy", &mRenderParams.mCloudSettings.x, -1.0f, 1.0f))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
-                    mUpdateEnvironment = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
+                    mCloudNoiseUpdated = 0;
                 }
                 if (ImGui::SliderFloat("Cloud speed", &mRenderParams.mCloudSettings.y, 0.0f, 1.0f))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
-                    mUpdateEnvironment = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
+                    mCloudNoiseUpdated = 0;
                 }
                 if (ImGui::SliderFloat("Cloud coverage", &mRenderParams.mCloudMapping.z, 0.0f, 1.0f))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
-                    mUpdateEnvironment = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
+                    mCloudNoiseUpdated = 0;
                 }
                 if (ImGui::SliderFloat("Cloud density", &mRenderParams.mCloudSettings.z, 0.0001f, 100.0f, "%.3f", ImGuiSliderFlags_Logarithmic))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
-                    mUpdateEnvironment = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
+                    mCloudNoiseUpdated = 0;
                 }
                 if (ImGui::SliderFloat("Cloud BBox height", &mRenderParams.mCloudSettings.w, 100.0f, 100000.0f))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
-                    mUpdateEnvironment = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
+                    mCloudNoiseUpdated = 0;
                 }
                 if (ImGui::SliderFloat("Cloud UV width", &mRenderParams.mCloudMapping.x, 1.0f, 1000.0f))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
-                    mUpdateEnvironment = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
+                    mCloudNoiseUpdated = 0;
                 }
                 if (ImGui::SliderFloat("Cloud UV height", &mRenderParams.mCloudMapping.y, 1.0f, 1000.0f))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
-                    mUpdateEnvironment = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
+                    mCloudNoiseUpdated = 0;
                 }
                 if (ImGui::SliderInt("Max steps", &mRenderParams.mSteps.x, 4, 1024))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
-                    mUpdateEnvironment = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
+                    mCloudNoiseUpdated = 0;
                 }
                 if (ImGui::SliderInt("Max shadow steps", &mRenderParams.mSteps.y, 2, 32))
                 {
                     updateUniform(RENDERER_PARAMS, mRenderParams);
-                    mUpdateEnvironment = true;
+                    mUpdateIrradiance = true;
+                    mIrradianceSideUpdated = 0;
+                    mSkySideUpdated = 0;
+                    mCloudNoiseUpdated = 0;
                 }
                 ImGui::EndTabItem();
             }
