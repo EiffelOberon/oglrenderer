@@ -154,6 +154,7 @@ private:
 
     // ocean geometry
     VertexBuffer mWaterGrid;
+    std::vector<std::unique_ptr<VertexBuffer>> mModels;
 
     // noise 
     NoiseParams mWorleyNoiseParams;

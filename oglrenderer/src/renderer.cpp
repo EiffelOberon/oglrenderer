@@ -310,6 +310,15 @@ bool Renderer::loadModel(
             shapes[s].mesh.material_ids[f];
         }
     }
+
+    // push data to the device
+    const uint32_t idx = mModels.size();
+    mModels.push_back(std::make_unique<VertexBuffer>());
+    mModels.at(idx)->update(
+        sizeof(VertexBuffer) * vertices.size(), 
+        sizeof(uint32_t) * indices.size(), 
+        vertices.data(), 
+        indices.data());
     return true;
 }
 
