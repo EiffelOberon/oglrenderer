@@ -149,6 +149,8 @@ private:
     std::unique_ptr<RenderCubemapTexture> mFinalSkyCubemap;
     std::unique_ptr<RenderCubemapTexture> mIrradianceCubemap;
 
+    std::unique_ptr<Texture> mPrecomputedFresnelTexture;
+
     // states
     Camera mCamera;
     CameraParams mCamParams;

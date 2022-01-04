@@ -28,6 +28,7 @@ Renderer::Renderer()
     , mSkyCubemap(nullptr)
     , mFinalSkyCubemap(nullptr)
     , mIrradianceCubemap(nullptr)
+    , mPrecomputedFresnelTexture(nullptr)
     , mWorleyNoiseRenderTexture(nullptr)
     , mCamera()
     , mShowBuffersWindow(false)
@@ -69,6 +70,7 @@ Renderer::Renderer()
     mShaders[TEMPORAL_QUAD_SHADER] = std::make_unique<ShaderProgram>("temporal", "./spv/temporalvert.spv", "./spv/temporalfrag.spv");
     mShaders[PRECOMP_IRRADIANCE_SHADER] = std::make_unique<ShaderProgram>("precomputeirradiance", "./spv/vert.spv", "./spv/precomputeirradiancefrag.spv");
     mShaders[SCENE_OBJECT_SHADER] = std::make_unique<ShaderProgram>("sceneobject", "./spv/sceneobjvert.spv", "./spv/sceneobjfrag.spv");
+    mShaders[PRECOMP_FRESNEL_SHADER] = std::make_unique<ShaderProgram>("fresnel", "./spv/precomputefresnel.spv");
 
     // cloud noise textures
     mCloudNoiseRenderTexture[0] = nullptr;
@@ -174,6 +176,13 @@ Renderer::Renderer()
 
     // hosek
     mHosekSkyModel = std::make_unique<Hosek>(glm::vec3(mSkyParams.mSunSetting.x, mSkyParams.mSunSetting.y, mSkyParams.mSunSetting.z), 512);
+
+    // precompute fresnel
+    mPrecomputedFresnelTexture = std::make_unique<Texture>(FRESNEL_RESOLUTION, FRESNEL_RESOLUTION, GL_LINEAR, false, 32, false, true, nullptr);
+    mShaders[PRECOMP_FRESNEL_SHADER]->use();
+    mPrecomputedFresnelTexture->bindImageTexture(PRECOMPUTE_FRESNEL_TEX, GL_WRITE_ONLY);
+    mShaders[PRECOMP_FRESNEL_SHADER]->dispatch(true, FRESNEL_RESOLUTION / PRECOMPUTE_FRESNEL_LOCAL_SIZE, FRESNEL_RESOLUTION / PRECOMPUTE_FRESNEL_LOCAL_SIZE, 1);
+    mShaders[PRECOMP_FRESNEL_SHADER]->disable();
 
     // load textures
     FreeImage_Initialise();
@@ -1381,6 +1390,18 @@ void Renderer::renderGUI()
 
         // the buffer in previous iteration
         screenBuffer = (ImTextureID)mScreenRenderTextures[(mFrameCount + 1) % SCREEN_BUFFER_COUNT]->getTextureId(0);
+        {
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left
+            ImVec2 maxUV = ImVec2(1.0f, 1.0f);              // Lower-right
+            ImVec4 tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+            ImVec4 border = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+            ImGui::Image(screenBuffer, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
+        }
+
+        ImGui::Text("Fresnel");
+
+        screenBuffer = (ImTextureID)mPrecomputedFresnelTexture->texId();
         {
             ImVec2 pos = ImGui::GetCursorScreenPos();
             ImVec2 minUV = ImVec2(0.0f, 0.0f);              // Top-left

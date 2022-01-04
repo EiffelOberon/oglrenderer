@@ -23,7 +23,8 @@
 # define TEMPORAL_QUAD_SHADER      14
 # define PRECOMP_IRRADIANCE_SHADER 15
 # define SCENE_OBJECT_SHADER       16
-# define SHADER_COUNT              (SCENE_OBJECT_SHADER + 1)
+# define PRECOMP_FRESNEL_SHADER    17
+# define SHADER_COUNT              (PRECOMP_FRESNEL_SHADER + 1)
 
 // sky models
 # define NISHITA_SKY 0
@@ -51,6 +52,7 @@
 # define ENVIRONMENT_RESOLUTION 128
 # define BLUENOISE_RESOLUTION   512
 # define IRRADIANCE_RESOLUTION  16
+# define FRESNEL_RESOLUTION     64
 
 // ocean resolution
 # define OCEAN_RESOLUTION_1 256
@@ -68,7 +70,7 @@
 # define PI (3.1415926f)
 
 // BSDF
-# define SAMPLE_COUNT 100
+# define SAMPLE_COUNT 1000
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -99,6 +101,9 @@
 # define PRECOMPUTE_ENVIRONMENT_CLOUD_TEX 1
 # define PRECOMPUTE_ENVIRONMENT_NOISE_TEX 2
 # define PRECOMPUTE_ENVIRONMENT_SKY_TEX   3
+
+// precompute fresnel shader
+# define PRECOMPUTE_FRESNEL_TEX 1
 
 // precompute irradiance shader
 # define PRECOMPUTE_IRRADIANCE_SKY_TEX    1

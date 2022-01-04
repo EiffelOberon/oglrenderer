@@ -83,6 +83,11 @@ float G2(
     float alpha2 = (alpha * alpha);
     float lambdaL = sqrt(alpha2 + (1.0 - alpha2) * (nDotL * nDotL));
     float lambdaV = sqrt(alpha2 + (1.0 - alpha2) * (nDotV * nDotV));
+    if (nDotL == 0.0f || nDotV == 0.0f)
+    {
+        return 0.0f;
+    }
+
     return 2.0 / (lambdaL / nDotL + lambdaV / nDotV);
 }
 

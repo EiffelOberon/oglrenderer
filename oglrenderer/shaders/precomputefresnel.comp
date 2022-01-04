@@ -13,6 +13,8 @@ layout(std430, binding = RENDERER_PARAMS) uniform RendererParamsUniform
     RendererParams renderParams;
 };
 
+layout(binding = PRECOMPUTE_FRESNEL_TEX, rgba32f) uniform image2D fresnelTex;
+
 // A single iteration of Bob Jenkins' One-At-A-Time hashing algorithm.
 uint hash(uint x) {
     x += (x << 10u);
@@ -62,8 +64,8 @@ void main()
     for (int i = 0; i < SAMPLE_COUNT; i++)
     {
         // random variables
-        vec4 inputs = vec4(vec3(uv, 0), renderParams.mSettings.x);
-        vec4 inputs2 = vec4(vec3(uv, 1), renderParams.mSettings.x);
+        vec4 inputs = vec4(vec3(uv, i), renderParams.mSettings.x);
+        vec4 inputs2 = vec4(vec3(uv, i+1), renderParams.mSettings.x);
         vec2 u = vec2(random(inputs), random(inputs2));
 
         // Compute the half vector and incoming light direction.
@@ -88,5 +90,5 @@ void main()
 
     // Normalize integrated terms.
     albedo /= float(SAMPLE_COUNT);
-
+    imageStore(fresnelTex, ivec2(gl_GlobalInvocationID.xy), vec4(vec3(albedo), 1.0f));
 }
