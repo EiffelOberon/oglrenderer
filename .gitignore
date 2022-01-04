@@ -5,7 +5,6 @@
 *.slo
 *.lo
 *.o
-*.obj
 
 # Precompiled Headers
 *.gch
@@ -49,3 +48,27 @@ oglrenderer/x64/Debug/oglrenderer.exe.recipe
 oglrenderer/x64/Release/oglrenderer.exe.recipe
 oglrenderer/x64/Release/oglrenderer.vcxproj.FileListAbsolute.txt
 oglrenderer/x64/Release/vc142.ib_pdb_index
+oglrenderer/Debug/main.obj
+oglrenderer/Release/main.obj
+oglrenderer/x64/Debug/ArHosekSkyModel.obj
+oglrenderer/x64/Debug/imgui.obj
+oglrenderer/x64/Debug/imgui_demo.obj
+oglrenderer/x64/Debug/imgui_draw.obj
+oglrenderer/x64/Debug/imgui_impl_glut.obj
+oglrenderer/x64/Debug/imgui_impl_opengl3.obj
+oglrenderer/x64/Debug/imgui_impl_win32.obj
+oglrenderer/x64/Debug/imgui_tables.obj
+oglrenderer/x64/Debug/imgui_widgets.obj
+oglrenderer/x64/Debug/main.obj
+oglrenderer/x64/Debug/renderer.obj
+oglrenderer/x64/Release/ArHosekSkyModel.obj
+oglrenderer/x64/Release/imgui.obj
+oglrenderer/x64/Release/imgui_demo.obj
+oglrenderer/x64/Release/imgui_draw.obj
+oglrenderer/x64/Release/imgui_impl_glut.obj
+oglrenderer/x64/Release/imgui_impl_opengl3.obj
+oglrenderer/x64/Release/imgui_impl_win32.obj
+oglrenderer/x64/Release/imgui_tables.obj
+oglrenderer/x64/Release/imgui_widgets.obj
+oglrenderer/x64/Release/main.obj
+oglrenderer/x64/Release/renderer.obj
