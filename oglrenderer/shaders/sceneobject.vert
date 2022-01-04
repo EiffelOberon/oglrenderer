@@ -22,6 +22,11 @@ layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
     OceanParams oceanParams;
 };
 
+layout(std430, binding = SCENE_MODEL_MATRIX) buffer SceneModelMatBuffer
+{
+    mat4 m[];
+};
+
 layout(location = 1) out vec3 normal;
 layout(location = 2) out vec2 uv;
 

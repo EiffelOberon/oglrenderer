@@ -22,7 +22,8 @@
 # define PRECOMP_SKY_SHADER        13
 # define TEMPORAL_QUAD_SHADER      14
 # define PRECOMP_IRRADIANCE_SHADER 15
-# define SHADER_COUNT              (PRECOMP_IRRADIANCE_SHADER + 1)
+# define SCENE_OBJECT_SHADER       16
+# define SHADER_COUNT              (SCENE_OBJECT_SHADER + 1)
 
 // sky models
 # define NISHITA_SKY 0
@@ -40,20 +41,9 @@
 # define MVP_MATRIX      8
 # define PREV_MVP_MATRIX 9
 
-// texture binding points
-//# define SCREEN_QUAD         0
-//# define CLOUD_TEXTURE       1
-//# define ENVIRONMENT_TEXTURE 2
-//# define OCEAN_NOISE         3
-//# define H0K_TEXTURE         4
-//# define H_X_TEXTURE         5
-//# define H_Y_TEXTURE         6
-//# define H_Z_TEXTURE         7
-//# define BUTTERFLY_TEXTURE   8
-//# define TEXTURES_COUNT      (BUTTERFLY_TEXTURE + 1)
-
 // ssbo binding points
 # define BUTTERFLY_INDICES   0
+# define SCENE_MODEL_MATRIX  1
 
 // texture resolution
 # define CLOUD_RESOLUTION       128

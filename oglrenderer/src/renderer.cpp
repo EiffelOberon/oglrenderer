@@ -65,6 +65,7 @@ Renderer::Renderer()
     mShaders[WATER_SHADER] = std::make_unique<ShaderProgram>("water", "./spv/watervert.spv", "./spv/waterfrag.spv");
     mShaders[TEMPORAL_QUAD_SHADER] = std::make_unique<ShaderProgram>("temporal", "./spv/temporalvert.spv", "./spv/temporalfrag.spv");
     mShaders[PRECOMP_IRRADIANCE_SHADER] = std::make_unique<ShaderProgram>("precomputeirradiance", "./spv/vert.spv", "./spv/precomputeirradiancefrag.spv");
+    mShaders[SCENE_OBJECT_SHADER] = std::make_unique<ShaderProgram>("sceneobject", "./spv/sceneobjvert.spv", "./spv/sceneobjfrag.spv");
 
     // cloud noise textures
     mCloudNoiseRenderTexture[0] = nullptr;
@@ -155,12 +156,12 @@ Renderer::Renderer()
     // compute camera and projection matrix for normal camera
     glm::mat4 projMatrix = glm::perspective(glm::radians(60.0f), 1600.0f / 900.0f, 0.1f, 10000.0f);
     glm::mat4 viewMatrix = mCamera.getViewMatrix();
-    mviewProjectionMat.mProjectionMatrix = projMatrix;
-    mviewProjectionMat.mViewMatrix = viewMatrix;
-    addUniform(MVP_MATRIX, mviewProjectionMat);
+    mViewProjectionMat.mProjectionMatrix = projMatrix;
+    mViewProjectionMat.mViewMatrix = viewMatrix;
+    addUniform(MVP_MATRIX, mViewProjectionMat);
 
-    mPreviousviewProjectionMat = mviewProjectionMat;
-    addUniform(PREV_MVP_MATRIX, mPreviousviewProjectionMat);
+    mPreviousViewProjectionMat = mViewProjectionMat;
+    addUniform(PREV_MVP_MATRIX, mPreviousViewProjectionMat);
 
     mPrecomputeMatrix.mProjectionMatrix = glm::perspective(glm::radians(60.0f), 1.0f, 0.1f, 10000.0f);
     mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 1, 0), glm::vec3(0, 1, 0) + glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
@@ -315,10 +316,15 @@ bool Renderer::loadModel(
     const uint32_t idx = mModels.size();
     mModels.push_back(std::make_unique<VertexBuffer>());
     mModels.at(idx)->update(
-        sizeof(VertexBuffer) * vertices.size(), 
+        sizeof(Vertex) * vertices.size(),
         sizeof(uint32_t) * indices.size(), 
         vertices.data(), 
         indices.data());
+    mModelMats.push_back(glm::mat4(1.0f));
+
+    // push model matrices to buffer
+    mModelMatsBuffer = std::make_unique<ShaderBuffer>(mModelMats.size() * sizeof(glm::mat4));
+    mModelMatsBuffer->upload(mModelMats.data());
     return true;
 }
 
@@ -328,8 +334,8 @@ void Renderer::updateCamera(
     const int deltaY)
 {
     // update previous matrix to this frame's mvp matrix
-    mPreviousviewProjectionMat = mviewProjectionMat;
-    updateUniform(PREV_MVP_MATRIX, mPreviousviewProjectionMat);
+    mPreviousViewProjectionMat = mViewProjectionMat;
+    updateUniform(PREV_MVP_MATRIX, mPreviousViewProjectionMat);
 
     mCamera.update(deltaX * 2.0f * M_PI / mResolution.x, deltaY * M_PI / mResolution.y);
     mCamParams.mEye = glm::vec4(mCamera.getEye(), 0.0f);
@@ -339,8 +345,8 @@ void Renderer::updateCamera(
 
     // update MVP
     glm::mat4 viewMatrix = mCamera.getViewMatrix();
-    mviewProjectionMat.mViewMatrix = viewMatrix;
-    updateUniform(MVP_MATRIX, mviewProjectionMat);
+    mViewProjectionMat.mViewMatrix = viewMatrix;
+    updateUniform(MVP_MATRIX, mViewProjectionMat);
 }
 
 
@@ -348,8 +354,8 @@ void Renderer::updateCameraZoom(
     const int dir)
 {
     // update previous matrix to this frame's mvp matrix
-    mPreviousviewProjectionMat = mviewProjectionMat;
-    updateUniform(PREV_MVP_MATRIX, mPreviousviewProjectionMat);
+    mPreviousViewProjectionMat = mViewProjectionMat;
+    updateUniform(PREV_MVP_MATRIX, mPreviousViewProjectionMat);
 
     mCamera.updateZoom(dir);
     mCamParams.mEye = glm::vec4(mCamera.getEye(), 0.0f);
@@ -359,8 +365,8 @@ void Renderer::updateCameraZoom(
 
     // update MVP
     glm::mat4 viewMatrix = mCamera.getViewMatrix();
-    mviewProjectionMat.mViewMatrix = viewMatrix;
-    updateUniform(MVP_MATRIX, mviewProjectionMat);
+    mViewProjectionMat.mViewMatrix = viewMatrix;
+    updateUniform(MVP_MATRIX, mViewProjectionMat);
 }
 
 
@@ -490,8 +496,8 @@ void Renderer::resize(
 
         // update MVP
         glm::mat4 perspectiveMatrix = glm::perspective(glm::radians(60.0f), mResolution.x / mResolution.y, 0.1f, 10000.0f);
-        mviewProjectionMat.mProjectionMatrix = perspectiveMatrix;
-        updateUniform(MVP_MATRIX, mviewProjectionMat);
+        mViewProjectionMat.mProjectionMatrix = perspectiveMatrix;
+        updateUniform(MVP_MATRIX, mViewProjectionMat);
     }
 }
 
@@ -685,7 +691,7 @@ void Renderer::preRender()
             updateUniform(CAMERA_PARAMS, mPrecomputeCamParams);
             updateUniform(MVP_MATRIX, mPrecomputeMatrix);
             renderWater(true);
-            updateUniform(MVP_MATRIX, mviewProjectionMat);
+            updateUniform(MVP_MATRIX, mViewProjectionMat);
             updateUniform(CAMERA_PARAMS, mCamParams);
         }
 
@@ -763,14 +769,38 @@ void Renderer::render()
     mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(WATER_SHADER);
     renderWater(false);
     mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(WATER_SHADER);
+
+    // render scene objects
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LESS);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(SCENE_OBJECT_SHADER);
+    mShaders[SCENE_OBJECT_SHADER]->use();
+    mModelMatsBuffer->bind(SCENE_MODEL_MATRIX);
+    for (int i = 0; i < mModels.size(); ++i)
+    {
+        mModels[i]->draw();
+    }
+    mShaders[SCENE_OBJECT_SHADER]->disable();
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(SCENE_OBJECT_SHADER);
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    glDisable(GL_CULL_FACE);
 }
 
 
 void Renderer::postRender()
 {
     // update previous matrix to this frame's mvp matrix
-    mPreviousviewProjectionMat = mviewProjectionMat;
-    updateUniform(PREV_MVP_MATRIX, mPreviousviewProjectionMat);
+    mPreviousViewProjectionMat = mViewProjectionMat;
+    updateUniform(PREV_MVP_MATRIX, mPreviousViewProjectionMat);
 
     // get the results from the queries
     TimeQuery& timeQuery = *(mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT));

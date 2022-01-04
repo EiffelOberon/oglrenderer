@@ -20,4 +20,6 @@
 ./shaderc/glslc.exe ./shaders/temporalquad.frag -o ./spv/temporalfrag.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 ./shaderc/glslc.exe ./shaders/precomputefresnel.comp -o ./spv/precomputefresnel.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 ./shaderc/glslc.exe ./shaders/precomputeirradiance.frag -o ./spv/precomputeirradiancefrag.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
+./shaderc/glslc.exe ./shaders/sceneobject.vert -o ./spv/sceneobjvert.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
+./shaderc/glslc.exe ./shaders/sceneobject.frag -o ./spv/sceneobjfrag.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 

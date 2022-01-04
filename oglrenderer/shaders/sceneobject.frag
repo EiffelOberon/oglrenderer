@@ -25,5 +25,5 @@ layout(location = 0) out vec4 c;
 
 void main()
 {	
-    c = vec4(normal, 1.0f);
+    c = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 }

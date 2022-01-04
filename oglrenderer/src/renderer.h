@@ -152,6 +152,9 @@ private:
     SkyParams mSkyParams;
     OceanParams mOceanParams;
 
+    // shader buffers
+    std::unique_ptr<ShaderBuffer> mModelMatsBuffer;
+
     // ocean geometry
     VertexBuffer mWaterGrid;
     std::vector<std::unique_ptr<VertexBuffer>> mModels;
@@ -173,9 +176,10 @@ private:
     bool mRenderWater;
 
     // MVP matrix
-    ViewProjectionMatrix mviewProjectionMat;
-    ViewProjectionMatrix mPreviousviewProjectionMat;
+    ViewProjectionMatrix mViewProjectionMat;
+    ViewProjectionMatrix mPreviousViewProjectionMat;
     ViewProjectionMatrix mPrecomputeMatrix;
+    std::vector<glm::mat4> mModelMats;
 
     float mDeltaTime;
     float mTime;
