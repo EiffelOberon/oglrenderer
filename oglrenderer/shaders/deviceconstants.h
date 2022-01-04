@@ -6,22 +6,23 @@
 # define QUERY_DOUBLE_BUFFER_COUNT 2
 
 // shader program Id
-# define BUTTERFLY_SHADER         0
-# define INVERSION_SHADER         1
-# define PRECOMP_ENV_SHADER       2
-# define PRECOMP_CLOUD_SHADER     3
-# define PRECOMP_OCEAN_H0_SHADER  4
-# define PRECOMP_OCEAN_H_SHADER   5
-# define PRECOMP_BUTTERFLY_SHADER 6
-# define PRE_RENDER_QUAD_SHADER   7
-# define TEXTURED_QUAD_SHADER     8
-# define WORLEY_NOISE_SHADER      9
-# define PERLIN_NOISE_SHADER      10
-# define CLOUD_NOISE_SHADER       11
-# define WATER_SHADER             12
-# define PRECOMP_SKY_SHADER       13
-# define TEMPORAL_QUAD_SHADER     14
-# define SHADER_COUNT             (TEMPORAL_QUAD_SHADER + 1)
+# define BUTTERFLY_SHADER          0
+# define INVERSION_SHADER          1
+# define PRECOMP_ENV_SHADER        2
+# define PRECOMP_CLOUD_SHADER      3
+# define PRECOMP_OCEAN_H0_SHADER   4
+# define PRECOMP_OCEAN_H_SHADER    5
+# define PRECOMP_BUTTERFLY_SHADER  6
+# define PRE_RENDER_QUAD_SHADER    7
+# define TEXTURED_QUAD_SHADER      8
+# define WORLEY_NOISE_SHADER       9
+# define PERLIN_NOISE_SHADER       10
+# define CLOUD_NOISE_SHADER        11
+# define WATER_SHADER              12
+# define PRECOMP_SKY_SHADER        13
+# define TEMPORAL_QUAD_SHADER      14
+# define PRECOMP_IRRADIANCE_SHADER 15
+# define SHADER_COUNT              (PRECOMP_IRRADIANCE_SHADER + 1)
 
 // sky models
 # define NISHITA_SKY 0
