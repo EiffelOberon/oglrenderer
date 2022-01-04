@@ -11,7 +11,7 @@ layout(location = 2) in vec2 vertexUV;
 
 layout(std430, binding = MVP_MATRIX) uniform Matrices
 {
-    MVPMatrix mvpMatrix;
+    ViewProjectionMatrix viewProjectionMat;
 };
 layout(std430, binding = CAMERA_PARAMS) uniform CameraParamsUniform
 {
@@ -45,7 +45,7 @@ void main()
 	const float distanceToCamera = clamp(length(newVertexPos - camParams.mEye.xyz), 0.4f, oceanParams.mTransmission.w) / oceanParams.mTransmission.w;
 	newVertexPos = mix(newVertexPos, vertexPos, distanceToCamera);
 
-	gl_Position =  mvpMatrix.mProjectionMatrix * mvpMatrix.mViewMatrix * vec4(newVertexPos, 1.0);
+	gl_Position =  viewProjectionMat.mProjectionMatrix * viewProjectionMat.mViewMatrix * vec4(newVertexPos, 1.0);
 	
 	position = newVertexPos;
 	uv = vertexPos.xz;

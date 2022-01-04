@@ -247,5 +247,11 @@
     <None Include="shaders\precomputeirradiance.frag">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\sceneobject.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\sceneobject.frag">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

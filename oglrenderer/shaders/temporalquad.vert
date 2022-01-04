@@ -14,11 +14,11 @@ layout(std430, binding = ORTHO_MATRIX) uniform OrthoMatrixParams
 };
 layout(std430, binding = MVP_MATRIX) uniform MVPParams
 {
-    MVPMatrix mvpMatrix;
+    ViewProjectionMatrix viewProjectionMat;
 };
 layout(std430, binding = PREV_MVP_MATRIX) uniform PrevMVPParams
 {
-    MVPMatrix prevMVPMatrix;
+    ViewProjectionMatrix prevViewProjectionMat;
 };
 
 layout(location = 1) out vec2 uv;
@@ -32,11 +32,11 @@ void main()
 	uv = vertexUV.xy;
 	
     // current frame
-	mat4 invMVP = inverse(mvpMatrix.mProjectionMatrix * mvpMatrix.mViewMatrix);
+	mat4 invMVP = inverse(viewProjectionMat.mProjectionMatrix * viewProjectionMat.mViewMatrix);
 	near = invMVP * vec4(gl_Position.xy / gl_Position.w, -1.0f, 1.0f);
 	far  = invMVP * vec4(gl_Position.xy / gl_Position.w , 1.0f, 1.0f);
 
-    vec4 oldScreenPos = (prevMVPMatrix.mProjectionMatrix * prevMVPMatrix.mViewMatrix * far);
+    vec4 oldScreenPos = (prevViewProjectionMat.mProjectionMatrix * prevViewProjectionMat.mViewMatrix * far);
     oldScreenPos /= oldScreenPos.w;
     oldUV = oldScreenPos.xy * 0.5f + 0.5f;
 }

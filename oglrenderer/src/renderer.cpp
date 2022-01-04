@@ -155,12 +155,12 @@ Renderer::Renderer()
     // compute camera and projection matrix for normal camera
     glm::mat4 projMatrix = glm::perspective(glm::radians(60.0f), 1600.0f / 900.0f, 0.1f, 10000.0f);
     glm::mat4 viewMatrix = mCamera.getViewMatrix();
-    mMVPMatrix.mProjectionMatrix = projMatrix;
-    mMVPMatrix.mViewMatrix = viewMatrix;
-    addUniform(MVP_MATRIX, mMVPMatrix);
+    mviewProjectionMat.mProjectionMatrix = projMatrix;
+    mviewProjectionMat.mViewMatrix = viewMatrix;
+    addUniform(MVP_MATRIX, mviewProjectionMat);
 
-    mPreviousMVPMatrix = mMVPMatrix;
-    addUniform(PREV_MVP_MATRIX, mPreviousMVPMatrix);
+    mPreviousviewProjectionMat = mviewProjectionMat;
+    addUniform(PREV_MVP_MATRIX, mPreviousviewProjectionMat);
 
     mPrecomputeMatrix.mProjectionMatrix = glm::perspective(glm::radians(60.0f), 1.0f, 0.1f, 10000.0f);
     mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 1, 0), glm::vec3(0, 1, 0) + glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
@@ -328,8 +328,8 @@ void Renderer::updateCamera(
     const int deltaY)
 {
     // update previous matrix to this frame's mvp matrix
-    mPreviousMVPMatrix = mMVPMatrix;
-    updateUniform(PREV_MVP_MATRIX, mPreviousMVPMatrix);
+    mPreviousviewProjectionMat = mviewProjectionMat;
+    updateUniform(PREV_MVP_MATRIX, mPreviousviewProjectionMat);
 
     mCamera.update(deltaX * 2.0f * M_PI / mResolution.x, deltaY * M_PI / mResolution.y);
     mCamParams.mEye = glm::vec4(mCamera.getEye(), 0.0f);
@@ -339,8 +339,8 @@ void Renderer::updateCamera(
 
     // update MVP
     glm::mat4 viewMatrix = mCamera.getViewMatrix();
-    mMVPMatrix.mViewMatrix = viewMatrix;
-    updateUniform(MVP_MATRIX, mMVPMatrix);
+    mviewProjectionMat.mViewMatrix = viewMatrix;
+    updateUniform(MVP_MATRIX, mviewProjectionMat);
 }
 
 
@@ -348,8 +348,8 @@ void Renderer::updateCameraZoom(
     const int dir)
 {
     // update previous matrix to this frame's mvp matrix
-    mPreviousMVPMatrix = mMVPMatrix;
-    updateUniform(PREV_MVP_MATRIX, mPreviousMVPMatrix);
+    mPreviousviewProjectionMat = mviewProjectionMat;
+    updateUniform(PREV_MVP_MATRIX, mPreviousviewProjectionMat);
 
     mCamera.updateZoom(dir);
     mCamParams.mEye = glm::vec4(mCamera.getEye(), 0.0f);
@@ -359,8 +359,8 @@ void Renderer::updateCameraZoom(
 
     // update MVP
     glm::mat4 viewMatrix = mCamera.getViewMatrix();
-    mMVPMatrix.mViewMatrix = viewMatrix;
-    updateUniform(MVP_MATRIX, mMVPMatrix);
+    mviewProjectionMat.mViewMatrix = viewMatrix;
+    updateUniform(MVP_MATRIX, mviewProjectionMat);
 }
 
 
@@ -490,8 +490,8 @@ void Renderer::resize(
 
         // update MVP
         glm::mat4 perspectiveMatrix = glm::perspective(glm::radians(60.0f), mResolution.x / mResolution.y, 0.1f, 10000.0f);
-        mMVPMatrix.mProjectionMatrix = perspectiveMatrix;
-        updateUniform(MVP_MATRIX, mMVPMatrix);
+        mviewProjectionMat.mProjectionMatrix = perspectiveMatrix;
+        updateUniform(MVP_MATRIX, mviewProjectionMat);
     }
 }
 
@@ -685,7 +685,7 @@ void Renderer::preRender()
             updateUniform(CAMERA_PARAMS, mPrecomputeCamParams);
             updateUniform(MVP_MATRIX, mPrecomputeMatrix);
             renderWater(true);
-            updateUniform(MVP_MATRIX, mMVPMatrix);
+            updateUniform(MVP_MATRIX, mviewProjectionMat);
             updateUniform(CAMERA_PARAMS, mCamParams);
         }
 
@@ -769,8 +769,8 @@ void Renderer::render()
 void Renderer::postRender()
 {
     // update previous matrix to this frame's mvp matrix
-    mPreviousMVPMatrix = mMVPMatrix;
-    updateUniform(PREV_MVP_MATRIX, mPreviousMVPMatrix);
+    mPreviousviewProjectionMat = mviewProjectionMat;
+    updateUniform(PREV_MVP_MATRIX, mPreviousviewProjectionMat);
 
     // get the results from the queries
     TimeQuery& timeQuery = *(mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT));

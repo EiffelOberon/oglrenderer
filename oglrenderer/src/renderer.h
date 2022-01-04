@@ -173,9 +173,9 @@ private:
     bool mRenderWater;
 
     // MVP matrix
-    MVPMatrix mMVPMatrix;
-    MVPMatrix mPreviousMVPMatrix;
-    MVPMatrix mPrecomputeMatrix;
+    ViewProjectionMatrix mviewProjectionMat;
+    ViewProjectionMatrix mPreviousviewProjectionMat;
+    ViewProjectionMatrix mPrecomputeMatrix;
 
     float mDeltaTime;
     float mTime;

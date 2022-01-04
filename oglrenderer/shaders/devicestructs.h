@@ -83,7 +83,7 @@ struct OceanParams
 };
 
 
-struct MVPMatrix
+struct ViewProjectionMatrix
 {
     mat4 mProjectionMatrix;
     mat4 mViewMatrix;

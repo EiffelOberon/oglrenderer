@@ -14,7 +14,7 @@ layout(std430, binding = ORTHO_MATRIX) uniform OrthoMatrixParams
 };
 layout(std430, binding = MVP_MATRIX) uniform MVPParams
 {
-    MVPMatrix mvpMatrix;
+    ViewProjectionMatrix viewProjectionMat;
 };
 
 layout(location = 1) out vec2 uv;
@@ -26,7 +26,7 @@ void main()
 	gl_Position =  orthoMatrix * vec4(vertexPos, 1.0);
 	uv = vertexUV.xy;
 	
-	const mat4 invMVP = inverse(mvpMatrix.mProjectionMatrix * mvpMatrix.mViewMatrix);
+	const mat4 invMVP = inverse(viewProjectionMat.mProjectionMatrix * viewProjectionMat.mViewMatrix);
 	near = invMVP * vec4(gl_Position.xy / gl_Position.w, -1.0f, 1.0f);
 	far  = invMVP * vec4(gl_Position.xy / gl_Position.w , 1.0f, 1.0f);
 }

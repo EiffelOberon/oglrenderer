@@ -216,6 +216,8 @@
     <None Include="shaders\precomputesky.frag" />
     <None Include="shaders\quad.frag" />
     <None Include="shaders\quad.vert" />
+    <None Include="shaders\sceneobject.frag" />
+    <None Include="shaders\sceneobject.vert" />
     <None Include="shaders\temporalquad.frag" />
     <None Include="shaders\temporalquad.vert" />
     <None Include="shaders\texturedQuad.frag" />
