@@ -18,11 +18,13 @@ Renderer::Renderer()
     , mOceanFFTLowRes(nullptr)
     , mOceanFoamTexture(nullptr)
     , mEnvironmentResolution(ENVIRONMENT_RESOLUTION, ENVIRONMENT_RESOLUTION)
+    , mIrradianceResolution(IRRADIANCE_RESOLUTION, IRRADIANCE_RESOLUTION)
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mClipmap(6)
     , mClipmapLevel(0)
     , mSkyCubemap(nullptr)
     , mFinalSkyCubemap(nullptr)
+    , mIrradianceCubemap(nullptr)
     , mWorleyNoiseRenderTexture(nullptr)
     , mCamera()
     , mShowBuffersWindow(false)
@@ -136,6 +138,7 @@ Renderer::Renderer()
     // cubemap environment
     mSkyCubemap = std::make_unique<RenderCubemapTexture>(mEnvironmentResolution.x);
     mFinalSkyCubemap = std::make_unique<RenderCubemapTexture>(mEnvironmentResolution.x);
+    mIrradianceCubemap = std::make_unique<RenderCubemapTexture>(mIrradianceResolution.x);
 
     // ocean related noise texture and other shader buffers
     mOceanFFTHighRes = std::make_unique<OceanFFT>(*this, OCEAN_RESOLUTION_1, OCEAN_DIMENSIONS_1);
@@ -598,6 +601,22 @@ void Renderer::preRender()
         mFinalSkyCubemap->unbind();
     }
     mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PRECOMP_ENV_SHADER);
+    
+    // 3. preintegrate diffuse
+    updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeSettings), sizeof(mSkyParams.mPrecomputeSettings), mSkyParams.mPrecomputeSettings);
+    mIrradianceCubemap->bind(mSkyParams.mPrecomputeSettings.x);
+
+    mTimeQueries.at(mFrameCount% QUERY_DOUBLE_BUFFER_COUNT)->start(PRECOMP_IRRADIANCE_SHADER);
+    {
+        glViewport(0, 0, int(mIrradianceResolution.x), int(mIrradianceResolution.y));
+
+        mFinalSkyCubemap->bindTexture(PRECOMPUTE_IRRADIANCE_SKY_TEX, 0);
+        mShaders[PRECOMP_IRRADIANCE_SHADER]->use();
+        mQuad.draw();
+        mShaders[PRECOMP_IRRADIANCE_SHADER]->disable();
+        mIrradianceCubemap->unbind();
+    }
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PRECOMP_IRRADIANCE_SHADER);
 }
 
 

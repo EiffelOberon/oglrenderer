@@ -211,6 +211,7 @@
     <None Include="shaders\precomputecloud.comp" />
     <None Include="shaders\precomputeenvironment.frag" />
     <None Include="shaders\precomputefresnel.comp" />
+    <None Include="shaders\precomputeirradiance.frag" />
     <None Include="shaders\precomputesky.frag" />
     <None Include="shaders\quad.frag" />
     <None Include="shaders\quad.vert" />

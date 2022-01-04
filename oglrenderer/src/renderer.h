@@ -112,6 +112,7 @@ private:
     // resolution
     glm::vec2     mResolution;
     glm::vec2     mEnvironmentResolution;
+    glm::vec2     mIrradianceResolution;
 
     // multiplier for lower resolution for down-res background
     float         mLowResFactor;
@@ -138,6 +139,7 @@ private:
     // environment cubemap texture
     std::unique_ptr<RenderCubemapTexture> mSkyCubemap;
     std::unique_ptr<RenderCubemapTexture> mFinalSkyCubemap;
+    std::unique_ptr<RenderCubemapTexture> mIrradianceCubemap;
 
     // states
     Camera mCamera;
