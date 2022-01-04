@@ -30,16 +30,17 @@
 # define HOSEK_SKY   1
 
 // uniform binding points
-# define ORTHO_MATRIX    0
-# define CAMERA_PARAMS   1
-# define SKY_PARAMS      2
-# define RENDERER_PARAMS 3
-# define FBM_PARAMS      4
-# define WORLEY_PARAMS   5
-# define PERLIN_PARAMS   6
-# define OCEAN_PARAMS    7
-# define MVP_MATRIX      8
-# define PREV_MVP_MATRIX 9
+# define ORTHO_MATRIX        0
+# define CAMERA_PARAMS       1
+# define SKY_PARAMS          2
+# define RENDERER_PARAMS     3
+# define FBM_PARAMS          4
+# define WORLEY_PARAMS       5
+# define PERLIN_PARAMS       6
+# define OCEAN_PARAMS        7
+# define MVP_MATRIX          8
+# define PREV_MVP_MATRIX     9
+# define SCENE_OBJECT_PARAMS 10
 
 // ssbo binding points
 # define BUTTERFLY_INDICES   0

@@ -137,6 +137,9 @@ Renderer::Renderer()
     mOceanParams.mFoamSettings = glm::vec4(1.0f, 0.7f, 0.0f, 0.0f);
     addUniform(OCEAN_PARAMS, mOceanParams);
 
+    mSceneObjectParams.mIndices = glm::ivec4(0);
+    addUniform(SCENE_OBJECT_PARAMS, mSceneObjectParams);
+
     loadStates();
 
     // cubemap environment
@@ -785,6 +788,10 @@ void Renderer::render()
     mModelMatsBuffer->bind(SCENE_MODEL_MATRIX);
     for (int i = 0; i < mModels.size(); ++i)
     {
+        // set model matrix index
+        mSceneObjectParams.mIndices.x = i;
+        updateUniform(SCENE_OBJECT_PARAMS, mSceneObjectParams);
+
         mModels[i]->draw();
     }
     mShaders[SCENE_OBJECT_SHADER]->disable();

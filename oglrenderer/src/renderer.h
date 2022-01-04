@@ -151,6 +151,7 @@ private:
     RendererParams mRenderParams;
     SkyParams mSkyParams;
     OceanParams mOceanParams;
+    SceneObjectParams mSceneObjectParams;
 
     // shader buffers
     std::unique_ptr<ShaderBuffer> mModelMatsBuffer;

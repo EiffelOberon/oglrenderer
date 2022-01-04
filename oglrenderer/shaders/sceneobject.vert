@@ -21,6 +21,10 @@ layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
 {
     OceanParams oceanParams;
 };
+layout(std430, binding = SCENE_OBJECT_PARAMS) uniform SceneObjectParamsUniform
+{
+    SceneObjectParams sceneObjectParams;
+};
 
 layout(std430, binding = SCENE_MODEL_MATRIX) buffer SceneModelMatBuffer
 {
@@ -32,6 +36,6 @@ layout(location = 2) out vec2 uv;
 
 void main()
 {
-	gl_Position =  viewProjectionMat.mProjectionMatrix * viewProjectionMat.mViewMatrix * vec4(vertexPos, 1.0);
+	gl_Position =  viewProjectionMat.mProjectionMatrix * viewProjectionMat.mViewMatrix * m[sceneObjectParams.mIndices.x] * vec4(vertexPos, 1.0);
 	uv = vertexUV;
 }

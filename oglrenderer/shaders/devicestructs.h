@@ -83,6 +83,13 @@ struct OceanParams
 };
 
 
+struct SceneObjectParams
+{
+    // x: model matrix index
+    ivec4 mIndices;
+};
+
+
 struct ViewProjectionMatrix
 {
     mat4 mProjectionMatrix;
