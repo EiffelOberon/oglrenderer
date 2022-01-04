@@ -121,6 +121,7 @@
 
 // scene object shader
 # define SCENE_OBJECT_IRRADIANCE 1
+# define SCENE_OBJECT_SKY        2
 
 // texturedQuad.frag
 # define SCREEN_QUAD_TEX 1

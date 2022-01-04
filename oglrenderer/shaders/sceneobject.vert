@@ -31,12 +31,16 @@ layout(std430, binding = SCENE_MODEL_MATRIX) buffer SceneModelMatBuffer
     mat4 m[];
 };
 
+layout(location = 0) out vec3 position;
 layout(location = 1) out vec3 normal;
 layout(location = 2) out vec2 uv;
 
 void main()
 {
-	gl_Position =  viewProjectionMat.mProjectionMatrix * viewProjectionMat.mViewMatrix * m[sceneObjectParams.mIndices.x] * vec4(vertexPos, 1.0);
+    vec4 worldSpacePos = (m[sceneObjectParams.mIndices.x] * vec4(vertexPos, 1.0));
+	gl_Position =  viewProjectionMat.mProjectionMatrix * viewProjectionMat.mViewMatrix * worldSpacePos;
+
+    position = worldSpacePos.xyz;
     normal = normalize((transpose(inverse(m[sceneObjectParams.mIndices.x])) * vec4(vertexNormal, 0.0f)).xyz);
 	uv = vertexUV;
 }

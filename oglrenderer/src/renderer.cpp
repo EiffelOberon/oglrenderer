@@ -801,6 +801,7 @@ void Renderer::render()
     mShaders[SCENE_OBJECT_SHADER]->use();
     mModelMatsBuffer->bind(SCENE_MODEL_MATRIX);
     mIrradianceCubemap->bindTexture(SCENE_OBJECT_IRRADIANCE, 0);
+    mFinalSkyCubemap->bindTexture(SCENE_OBJECT_SKY, 0);
     for (int i = 0; i < mModels.size(); ++i)
     {
         // set model matrix index
