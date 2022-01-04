@@ -59,6 +59,7 @@ Renderer::Renderer()
     mShaders[WORLEY_NOISE_SHADER] = std::make_unique<ShaderProgram>("worley", "./spv/vert.spv", "./spv/worleynoisefrag.spv");
     mShaders[WATER_SHADER] = std::make_unique<ShaderProgram>("water", "./spv/watervert.spv", "./spv/waterfrag.spv");
     mShaders[TEMPORAL_QUAD_SHADER] = std::make_unique<ShaderProgram>("temporal", "./spv/temporalvert.spv", "./spv/temporalfrag.spv");
+    mShaders[PRECOMP_SKY_SHADER] = std::make_unique<ShaderProgram>("precomputeirradiance", "./spv/vert.spv", "./spv/precomputeirradiancefrag.spv");
 
     // cloud noise textures
     mCloudNoiseRenderTexture[0] = nullptr;

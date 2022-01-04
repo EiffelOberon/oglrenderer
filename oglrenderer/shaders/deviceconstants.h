@@ -107,6 +107,9 @@
 # define PRECOMPUTE_ENVIRONMENT_NOISE_TEX 2
 # define PRECOMPUTE_ENVIRONMENT_SKY_TEX   3
 
+// precompute irradiance shader
+# define PRECOMPUTE_IRRADIANCE_SKY_TEX    1
+
 // ocean height field shader
 # define OCEAN_HEIGHTFIELD_NOISE 1
 # define OCEAN_HEIGHTFIELD_H0K   2
