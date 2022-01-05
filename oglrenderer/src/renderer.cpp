@@ -358,13 +358,13 @@ bool Renderer::loadModel(
                     vertexList[bufferIdx].mUV.y = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
                 }
 
+                // per-face material
+                vertexList[bufferIdx].mMaterialId = materialIdx + shapes[s].mesh.material_ids[f];
+
                 indexList[bufferIdx] = bufferIdx;
                 ++bufferIdx;
             }
             index_offset += fv;
-
-            // per-face material
-            vertexList[bufferIdx].mMaterialId = materialIdx + shapes[s].mesh.material_ids[f];
         }
     }
 
