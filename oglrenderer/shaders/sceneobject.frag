@@ -43,6 +43,20 @@ void main()
 						  vec3(1.0f);
 	vec3 directDiffuse = sunColor * max(0.0f, dot(normal, sunDir));
 
+	// get PBR input parameters
+	const float roughness = clamp(skyParams.mPrecomputeGGXSettings.y, 0.0f, 0.99f);
+	const float ior = skyParams.mPrecomputeGGXSettings.z;
+	const float metallic = skyParams.mPrecomputeGGXSettings.w;
+
+	// indirect specular
+	const float nDotL = max(dot(normal, viewDir), 0.0f);
+	vec3 L = vec4(textureLod(prefilterTex, normal, roughness * float(PREFILTER_MIP_COUNT - 1)).xyz, 1.0f).xyz;
+	vec2 ggx = texture(precomputedGGXTex, vec2(roughness, nDotL)).xy;
+	float f0 = (ior - 1.0f) / (ior + 1.0f);
+	f0 *= f0;
+	f0 = mix(f0, 1.0f, metallic);
+	const vec3 indirectSpecular = L * (f0 * ggx.x + ggx.y);
+	
 	// add them up
-	c = vec4(textureLod(prefilterTex, normal, skyParams.mPrecomputeGGXSettings.y * float(PREFILTER_MIP_COUNT - 1)).xyz, 1.0f);//vec4(indirectDiffuse + directDiffuse, 1.0f);
+	c = vec4(mix(indirectDiffuse, vec3(0.0f), metallic) + indirectSpecular, 1.0f);
 }

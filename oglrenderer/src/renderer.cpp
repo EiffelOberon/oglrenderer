@@ -107,6 +107,7 @@ Renderer::Renderer()
     mSkyParams.mFogSettings = glm::vec4(3000.0f, 5000.0f, 0.0f, 0.0f);
     mSkyParams.mPrecomputeSettings.x = 0;
     mSkyParams.mPrecomputeSettings.y = 0;
+    mSkyParams.mPrecomputeGGXSettings = glm::vec4(0.0f, 0.0f, 1.5f, 0.0f);
     addUniform(SKY_PARAMS, mSkyParams);
 
     // initialize noise
@@ -1336,6 +1337,14 @@ void Renderer::renderGUI()
             if (ImGui::BeginTabItem("Material"))
             {
                 if (ImGui::SliderFloat("roughness", &mSkyParams.mPrecomputeGGXSettings.y, 0.01f, 1.0f))
+                {
+                    updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeGGXSettings), sizeof(glm::vec4), mSkyParams.mPrecomputeGGXSettings);
+                }
+                if (ImGui::SliderFloat("ior", &mSkyParams.mPrecomputeGGXSettings.z, 1.0f, 10.0f))
+                {
+                    updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeGGXSettings), sizeof(glm::vec4), mSkyParams.mPrecomputeGGXSettings);
+                }
+                if (ImGui::SliderFloat("metallic", &mSkyParams.mPrecomputeGGXSettings.w, 0.0f, 1.0f))
                 {
                     updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeGGXSettings), sizeof(glm::vec4), mSkyParams.mPrecomputeGGXSettings);
                 }

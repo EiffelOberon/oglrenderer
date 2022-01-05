@@ -32,7 +32,7 @@ struct SkyParams
     vec4 mFogSettings;
     // x: i-th cubemap texture, y: active model z: empty w: empty
     ivec4 mPrecomputeSettings;
-    // x: roughness y: test
+    // x: roughness y: roughness test z: ior test w: metallic test
     vec4 mPrecomputeGGXSettings;
 };
 
