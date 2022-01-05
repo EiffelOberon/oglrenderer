@@ -472,6 +472,7 @@ void Renderer::renderWater(
         {
             mPrefilterCubemap->bindTexture(WATER_PREFILTER_ENV, 0);
             mPrecomputedFresnelTexture->bindTexture(WATER_PRECOMPUTED_GGX);
+            mIrradianceCubemap->bindTexture(WATER_IRRADIANCE, 0);
         }
         if (mOceanWireframe && !precompute)
         {

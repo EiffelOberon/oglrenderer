@@ -2,6 +2,7 @@
 #define GLSL_SHADER
 #extension GL_EXT_scalar_block_layout : require
 
+#include "bsdf.h"
 #include "deviceconstants.h"
 #include "devicestructs.h"
 
@@ -32,6 +33,7 @@ layout(binding = WATER_DISPLACEMENT3_TEX) uniform sampler2D displacement3;
 layout(binding = WATER_ENV_TEX) uniform samplerCube environmentTex;
 layout(binding = WATER_FOAM_TEX) uniform sampler2D foamTex;
 
+layout(binding = WATER_IRRADIANCE) uniform samplerCube irradianceTex;
 layout(binding = WATER_PREFILTER_ENV) uniform samplerCube prefilterTex;
 layout(binding = WATER_PRECOMPUTED_GGX) uniform sampler2D precomputedGGXTex;
 
@@ -128,6 +130,12 @@ void main()
 		radiance += mix(transmission, oceanParams.mReflection.xyz * indirectReflection, f);
 	}
 
+	if(jacobian < oceanParams.mFoamSettings.y)
+	{
+		const float foam = pow(texture(foamTex, uv / oceanParams.mFoamSettings.x).x, 2.2f);
+		radiance = vec3(mix(radiance, vec3((foam * oceanParams.mReflection.w) * luminance(texture(irradianceTex, n).xyz)), foam));
+	}
+
 	// direct specular + indirect specular + transmission
 	vec3 directSpecular = pow(clamp(dot(reflect(-sunDir, n), viewDir), 0.0f, 1.0f), skyParams.mSunSetting.w) * sunColor;
 	radiance += directSpecular;
@@ -135,12 +143,6 @@ void main()
     const float distance = length(camParams.mEye.xyz - position);
     float alpha = 1 - clamp((distance - skyParams.mFogSettings.x) / (skyParams.mFogSettings.y - skyParams.mFogSettings.x), 0.0f, 1.0f);
 	c = vec4(radiance, alpha);
-
-	if(jacobian < oceanParams.mFoamSettings.y)
-	{
-		const float foam = pow(texture(foamTex, uv / oceanParams.mFoamSettings.x).x, 2.2f);
-		c = vec4(mix(radiance - directSpecular, vec3(foam * oceanParams.mReflection.w), foam), alpha);
-	}
 	
 	// color correction for main pass if this is not pre-render
 	if(renderParams.mSettings.z == 0)

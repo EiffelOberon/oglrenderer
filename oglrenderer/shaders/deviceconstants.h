@@ -147,5 +147,6 @@
 # define WATER_FOAM_TEX          5
 # define WATER_PREFILTER_ENV     6
 # define WATER_PRECOMPUTED_GGX   7
+# define WATER_IRRADIANCE        8
 
 #endif

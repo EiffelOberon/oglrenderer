@@ -14,6 +14,13 @@ float fresnel(
 }
 
 
+float luminance(
+    const vec3 rgb) 
+{
+    return dot(vec3(0.2126f, 0.7152f, 0.0722f), rgb);
+}
+
+
 float GGX_D(
     const vec3 wh, 
     const vec2 alpha)
