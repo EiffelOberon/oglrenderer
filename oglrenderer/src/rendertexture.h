@@ -143,6 +143,7 @@ public:
         const uint32_t dimension,
         const bool     mipmap)
     {
+        mMipmap = mipmap;
         mWidth = dimension;
         mHeight = dimension;
         mTex.resize(1);
@@ -218,9 +219,18 @@ public:
 
     void bind(
         const uint32_t i,
+        const uint32_t mipWidth = 0,
+        const uint32_t mipHeight = 0,
         const uint32_t mipLevel = 0)
     {
         glBindFramebuffer(GL_FRAMEBUFFER, mFbo);
+
+        //if (mMipmap)
+        //{
+        //    glBindRenderbuffer(GL_RENDERBUFFER, mRbo);
+        //    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, mipWidth, mipHeight);
+        //}
+
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, mTex[0], mipLevel);
     }
 
@@ -241,4 +251,8 @@ public:
     {
         return mHeight;
     }
+
+private:
+    bool mMipmap;
+
 };

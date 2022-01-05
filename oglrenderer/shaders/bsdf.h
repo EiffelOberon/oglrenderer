@@ -65,6 +65,30 @@ vec3 GGX_sample(
 }
 
 
+vec3 GGX_sample_with_n(vec2 u, vec3 N, float roughness)
+{
+    float a = roughness * roughness;
+
+    float phi = 2.0f * PI * u.x;
+    float cosTheta = sqrt((1.0f - u.y) / (1.0f + (a * a - 1.0f) * u.y));
+    float sinTheta = sqrt(1.0f - cosTheta * cosTheta);
+
+    // from spherical coordinates to cartesian coordinates
+    vec3 H;
+    H.x = cos(phi) * sinTheta;
+    H.y = sin(phi) * sinTheta;
+    H.z = cosTheta;
+
+    // from tangent-space vector to world-space sample vector
+    vec3 up = abs(N.z) < 0.999 ? vec3(0.0f, 0.0f, 1.0f) : vec3(1.0f, 0.0f, 0.0f);
+    vec3 tangent = normalize(cross(up, N));
+    vec3 bitangent = cross(N, tangent);
+
+    vec3 sampleVec = tangent * H.x + bitangent * H.y + N * H.z;
+    return normalize(sampleVec);
+}
+
+
 float G1(
     const float cosTheta, 
     const float alpha)

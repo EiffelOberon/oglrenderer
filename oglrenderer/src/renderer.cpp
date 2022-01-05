@@ -175,7 +175,7 @@ Renderer::Renderer()
     mPreviousViewProjectionMat = mViewProjectionMat;
     addUniform(PREV_MVP_MATRIX, mPreviousViewProjectionMat);
 
-    mPrecomputeMatrix.mProjectionMatrix = glm::perspective(glm::radians(60.0f), 1.0f, 0.1f, 10000.0f);
+    mPrecomputeMatrix.mProjectionMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10000.0f);
     mPrecomputeMatrix.mViewMatrix = glm::lookAt(glm::vec3(0, 1, 0), glm::vec3(0, 1, 0) + glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
 
     // hosek
@@ -738,27 +738,6 @@ void Renderer::preRender()
         mIrradianceCubemap->unbind();
         mTimeQueries.at(mFrameCount% QUERY_DOUBLE_BUFFER_COUNT)->end(PRECOMP_IRRADIANCE_SHADER);
 
-        // specular ggx
-        mTimeQueries.at(mFrameCount% QUERY_DOUBLE_BUFFER_COUNT)->start(PREFILTER_ENVIRONMENT_SHADER);
-        for (int i = 0; i < PREFILTER_MIP_COUNT; ++i)
-        {
-            const uint32_t mipWidth = 128 * std::pow(0.5, i);
-            const uint32_t mipHeight = 128 * std::pow(0.5, i);
-            const float roughness = float(i) / float(PREFILTER_MIP_COUNT - 1);
-            glViewport(0, 0, mipWidth, mipHeight);
-            
-            mSkyParams.mPrecomputeSettings.z = roughness;
-            updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeSettings), sizeof(glm::vec4), mSkyParams.mPrecomputeSettings);
-
-            mPrefilterCubemap->bind(mSkyParams.mPrecomputeSettings.x, i);
-            mFinalSkyCubemap->bindTexture(PREFILTER_ENVIRONMENT_SKY_TEX, 0);
-            mShaders[PREFILTER_ENVIRONMENT_SKY_TEX]->use();
-            mQuad.draw();
-            mShaders[PREFILTER_ENVIRONMENT_SKY_TEX]->disable();
-            mPrefilterCubemap->unbind();
-        }
-        mTimeQueries.at(mFrameCount% QUERY_DOUBLE_BUFFER_COUNT)->end(PREFILTER_ENVIRONMENT_SHADER);
-
         // update flags
         mIrradianceSideUpdated |= (1 << (mSkyParams.mPrecomputeSettings.x));
         if (mIrradianceSideUpdated == 0x3F)
@@ -767,6 +746,27 @@ void Renderer::preRender()
             mIrradianceSideUpdated = 0;
         }
     }
+
+    // specular ggx
+    mTimeQueries.at(mFrameCount% QUERY_DOUBLE_BUFFER_COUNT)->start(PREFILTER_ENVIRONMENT_SHADER);
+    for (int i = 0; i < PREFILTER_MIP_COUNT; ++i)
+    {
+        const uint32_t mipWidth = 128 * std::pow(0.5, i);
+        const uint32_t mipHeight = 128 * std::pow(0.5, i);
+        const float roughness = float(i) / float(PREFILTER_MIP_COUNT - 1);
+        glViewport(0, 0, mipWidth, mipHeight);
+
+        mSkyParams.mPrecomputeGGXSettings.x = roughness;
+        updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeGGXSettings), sizeof(glm::vec4), mSkyParams.mPrecomputeGGXSettings);
+
+        mPrefilterCubemap->bind(mSkyParams.mPrecomputeSettings.x, mipWidth, mipHeight, i);
+        mFinalSkyCubemap->bindTexture(PREFILTER_ENVIRONMENT_SKY_TEX, 0);
+        mShaders[PREFILTER_ENVIRONMENT_SHADER]->use();
+        mQuad.draw();
+        mShaders[PREFILTER_ENVIRONMENT_SHADER]->disable();
+        mPrefilterCubemap->unbind();
+    }
+    mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PREFILTER_ENVIRONMENT_SHADER);
 }
 
 
@@ -1330,6 +1330,14 @@ void Renderer::renderGUI()
                         ImGui::Image(displacementTexId, ImVec2(textureWidth, textureHeight), minUV, maxUV, tint, border);
                     }
 
+                }
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("Material"))
+            {
+                if (ImGui::SliderFloat("roughness", &mSkyParams.mPrecomputeGGXSettings.y, 0.01f, 1.0f))
+                {
+                    updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeGGXSettings), sizeof(glm::vec4), mSkyParams.mPrecomputeGGXSettings);
                 }
                 ImGui::EndTabItem();
             }

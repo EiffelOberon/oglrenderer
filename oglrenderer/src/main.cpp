@@ -292,6 +292,8 @@ int main(
         glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_MARKER, 0,
             GL_DEBUG_SEVERITY_NOTIFICATION, -1, "Started debugging");
 #endif
+        // always seamless cubemap
+        glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
         // enter GLUT event processing cycle
         glutMainLoop();

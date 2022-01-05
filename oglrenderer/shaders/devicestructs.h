@@ -30,8 +30,10 @@ struct SkyParams
     vec4 mNishitaSetting;
     // x: min fog dist, y: max fog dist, z,w: empty
     vec4 mFogSettings;
-    // x: i-th cubemap texture, y: active model z: ggx roughness w: empty
+    // x: i-th cubemap texture, y: active model z: empty w: empty
     ivec4 mPrecomputeSettings;
+    // x: roughness y: test
+    vec4 mPrecomputeGGXSettings;
 };
 
 

@@ -44,5 +44,5 @@ void main()
 	vec3 directDiffuse = sunColor * max(0.0f, dot(normal, sunDir));
 
 	// add them up
-	c = vec4(textureLod(prefilterTex, normal, 1.0f).xyz, 1.0f);//vec4(indirectDiffuse + directDiffuse, 1.0f);
+	c = vec4(textureLod(prefilterTex, normal, skyParams.mPrecomputeGGXSettings.y * float(PREFILTER_MIP_COUNT - 1)).xyz, 1.0f);//vec4(indirectDiffuse + directDiffuse, 1.0f);
 }
