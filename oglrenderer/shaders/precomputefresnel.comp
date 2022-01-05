@@ -26,13 +26,12 @@ void main()
     const float theta = acos(cosTheta);
 
     const vec3 wo = normalize(vec3(sin(theta), 0, cosTheta));
-    float albedo = 0.0f;
+    
+    vec2 result = vec2(0.0f);
     for (int i = 0; i < SAMPLE_COUNT; i++)
     {
         // random variables
-        vec4 inputs = vec4(vec3(uv, i), renderParams.mSettings.x);
-        vec4 inputs2 = vec4(vec3(uv, i+1), renderParams.mSettings.x);
-        vec2 u = vec2(random(inputs), random(inputs2));
+        vec2 u = hammersley(i, SAMPLE_COUNT);
 
         // Compute the half vector and incoming light direction.
         float alpha = roughness2;
@@ -44,7 +43,7 @@ void main()
         float oDotH = clamp(dot(wo, wh), 0.0f, 1.0);
 
         // Compute the Fresnel term.
-        float Fc = fresnel(1.5f, oDotH);
+        float Fc = pow(1.0f - oDotH, 5.0f);
 
         // Compute the sample weight, combining the geometric term, BRDF denominator, and PDF.
         // https://hal.inria.fr/hal-00996995v2/document, Algorithm 2
@@ -53,10 +52,11 @@ void main()
         float weight = g1 == 0.0f ? 1.0f : g2 / g1;
 
         // Add the contribution of this sample.
-        albedo += weight * Fc;
+        result.x += (1.0f - Fc) * weight;
+        result.y += weight * Fc;
     }
 
     // Normalize integrated terms.
-    albedo /= float(SAMPLE_COUNT);
-    imageStore(fresnelTex, ivec2(gl_GlobalInvocationID.xy), vec4(vec3(albedo), 1.0f));
+    result /= float(SAMPLE_COUNT);
+    imageStore(fresnelTex, ivec2(gl_GlobalInvocationID.xy), vec4(result.xy, 0.0f, 1.0f));
 }

@@ -71,6 +71,7 @@ Renderer::Renderer()
     mShaders[PRECOMP_IRRADIANCE_SHADER] = std::make_unique<ShaderProgram>("precomputeirradiance", "./spv/vert.spv", "./spv/precomputeirradiancefrag.spv");
     mShaders[SCENE_OBJECT_SHADER] = std::make_unique<ShaderProgram>("sceneobject", "./spv/sceneobjvert.spv", "./spv/sceneobjfrag.spv");
     mShaders[PRECOMP_FRESNEL_SHADER] = std::make_unique<ShaderProgram>("fresnel", "./spv/precomputefresnel.spv");
+    mShaders[PREFILTER_ENVIRONMENT_SHADER] = std::make_unique<ShaderProgram>("prefilterenvironment", "./spv/vert.spv", "./spv/prefilterenvironmentfrag.spv");
 
     // cloud noise textures
     mCloudNoiseRenderTexture[0] = nullptr;
