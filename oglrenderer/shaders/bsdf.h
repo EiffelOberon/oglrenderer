@@ -69,8 +69,13 @@ float G1(
     const float cosTheta, 
     const float alpha)
 {
+    if (cosTheta == 0.0f)
+    {
+        return 0.0f;
+    }
     float cosTheta2 = (cosTheta * cosTheta);
     float tanTheta2 = (1.0 - cosTheta2) / cosTheta2;
+    
     return 2.0 / (1.0 + sqrt(1.0 + (alpha * alpha) * tanTheta2));
 }
 

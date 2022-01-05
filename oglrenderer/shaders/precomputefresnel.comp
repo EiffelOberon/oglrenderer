@@ -82,7 +82,9 @@ void main()
 
         // Compute the sample weight, combining the geometric term, BRDF denominator, and PDF.
         // https://hal.inria.fr/hal-00996995v2/document, Algorithm 2
-        float weight = G2(nDotL, cosTheta, alpha) / G1(cosTheta, alpha);
+        const float g1 = G1(cosTheta, alpha);
+        const float g2 = G2(nDotL, cosTheta, alpha);
+        float weight = g1 == 0.0f ? 1.0f : g2 / g1;
 
         // Add the contribution of this sample.
         albedo += weight * Fc;
