@@ -10,6 +10,7 @@ struct Vertex
     glm::vec3 mPosition;
     glm::vec3 mNormal;
     glm::vec2 mUV;
+    uint32_t  mMaterialId;
 };
 
 

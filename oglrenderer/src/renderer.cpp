@@ -196,11 +196,11 @@ Renderer::Renderer()
     assert(result);
     result = result && loadTexture(mBlueNoiseTexture, false, true, "./resources/blueNoise512.png");
     assert(result);
-    FreeImage_DeInitialise();
 
     // load models
     std::string inputfile = "./models/ship/Ship_CSCL_Star.obj";
     assert(loadModel(inputfile));
+    FreeImage_DeInitialise();
 }
 
 Renderer::~Renderer()
@@ -261,8 +261,10 @@ bool Renderer::loadTexture(
 bool Renderer::loadModel(
     const std::string &fileName)
 {
+    const std::string folderPath = fileName.substr(0, fileName.find_last_of('/') + 1);
+
     tinyobj::ObjReaderConfig reader_config;
-    reader_config.mtl_search_path = "./models/";
+    reader_config.mtl_search_path = folderPath.c_str();
 
     tinyobj::ObjReader reader;
 
@@ -284,8 +286,8 @@ bool Renderer::loadModel(
     auto& shapes = reader.GetShapes();
     auto& materials = reader.GetMaterials();
 
-    std::vector<Vertex> vertices;
-    std::vector<uint32_t> indices;
+    std::vector<Vertex> vertexList;
+    std::vector<uint32_t> indexList;
 
     uint32_t count = 0;
     for (size_t s = 0; s < shapes.size(); s++)
@@ -295,8 +297,32 @@ bool Renderer::loadModel(
             count += shapes[s].mesh.num_face_vertices[f];
         }
     }
-    vertices.resize(count);
-    indices.resize(count);
+    vertexList.resize(count);
+    indexList.resize(count);
+    
+    // modify the material list instance
+    const uint32_t materialIdx = mMaterials.size();
+    mMaterials.resize(mMaterials.size() + materials.size());
+    for (uint32_t i = 0; i < materials.size(); ++i)
+    {
+        mMaterials.at(i + materialIdx) = std::make_unique<Material>();
+        mMaterials.at(i + materialIdx)->mTexture1 = glm::ivec4(INVALID_TEX_ID, INVALID_TEX_ID, INVALID_TEX_ID, INVALID_TEX_ID);
+
+        std::unique_ptr<Texture> diffuseTex;
+        if (materials[i].diffuse_texname != "" && 
+            loadTexture(diffuseTex, true, false, folderPath + materials[i].diffuse_texname))
+        {
+            const uint32_t texIdx = mTextures.size();
+            mTextures.push_back(std::move(diffuseTex));
+            mMaterials.at(i + materialIdx)->mTexture1.x = texIdx;
+        }
+
+        // TODO
+        assert(materials[i].specular_texname == "");
+        assert(materials[i].roughness_texname == "");
+        assert(materials[i].metallic_texname == "");
+        assert(materials[i].alpha_texname == "");
+    }
 
     // Loop over shapes
     int bufferIdx = 0;
@@ -313,32 +339,32 @@ bool Renderer::loadModel(
             {
                 // access to vertex
                 tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-                vertices[bufferIdx].mPosition.x = attrib.vertices[3 * size_t(idx.vertex_index) + 0];
-                vertices[bufferIdx].mPosition.y = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
-                vertices[bufferIdx].mPosition.z = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
+                vertexList[bufferIdx].mPosition.x = attrib.vertices[3 * size_t(idx.vertex_index) + 0];
+                vertexList[bufferIdx].mPosition.y = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
+                vertexList[bufferIdx].mPosition.z = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
 
                 // Check if `normal_index` is zero or positive. negative = no normal data
                 if (idx.normal_index >= 0)
                 {
-                    vertices[bufferIdx].mNormal.x = attrib.normals[3 * size_t(idx.normal_index) + 0];
-                    vertices[bufferIdx].mNormal.y = attrib.normals[3 * size_t(idx.normal_index) + 1];
-                    vertices[bufferIdx].mNormal.z = attrib.normals[3 * size_t(idx.normal_index) + 2];
+                    vertexList[bufferIdx].mNormal.x = attrib.normals[3 * size_t(idx.normal_index) + 0];
+                    vertexList[bufferIdx].mNormal.y = attrib.normals[3 * size_t(idx.normal_index) + 1];
+                    vertexList[bufferIdx].mNormal.z = attrib.normals[3 * size_t(idx.normal_index) + 2];
                 }
 
                 // Check if `texcoord_index` is zero or positive. negative = no texcoord data
                 if (idx.texcoord_index >= 0)
                 {
-                    vertices[bufferIdx].mUV.x = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
-                    vertices[bufferIdx].mUV.y = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
+                    vertexList[bufferIdx].mUV.x = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
+                    vertexList[bufferIdx].mUV.y = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
                 }
 
-                indices[bufferIdx] = bufferIdx;
+                indexList[bufferIdx] = bufferIdx;
                 ++bufferIdx;
             }
             index_offset += fv;
 
             // per-face material
-            shapes[s].mesh.material_ids[f];
+            vertexList[bufferIdx].mMaterialId = materialIdx + shapes[s].mesh.material_ids[f];
         }
     }
 
@@ -346,10 +372,10 @@ bool Renderer::loadModel(
     const uint32_t idx = mModels.size();
     mModels.push_back(std::make_unique<VertexBuffer>());
     mModels.at(idx)->update(
-        sizeof(Vertex) * vertices.size(),
-        sizeof(uint32_t) * indices.size(), 
-        vertices.data(), 
-        indices.data());
+        sizeof(Vertex) * vertexList.size(),
+        sizeof(uint32_t) * indexList.size(), 
+        vertexList.data(), 
+        indexList.data());
     mModelMats.push_back(glm::mat4(1.0f));
 
     // push model matrices to buffer

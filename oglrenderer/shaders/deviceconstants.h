@@ -1,6 +1,10 @@
 #ifndef DEVICECONSTANTS_H
 #define DEVICECONSTANTS_H
 
+# define INVALID_TEX_ID (uint32_t(~0))
+
+//////////////////////////////////////////////////////////////////////////
+
 # define FRAMETIMES_COUNT          1000
 # define SCREEN_BUFFER_COUNT       2
 # define QUERY_DOUBLE_BUFFER_COUNT 2

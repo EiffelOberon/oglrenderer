@@ -20,37 +20,10 @@ struct CameraParams
 };
 
 
-struct SkyParams
+struct Material
 {
-    // x, y, z: dir w: intensity
-    vec4 mSunSetting;
-    // x, y, z: luminance w: empty
-    vec4 mSunLuminance;
-    // x: rayleigh intensity, y: mie intensity
-    vec4 mNishitaSetting;
-    // x: min fog dist, y: max fog dist, z,w: empty
-    vec4 mFogSettings;
-    // x: i-th cubemap texture, y: active model z: empty w: empty
-    ivec4 mPrecomputeSettings;
-    // x: roughness y: roughness test z: ior test w: metallic test
-    vec4 mPrecomputeGGXSettings;
-};
-
-
-struct RendererParams
-{
-    // x = time, y = aspect ratio, z = bit flag 1 for pre-process, w = empty;
-    vec4 mSettings;
-    // x = anisotropy, y = speed, z = density, w = height;
-    vec4 mCloudSettings;
-    // x = u, y = v, z = coverage, w = empty;
-    vec4 mCloudMapping;
-    // x = absorption, y, z, w = empty;
-    vec4 mCloudAbsorption;
-    // x = horizontal width, y = vertical width, z = frame count, w = empty
-    ivec4 mScreenSettings;
-    // x = max steps, y = shadow max steps, z = empty, w = empty;
-    ivec4 mSteps;
+    // x: diffuse y: specular z: roughness w: metallic
+    ivec4 mTexture1;
 };
 
 
@@ -85,10 +58,44 @@ struct OceanParams
 };
 
 
+struct RendererParams
+{
+    // x = time, y = aspect ratio, z = bit flag 1 for pre-process, w = empty;
+    vec4 mSettings;
+    // x = anisotropy, y = speed, z = density, w = height;
+    vec4 mCloudSettings;
+    // x = u, y = v, z = coverage, w = empty;
+    vec4 mCloudMapping;
+    // x = absorption, y, z, w = empty;
+    vec4 mCloudAbsorption;
+    // x = horizontal width, y = vertical width, z = frame count, w = empty
+    ivec4 mScreenSettings;
+    // x = max steps, y = shadow max steps, z = empty, w = empty;
+    ivec4 mSteps;
+};
+
+
 struct SceneObjectParams
 {
     // x: model matrix index
     ivec4 mIndices;
+};
+
+
+struct SkyParams
+{
+    // x, y, z: dir w: intensity
+    vec4 mSunSetting;
+    // x, y, z: luminance w: empty
+    vec4 mSunLuminance;
+    // x: rayleigh intensity, y: mie intensity
+    vec4 mNishitaSetting;
+    // x: min fog dist, y: max fog dist, z,w: empty
+    vec4 mFogSettings;
+    // x: i-th cubemap texture, y: active model z: empty w: empty
+    ivec4 mPrecomputeSettings;
+    // x: roughness y: roughness test z: ior test w: metallic test
+    vec4 mPrecomputeGGXSettings;
 };
 
 

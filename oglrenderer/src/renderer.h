@@ -173,6 +173,7 @@ private:
     NoiseParams mWorleyNoiseParams;
     NoiseParams mPerlinNoiseParams;
 
+    // ocean fft
     std::unique_ptr<OceanFFT> mOceanFFTHighRes;
     std::unique_ptr<OceanFFT> mOceanFFTMidRes;
     std::unique_ptr<OceanFFT> mOceanFFTLowRes;
@@ -191,6 +192,7 @@ private:
     ViewProjectionMatrix mPrecomputeMatrix;
     std::vector<glm::mat4> mModelMats;
 
+    // variables for recording time
     float mDeltaTime;
     float mTime;
     float mFrameTimes[FRAMETIMES_COUNT];
@@ -201,11 +203,17 @@ private:
     std::chrono::steady_clock::time_point mRenderStartTime;
     std::chrono::steady_clock::time_point mRenderEndTime;
 
+    // all uniform buffers
     std::map<uint32_t, std::unique_ptr<UniformBuffer>> mUniforms;
 
+    // hosek sky model
     std::unique_ptr<Hosek> mHosekSkyModel;
 
+    // clipmap for water plane
     Clipmap mClipmap;
     int mClipmapLevel;
 
+    // generic textures
+    std::vector<std::unique_ptr<Material>> mMaterials;
+    std::vector<std::unique_ptr<Texture>> mTextures;
 };
