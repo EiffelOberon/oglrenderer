@@ -21,7 +21,7 @@ layout(std430, binding = SKY_PARAMS) uniform SkyParamsUniform
 	SkyParams skyParams;
 };
 
-layout (binding = PRECOMPUTE_IRRADIANCE_SKY_TEX)   uniform samplerCube skyTexture;
+layout (binding = PREFILTER_ENVIRONMENT_SKY_TEX)   uniform samplerCube skyTexture;
 
 layout(location = 0) out vec4 c;
 

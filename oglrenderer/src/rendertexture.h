@@ -140,7 +140,8 @@ class RenderCubemapTexture : public RenderTexture
 public:
 
     RenderCubemapTexture(
-        const uint32_t dimension)
+        const uint32_t dimension,
+        const bool     mipmap)
     {
         mWidth = dimension;
         mHeight = dimension;
@@ -155,9 +156,14 @@ public:
             // TODO: make something else other than 32bit floating point textures
             glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA32F, mWidth, mHeight, 0, GL_RGBA, GL_FLOAT, nullptr);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+
+        if (mipmap)
+        {
+            glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
         }
 
         glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
@@ -211,10 +217,11 @@ public:
 
 
     void bind(
-        const uint32_t i)
+        const uint32_t i,
+        const uint32_t mipLevel = 0)
     {
         glBindFramebuffer(GL_FRAMEBUFFER, mFbo);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, mTex[0], 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, mTex[0], mipLevel);
     }
 
 

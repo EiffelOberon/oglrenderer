@@ -116,6 +116,7 @@ private:
     glm::vec2     mResolution;
     glm::vec2     mEnvironmentResolution;
     glm::vec2     mIrradianceResolution;
+    glm::vec2     mPrefilterCubemapResolution;
 
     // multiplier for lower resolution for down-res background
     float         mLowResFactor;
@@ -148,6 +149,7 @@ private:
     std::unique_ptr<RenderCubemapTexture> mSkyCubemap;
     std::unique_ptr<RenderCubemapTexture> mFinalSkyCubemap;
     std::unique_ptr<RenderCubemapTexture> mIrradianceCubemap;
+    std::unique_ptr<RenderCubemapTexture> mPrefilterCubemap;
 
     std::unique_ptr<Texture> mPrecomputedFresnelTexture;
 

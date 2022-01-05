@@ -22,6 +22,7 @@ Renderer::Renderer()
     , mOceanFoamTexture(nullptr)
     , mEnvironmentResolution(ENVIRONMENT_RESOLUTION, ENVIRONMENT_RESOLUTION)
     , mIrradianceResolution(IRRADIANCE_RESOLUTION, IRRADIANCE_RESOLUTION)
+    , mPrefilterCubemapResolution(PREFILTER_CUBEMAP_RESOLUTION, PREFILTER_CUBEMAP_RESOLUTION)
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mClipmap(6)
     , mClipmapLevel(0)
@@ -29,6 +30,7 @@ Renderer::Renderer()
     , mFinalSkyCubemap(nullptr)
     , mIrradianceCubemap(nullptr)
     , mPrecomputedFresnelTexture(nullptr)
+    , mPrefilterCubemap(nullptr)
     , mWorleyNoiseRenderTexture(nullptr)
     , mCamera()
     , mShowBuffersWindow(false)
@@ -149,9 +151,10 @@ Renderer::Renderer()
     loadStates();
 
     // cubemap environment
-    mSkyCubemap = std::make_unique<RenderCubemapTexture>(mEnvironmentResolution.x);
-    mFinalSkyCubemap = std::make_unique<RenderCubemapTexture>(mEnvironmentResolution.x);
-    mIrradianceCubemap = std::make_unique<RenderCubemapTexture>(mIrradianceResolution.x);
+    mSkyCubemap = std::make_unique<RenderCubemapTexture>(mEnvironmentResolution.x, false);
+    mFinalSkyCubemap = std::make_unique<RenderCubemapTexture>(mEnvironmentResolution.x, false);
+    mIrradianceCubemap = std::make_unique<RenderCubemapTexture>(mIrradianceResolution.x, false);
+    mPrefilterCubemap = std::make_unique<RenderCubemapTexture>(mPrefilterCubemapResolution.x, true);
 
     // ocean related noise texture and other shader buffers
     mOceanFFTHighRes = std::make_unique<OceanFFT>(*this, OCEAN_RESOLUTION_1, OCEAN_DIMENSIONS_1);
@@ -718,28 +721,48 @@ void Renderer::preRender()
     }
     mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(PRECOMP_ENV_SHADER);
     
-    // 3. preintegrate diffuse
+    // 3. preintegrate diffuse and ggx
     updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeSettings), sizeof(mSkyParams.mPrecomputeSettings), mSkyParams.mPrecomputeSettings);
     if(mUpdateIrradiance && mSkySideUpdated == 0x3F)
     {
+        // diffuse irradiance
+        mTimeQueries.at(mFrameCount% QUERY_DOUBLE_BUFFER_COUNT)->start(PRECOMP_IRRADIANCE_SHADER);
         mIrradianceCubemap->bind(mSkyParams.mPrecomputeSettings.x);
-
-        mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(PRECOMP_IRRADIANCE_SHADER);
-        glViewport(0, 0, int(mIrradianceResolution.x), int(mIrradianceResolution.y));
-
-        mFinalSkyCubemap->bindTexture(PRECOMPUTE_IRRADIANCE_SKY_TEX, 0);
-        mShaders[PRECOMP_IRRADIANCE_SHADER]->use();
-        mQuad.draw();
-        mShaders[PRECOMP_IRRADIANCE_SHADER]->disable();
+        {
+            glViewport(0, 0, int(mIrradianceResolution.x), int(mIrradianceResolution.y));
+            mFinalSkyCubemap->bindTexture(PRECOMPUTE_IRRADIANCE_SKY_TEX, 0);
+            mShaders[PRECOMP_IRRADIANCE_SHADER]->use();
+            mQuad.draw();
+            mShaders[PRECOMP_IRRADIANCE_SHADER]->disable();
+        }
         mIrradianceCubemap->unbind();
+        mTimeQueries.at(mFrameCount% QUERY_DOUBLE_BUFFER_COUNT)->end(PRECOMP_IRRADIANCE_SHADER);
 
+        // specular ggx
+        mTimeQueries.at(mFrameCount% QUERY_DOUBLE_BUFFER_COUNT)->start(PREFILTER_ENVIRONMENT_SHADER);
+        for (int i = 0; i < PREFILTER_MIP_COUNT; ++i)
+        {
+            const uint32_t mipWidth = 128 * std::pow(0.5, i);
+            const uint32_t mipHeight = 128 * std::pow(0.5, i);
+            const float roughness = float(i) / float(PREFILTER_MIP_COUNT - 1);
+            glViewport(0, 0, mipWidth, mipHeight);
+
+            mPrefilterCubemap->bind(mSkyParams.mPrecomputeSettings.x, i);
+            mFinalSkyCubemap->bindTexture(PREFILTER_ENVIRONMENT_SKY_TEX, 0);
+            mShaders[PREFILTER_ENVIRONMENT_SKY_TEX]->use();
+            mQuad.draw();
+            mShaders[PREFILTER_ENVIRONMENT_SKY_TEX]->disable();
+            mPrefilterCubemap->unbind();
+        }
+        mTimeQueries.at(mFrameCount% QUERY_DOUBLE_BUFFER_COUNT)->end(PREFILTER_ENVIRONMENT_SHADER);
+
+        // update flags
         mIrradianceSideUpdated |= (1 << (mSkyParams.mPrecomputeSettings.x));
         if (mIrradianceSideUpdated == 0x3F)
         {
             mUpdateIrradiance = false;
             mIrradianceSideUpdated = 0;
         }
-        mTimeQueries.at(mFrameCount% QUERY_DOUBLE_BUFFER_COUNT)->end(PRECOMP_IRRADIANCE_SHADER);
     }
 }
 

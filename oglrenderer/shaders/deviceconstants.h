@@ -4,6 +4,7 @@
 # define FRAMETIMES_COUNT          1000
 # define SCREEN_BUFFER_COUNT       2
 # define QUERY_DOUBLE_BUFFER_COUNT 2
+# define PREFILTER_MIP_COUNT       5
 
 // shader program Id
 # define BUTTERFLY_SHADER             0
@@ -49,11 +50,12 @@
 # define SCENE_MODEL_MATRIX  1
 
 // texture resolution
-# define CLOUD_RESOLUTION       128
-# define ENVIRONMENT_RESOLUTION 128
-# define BLUENOISE_RESOLUTION   512
-# define IRRADIANCE_RESOLUTION  16
-# define FRESNEL_RESOLUTION     64
+# define CLOUD_RESOLUTION             128
+# define ENVIRONMENT_RESOLUTION       128
+# define BLUENOISE_RESOLUTION         512
+# define IRRADIANCE_RESOLUTION        16
+# define FRESNEL_RESOLUTION           64
+# define PREFILTER_CUBEMAP_RESOLUTION 128
 
 // ocean resolution
 # define OCEAN_RESOLUTION_1 256
@@ -108,6 +110,9 @@
 
 // precompute irradiance shader
 # define PRECOMPUTE_IRRADIANCE_SKY_TEX    1
+
+// prefilter ggx shader
+# define PREFILTER_ENVIRONMENT_SKY_TEX 1
 
 // ocean height field shader
 # define OCEAN_HEIGHTFIELD_NOISE 1
