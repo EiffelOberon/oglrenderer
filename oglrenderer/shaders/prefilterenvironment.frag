@@ -2,8 +2,10 @@
 #define GLSL_SHADER
 #extension GL_EXT_scalar_block_layout : require
 
+#include "bsdf.h"
 #include "deviceconstants.h"
 #include "devicestructs.h"
+#include "random.h"
 
 layout(location = 1) in vec2 uv;
 
@@ -61,12 +63,31 @@ void main()
     // create ray
 	vec2 st = uv * 2.0f - 1.0f;
     vec3 normal = normalize(uvToXYZ(skyParams.mPrecomputeSettings.x, st));
+	vec3 wo = normal;
 
-    vec3 irradiance = vec3(0.0f);
+	float roughness = skyParams.mPrecomputeSettings.z;
+	float alpha = roughness * roughness;
 
-    vec3 up = vec3(0.0f, 1.0f, 0.0f);
-    vec3 right = normalize(cross(up, normal));
-    up = normalize(cross(normal, right));
+	vec3 L = vec3(0.0f);
+	float weight = 0.0f;
+    for (int i = 0; i < SAMPLE_COUNT; i++)
+    {
+        // random variables
+        vec2 u = hammersley(i, SAMPLE_COUNT);
+		
+		// this is the magic of the separable BSDF convolution, assume normal is equal to view vector
+		vec3 wh = GGX_sample(u, wo, vec2(alpha, alpha));
+		vec3 wi = reflect(-wo, wh);
 
-	c = vec4(0, 0, 0, 1);
+		const float nDotL = max(dot(wo, wi), 0.0f);
+		if(nDotL > 0.0f)
+		{
+			L += texture(skyTexture, wi).xyz * nDotL;
+			weight += nDotL;
+		}
+    }
+
+	L /= weight;
+
+	c = vec4(L, 1);
 }

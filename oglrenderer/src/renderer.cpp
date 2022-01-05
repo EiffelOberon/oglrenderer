@@ -746,6 +746,9 @@ void Renderer::preRender()
             const uint32_t mipHeight = 128 * std::pow(0.5, i);
             const float roughness = float(i) / float(PREFILTER_MIP_COUNT - 1);
             glViewport(0, 0, mipWidth, mipHeight);
+            
+            mSkyParams.mPrecomputeSettings.z = roughness;
+            updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeSettings), sizeof(glm::vec4), mSkyParams.mPrecomputeSettings);
 
             mPrefilterCubemap->bind(mSkyParams.mPrecomputeSettings.x, i);
             mFinalSkyCubemap->bindTexture(PREFILTER_ENVIRONMENT_SKY_TEX, 0);
@@ -834,6 +837,8 @@ void Renderer::render()
     mShaders[SCENE_OBJECT_SHADER]->use();
     mModelMatsBuffer->bind(SCENE_MODEL_MATRIX);
     mIrradianceCubemap->bindTexture(SCENE_OBJECT_IRRADIANCE, 0);
+    mPrefilterCubemap->bindTexture(SCENE_OBJECT_PREFILTER_ENV, 0);
+    mPrecomputedFresnelTexture->bindTexture(SCENE_OBJECT_PRECOMPUTED_GGX);
     mFinalSkyCubemap->bindTexture(SCENE_OBJECT_SKY, 0);
     for (int i = 0; i < mModels.size(); ++i)
     {

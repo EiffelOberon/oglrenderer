@@ -131,8 +131,10 @@
 # define QUAD_PREV_SCREEN_TEX 4
 
 // scene object shader
-# define SCENE_OBJECT_IRRADIANCE 1
-# define SCENE_OBJECT_SKY        2
+# define SCENE_OBJECT_IRRADIANCE      1
+# define SCENE_OBJECT_PREFILTER_ENV   2
+# define SCENE_OBJECT_PRECOMPUTED_GGX 3
+# define SCENE_OBJECT_SKY             4
 
 // texturedQuad.frag
 # define SCREEN_QUAD_TEX 1

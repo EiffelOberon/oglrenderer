@@ -23,6 +23,8 @@ layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
 };
 
 layout(binding = SCENE_OBJECT_IRRADIANCE) uniform samplerCube irradianceTex;
+layout(binding = SCENE_OBJECT_PREFILTER_ENV) uniform samplerCube prefilterTex;
+layout(binding = SCENE_OBJECT_PRECOMPUTED_GGX) uniform sampler2D precomputedGGXTex;
 layout(binding = SCENE_OBJECT_SKY) uniform samplerCube skyTex;
 
 layout(location = 0) out vec4 c;
@@ -42,5 +44,5 @@ void main()
 	vec3 directDiffuse = sunColor * max(0.0f, dot(normal, sunDir));
 
 	// add them up
-	c = vec4(indirectDiffuse + directDiffuse, 1.0f);
+	c = vec4(textureLod(prefilterTex, normal, 1.0f).xyz, 1.0f);//vec4(indirectDiffuse + directDiffuse, 1.0f);
 }
