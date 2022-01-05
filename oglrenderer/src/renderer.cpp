@@ -688,7 +688,7 @@ void Renderer::preRender()
             case 3:
             {
                 mPrecomputeCamParams.mTarget = mPrecomputeCamParams.mEye + glm::vec4(0, -1, 0, 0);
-                mPrecomputeCamParams.mUp = glm::vec4(1, 0, 0, 0);
+                mPrecomputeCamParams.mUp = glm::vec4(0, 0, -1, 0);
                 break;
             }
             case 4:
