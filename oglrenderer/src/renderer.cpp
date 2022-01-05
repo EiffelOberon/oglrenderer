@@ -286,20 +286,41 @@ bool Renderer::loadModel(
     auto& shapes = reader.GetShapes();
     auto& materials = reader.GetMaterials();
 
-    std::vector<Vertex> vertexList;
-    std::vector<uint32_t> indexList;
-
-    uint32_t count = 0;
+    // count the number of vertex per material, each material is rendered as a draw call
+    std::unordered_map<uint32_t, uint32_t> mMaterialVertexCount;
+    std::unordered_map<uint32_t, uint32_t> mMaterialVertexOffset;
     for (size_t s = 0; s < shapes.size(); s++)
     {
         for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++)
         {
-            count += shapes[s].mesh.num_face_vertices[f];
+            uint32_t count = shapes[s].mesh.num_face_vertices[f];
+            uint32_t materialId = shapes[s].mesh.material_ids[f];
+
+            if (mMaterialVertexCount.find(materialId) == mMaterialVertexCount.end())
+            {
+                mMaterialVertexCount[materialId] = count;
+                mMaterialVertexOffset[materialId] = 0;
+            }
+            else
+            {
+                mMaterialVertexCount[materialId] += count;
+            }
         }
     }
-    vertexList.resize(count);
-    indexList.resize(count);
-    
+
+    std::unordered_map<uint32_t, std::vector<Vertex>> vertexList;
+    std::unordered_map<uint32_t, std::vector<uint32_t>> indexList;
+    for (std::unordered_map<uint32_t, uint32_t>::iterator it = mMaterialVertexCount.begin(); 
+        it != mMaterialVertexCount.end(); 
+        ++it)
+    {
+        const uint32_t matId = it->first;
+        const uint32_t vertexCount = it->second;
+
+        vertexList[matId].resize(vertexCount);
+        indexList[matId].resize(vertexCount);
+    }
+        
     // modify the material list instance
     const uint32_t materialIdx = mMaterials.size();
     mMaterials.resize(mMaterials.size() + materials.size());
@@ -325,7 +346,7 @@ bool Renderer::loadModel(
     }
 
     // Loop over shapes
-    int bufferIdx = 0;
+    //int bufferIdx = 0;
     for (size_t s = 0; s < shapes.size(); s++)
     {
         // Loop over faces(polygon)
@@ -334,49 +355,59 @@ bool Renderer::loadModel(
         {
             size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
 
+            // per-face material
+            const int materialId = shapes[s].mesh.material_ids[f];
+            
             // Loop over vertices in the face.
             for (size_t v = 0; v < fv; v++)
             {
                 // access to vertex
+                Vertex& vertex = vertexList[materialId][mMaterialVertexOffset[materialId]];
                 tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-                vertexList[bufferIdx].mPosition.x = attrib.vertices[3 * size_t(idx.vertex_index) + 0];
-                vertexList[bufferIdx].mPosition.y = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
-                vertexList[bufferIdx].mPosition.z = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
+                vertex.mPosition.x = attrib.vertices[3 * size_t(idx.vertex_index) + 0];
+                vertex.mPosition.y = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
+                vertex.mPosition.z = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
 
                 // Check if `normal_index` is zero or positive. negative = no normal data
                 if (idx.normal_index >= 0)
                 {
-                    vertexList[bufferIdx].mNormal.x = attrib.normals[3 * size_t(idx.normal_index) + 0];
-                    vertexList[bufferIdx].mNormal.y = attrib.normals[3 * size_t(idx.normal_index) + 1];
-                    vertexList[bufferIdx].mNormal.z = attrib.normals[3 * size_t(idx.normal_index) + 2];
+                    vertex.mNormal.x = attrib.normals[3 * size_t(idx.normal_index) + 0];
+                    vertex.mNormal.y = attrib.normals[3 * size_t(idx.normal_index) + 1];
+                    vertex.mNormal.z = attrib.normals[3 * size_t(idx.normal_index) + 2];
                 }
 
                 // Check if `texcoord_index` is zero or positive. negative = no texcoord data
                 if (idx.texcoord_index >= 0)
                 {
-                    vertexList[bufferIdx].mUV.x = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
-                    vertexList[bufferIdx].mUV.y = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
+                    vertex.mUV.x = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
+                    vertex.mUV.y = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
                 }
 
-                // per-face material
-                vertexList[bufferIdx].mMaterialId = materialIdx + shapes[s].mesh.material_ids[f];
-
-                indexList[bufferIdx] = bufferIdx;
-                ++bufferIdx;
+                indexList[materialId][mMaterialVertexOffset[materialId]] = mMaterialVertexOffset[materialId];
+                mMaterialVertexOffset[materialId] = mMaterialVertexOffset[materialId] + 1;
             }
             index_offset += fv;
         }
     }
 
     // push data to the device
-    const uint32_t idx = mModels.size();
-    mModels.push_back(std::make_unique<VertexBuffer>());
-    mModels.at(idx)->update(
-        sizeof(Vertex) * vertexList.size(),
-        sizeof(uint32_t) * indexList.size(), 
-        vertexList.data(), 
-        indexList.data());
-    mModelMats.push_back(glm::mat4(1.0f));
+    for (std::unordered_map<uint32_t, uint32_t>::iterator it = mMaterialVertexCount.begin();
+        it != mMaterialVertexCount.end();
+        ++it)
+    {
+        const uint32_t matId = it->first;
+        const uint32_t vertexCount = it->second;
+
+        const uint32_t idx = mModels.size();
+        mModels.push_back(std::make_unique<VertexBuffer>());
+        mModels.at(idx)->update(
+            sizeof(Vertex) * vertexList[matId].size(),
+            sizeof(uint32_t) * indexList[matId].size(),
+            vertexList[matId].data(),
+            indexList[matId].data());
+
+        mModelMats.push_back(glm::mat4(1.0f));
+    }
 
     // push model matrices to buffer
     mModelMatsBuffer = std::make_unique<ShaderBuffer>(mModelMats.size() * sizeof(glm::mat4));
