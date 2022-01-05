@@ -145,5 +145,7 @@
 # define WATER_DISPLACEMENT3_TEX 3
 # define WATER_ENV_TEX           4
 # define WATER_FOAM_TEX          5
+# define WATER_PREFILTER_ENV     6
+# define WATER_PRECOMPUTED_GGX   7
 
 #endif

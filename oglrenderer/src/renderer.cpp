@@ -121,6 +121,7 @@ Renderer::Renderer()
     // initialize render params
     mRenderParams.mSettings.x = 0.0f;
     mRenderParams.mSettings.y = (1600.0f / 900.0f);
+    mRenderParams.mSettings.z = 0;
     mRenderParams.mCloudSettings.x = 0.0f;
     mRenderParams.mCloudSettings.y = 0.01f;
     mRenderParams.mCloudSettings.z = 1.0f;
@@ -467,7 +468,11 @@ void Renderer::renderWater(
         mOceanFFTMidRes->bind(WATER_DISPLACEMENT2_TEX);
         mOceanFFTLowRes->bind(WATER_DISPLACEMENT3_TEX);
         mOceanFoamTexture->bindTexture(WATER_FOAM_TEX);
-
+        if (!precompute)
+        {
+            mPrefilterCubemap->bindTexture(WATER_PREFILTER_ENV, 0);
+            mPrecomputedFresnelTexture->bindTexture(WATER_PRECOMPUTED_GGX);
+        }
         if (mOceanWireframe && !precompute)
         {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -528,6 +533,10 @@ void Renderer::preRender()
     {
         return;
     }
+    
+    mRenderParams.mSettings.z = 1;
+    updateUniform(RENDERER_PARAMS, 0, sizeof(glm::vec4), mRenderParams);
+
     mRenderStartTime = std::chrono::high_resolution_clock::now();
 
     // precompute cloud's noise textures (perlin worley and worley fbm)
@@ -782,7 +791,8 @@ void Renderer::render()
 
     // update the time for simulation
     mRenderParams.mSettings.x = mTime * 0.001f;
-    updateUniform(RENDERER_PARAMS, 0, sizeof(float), mRenderParams);
+    mRenderParams.mSettings.z = 0;
+    updateUniform(RENDERER_PARAMS, 0, sizeof(glm::vec4), mRenderParams);
 
     // clear buffers
     glClearColor(0, 0, 0, 0);

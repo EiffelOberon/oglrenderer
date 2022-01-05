@@ -21,6 +21,11 @@ layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
 {
     OceanParams oceanParams;
 };
+layout(std430, binding = RENDERER_PARAMS) uniform RendererParamsUniform
+{
+    RendererParams renderParams;
+};
+
 
 layout(binding = SCENE_OBJECT_IRRADIANCE) uniform samplerCube irradianceTex;
 layout(binding = SCENE_OBJECT_PREFILTER_ENV) uniform samplerCube prefilterTex;
@@ -49,9 +54,9 @@ void main()
 	const float metallic = skyParams.mPrecomputeGGXSettings.w;
 
 	// indirect specular
-	const float nDotL = max(dot(normal, viewDir), 0.0f);
+	const float nDotV = max(dot(normal, viewDir), 0.0f);
 	vec3 L = vec4(textureLod(prefilterTex, normal, roughness * float(PREFILTER_MIP_COUNT - 1)).xyz, 1.0f).xyz;
-	vec2 ggx = texture(precomputedGGXTex, vec2(roughness, nDotL)).xy;
+	vec2 ggx = texture(precomputedGGXTex, vec2(roughness, nDotV)).xy;
 	float f0 = (ior - 1.0f) / (ior + 1.0f);
 	f0 *= f0;
 	f0 = mix(f0, 1.0f, metallic);
@@ -59,4 +64,10 @@ void main()
 	
 	// add them up
 	c = vec4(mix(indirectDiffuse, vec3(0.0f), metallic) + indirectSpecular, 1.0f);
+	
+	// color correction for main pass if this is not pre-render
+	if(renderParams.mSettings.z == 0)
+	{
+		c = pow(c, vec4(1.0f / 2.2f));
+	}
 }

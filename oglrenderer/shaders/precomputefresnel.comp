@@ -27,7 +27,7 @@ void main()
 
     const vec3 wo = normalize(vec3(sin(theta), 0, cosTheta));
     
-    vec2 result = vec2(0.0f);
+    vec3 result = vec3(0.0f);
     for (int i = 0; i < SAMPLE_COUNT; i++)
     {
         // random variables
@@ -54,9 +54,10 @@ void main()
         // Add the contribution of this sample.
         result.x += (1.0f - Fc) * weight;
         result.y += weight * Fc;
+        result.z += fresnel(1.5f, oDotH);
     }
 
     // Normalize integrated terms.
     result /= float(SAMPLE_COUNT);
-    imageStore(fresnelTex, ivec2(gl_GlobalInvocationID.xy), vec4(result.xy, 0.0f, 1.0f));
+    imageStore(fresnelTex, ivec2(gl_GlobalInvocationID.xy), vec4(result.xyz, 1.0f));
 }

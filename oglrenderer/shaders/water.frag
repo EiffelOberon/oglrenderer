@@ -20,13 +20,20 @@ layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
 {
     OceanParams oceanParams;
 };
+layout(std430, binding = RENDERER_PARAMS) uniform RendererParamsUniform
+{
+    RendererParams renderParams;
+};
+
 
 layout(binding = WATER_DISPLACEMENT1_TEX) uniform sampler2D displacement1;
 layout(binding = WATER_DISPLACEMENT2_TEX) uniform sampler2D displacement2;
 layout(binding = WATER_DISPLACEMENT3_TEX) uniform sampler2D displacement3;
-
 layout(binding = WATER_ENV_TEX) uniform samplerCube environmentTex;
 layout(binding = WATER_FOAM_TEX) uniform sampler2D foamTex;
+
+layout(binding = WATER_PREFILTER_ENV) uniform samplerCube prefilterTex;
+layout(binding = WATER_PRECOMPUTED_GGX) uniform sampler2D precomputedGGXTex;
 
 layout(location = 0) out vec4 c;
 
@@ -76,9 +83,6 @@ void main()
 	const vec3 sunDir = normalize(skyParams.mSunSetting.xyz);
 	const vec3 halfDir = normalize(viewDir + sunDir);
 
-	const float r0 = pow((1.3f - 1.0f) / (1.3f + 1.0f), 2.0f);
-	const float f = clamp(r0 + (1.0f - r0) * pow(1 - dot(viewDir, n), 5.0f), 0.0f, 1.0f);
-
 	vec3 radiance = vec3(0.0f);
 	vec3 rayDir = normalize(reflect(-viewDir, n));
 	rayDir.y = max(rayDir.y, 0.0f);
@@ -93,12 +97,40 @@ void main()
 	const vec3 sunColor = (skyParams.mPrecomputeSettings.y == NISHITA_SKY) ? 
 						  texture(environmentTex, skyParams.mSunSetting.xyz).xyz : 
 						  vec3(1.0f);
-	const vec3 directSpecular = pow(clamp(dot(reflect(-sunDir, n), viewDir), 0.0f, 1.0f), skyParams.mSunSetting.w) * sunColor;
-	const vec3 indirectReflection = max(texture(environmentTex, rayDir).xyz, 0.0f);
+	vec3 indirectReflection;
+	if(renderParams.mSettings.z == 0)
+	{
+		// get PBR input parameters
+		const float roughness = 0.2f;
+		const float ior = 1.3f;
+		const float metallic = 0.0f;
+
+		// indirect specular
+		const float nDotV = max(dot(n, viewDir), 0.0f);
+		vec3 L = vec4(textureLod(prefilterTex, rayDir, roughness * float(PREFILTER_MIP_COUNT - 1)).xyz, 1.0f).xyz;
+		vec3 ggx = texture(precomputedGGXTex, vec2(roughness, nDotV)).xyz;
+		
+		// calculate fresnel
+		float f0 = (ior - 1.0f) / (ior + 1.0f);
+		f0 *= f0;
+		f0 = mix(f0, 1.0f, metallic);
+		indirectReflection = L;
+
+		radiance += mix(transmission, oceanParams.mReflection.xyz * indirectReflection * (f0 * ggx.x + ggx.y), ggx.z);
+	}
+	else
+	{	
+		indirectReflection = max(texture(environmentTex, rayDir).xyz, 0.0f);
+		
+		const float r0 = pow((1.3f - 1.0f) / (1.3f + 1.0f), 2.0f);
+		const float f = clamp(r0 + (1.0f - r0) * pow(1 - dot(viewDir, n), 5.0f), 0.0f, 1.0f);
+
+		radiance += mix(transmission, oceanParams.mReflection.xyz * indirectReflection, f);
+	}
 
 	// direct specular + indirect specular + transmission
+	vec3 directSpecular = pow(clamp(dot(reflect(-sunDir, n), viewDir), 0.0f, 1.0f), skyParams.mSunSetting.w) * sunColor;
 	radiance += directSpecular;
-	radiance += mix(transmission, oceanParams.mReflection.xyz * indirectReflection, f);
 
     const float distance = length(camParams.mEye.xyz - position);
     float alpha = 1 - clamp((distance - skyParams.mFogSettings.x) / (skyParams.mFogSettings.y - skyParams.mFogSettings.x), 0.0f, 1.0f);
@@ -108,5 +140,11 @@ void main()
 	{
 		const float foam = pow(texture(foamTex, uv / oceanParams.mFoamSettings.x).x, 2.2f);
 		c = vec4(mix(radiance - directSpecular, vec3(foam * oceanParams.mReflection.w), foam), alpha);
+	}
+	
+	// color correction for main pass if this is not pre-render
+	if(renderParams.mSettings.z == 0)
+	{
+		c = pow(c, vec4(1.0f / 2.2f));
 	}
 }

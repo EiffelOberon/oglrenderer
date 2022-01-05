@@ -39,7 +39,7 @@ struct SkyParams
 
 struct RendererParams
 {
-    // x = time, y = aspect ratio, z = empty, w = empty;
+    // x = time, y = aspect ratio, z = bit flag 1 for pre-process, w = empty;
     vec4 mSettings;
     // x = anisotropy, y = speed, z = density, w = height;
     vec4 mCloudSettings;
