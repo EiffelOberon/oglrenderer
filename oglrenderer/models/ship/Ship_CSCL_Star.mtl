@@ -10,7 +10,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd D:\\Downloads\\Ship_CSCL_Star_OBJ\\ships CSCL_containers.jpg
+map_Kd ships CSCL_containers.jpg
 
 newmtl ship_cscl_main
 Ns 55.000005
@@ -21,7 +21,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd D:\\Downloads\\Ship_CSCL_Star_OBJ\\ships CSCL_main.jpg
+map_Kd ships CSCL_main.jpg
 
 newmtl ship_cscl_propeller
 Ns 30.000009
@@ -42,4 +42,4 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd D:\\Downloads\\Ship_CSCL_Star_OBJ\\ships CSCL_top.jpg
+map_Kd ships CSCL_top.jpg

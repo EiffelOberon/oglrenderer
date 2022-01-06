@@ -335,7 +335,7 @@ bool Renderer::loadModel(
         mMaterialNames[i + materialIdx] = materials[i].name;
         std::unique_ptr<Texture> diffuseTex;
         if (materials[i].diffuse_texname != "" && 
-            loadTexture(diffuseTex, true, false, materials[i].diffuse_texname))
+            loadTexture(diffuseTex, true, false, folderPath + materials[i].diffuse_texname))
         {
             const uint32_t texIdx = mTextures.size();
             mTextures.push_back(std::move(diffuseTex));
