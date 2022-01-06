@@ -150,7 +150,7 @@ Renderer::Renderer()
     mOceanParams.mReflection = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     mOceanParams.mTransmission = glm::vec4(0.0f, 0.0f, 1.0f, 2000.0f);
     mOceanParams.mTransmission2 = glm::vec4(0.0f, 0.0f, 1.0f, 4.0f);
-    mOceanParams.mFoamSettings = glm::vec4(1.0f, 0.7f, 0.0f, 0.0f);
+    mOceanParams.mFoamSettings = glm::vec4(1.0f, 0.6f, 1.33f, 0.01f);
     addUniform(OCEAN_PARAMS, mOceanParams);
 
     mSceneObjectParams.mIndices = glm::ivec4(0);
@@ -1360,6 +1360,14 @@ void Renderer::renderGUI()
                 {
                     updateUniform(OCEAN_PARAMS, mOceanParams);
                 }
+                if (ImGui::SliderFloat("Roughness", &mOceanParams.mFoamSettings.w, 0.01f, 1.0f))
+                {
+                    updateUniform(OCEAN_PARAMS, mOceanParams);
+                }
+                if (ImGui::SliderFloat("IOR", &mOceanParams.mFoamSettings.z, 1.0f, 10.0f))
+                {
+                    updateUniform(OCEAN_PARAMS, mOceanParams);
+                }
                 if (ImGui::SliderFloat("Exponent", &mOceanParams.mTransmission2.w, 0.001f, 8.0f))
                 {
                     updateUniform(OCEAN_PARAMS, mOceanParams);
@@ -1770,6 +1778,8 @@ void Renderer::saveStates()
 
     ini["oceanparams"]["foamscale"] = std::to_string(mOceanParams.mFoamSettings.x);
     ini["oceanparams"]["foamintensity"] = std::to_string(mOceanParams.mFoamSettings.y);
+    ini["oceanparams"]["ior"] = std::to_string(mOceanParams.mFoamSettings.z);
+    ini["oceanparams"]["roughness"] = std::to_string(mOceanParams.mFoamSettings.w);
 
     // generate an INI file (overwrites any previous file)
     file.generate(ini);
@@ -1855,6 +1865,9 @@ void Renderer::loadStates()
 
             mOceanParams.mFoamSettings.x = std::stof(ini["oceanparams"]["foamscale"]);
             mOceanParams.mFoamSettings.y = std::stof(ini["oceanparams"]["foamintensity"]);
+
+            mOceanParams.mFoamSettings.z = std::stof(ini["oceanparams"]["ior"]);
+            mOceanParams.mFoamSettings.w = std::stof(ini["oceanparams"]["roughness"]);
         }
 
         updateUniform(OCEAN_PARAMS, mOceanParams);

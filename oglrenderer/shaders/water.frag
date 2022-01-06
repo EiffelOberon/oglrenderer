@@ -104,8 +104,8 @@ void main()
     // clamp nDotV to avoid numerical error
     const float nDotV = max(dot(n, viewDir), 0.01f);
     // get PBR input parameters
-    const float roughness = 0.2f;
-    const float ior = 1.3f;
+    const float roughness = oceanParams.mFoamSettings.w;
+    const float ior = oceanParams.mFoamSettings.z;
     const float metallic = 0.0f;
 
     const vec3 ggx = texture(precomputedGGXTex, vec2(roughness, nDotV)).xyz;

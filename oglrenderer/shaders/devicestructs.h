@@ -57,7 +57,7 @@ struct OceanParams
     vec4 mTransmission;
     // x, y, z: transmission w: lerp exponent
     vec4 mTransmission2;
-    // x: scale y,z,w: empty
+    // x: foam scale y: foam intensity z: ocean ior w: ocean roughness
     vec4 mFoamSettings;
 };
 
