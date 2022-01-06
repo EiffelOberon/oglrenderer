@@ -1,7 +1,7 @@
 #ifndef DEVICECONSTANTS_H
 #define DEVICECONSTANTS_H
 
-# define INVALID_TEX_ID (uint32_t(~0))
+# define INVALID_TEX_ID (int(~0))
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -52,6 +52,7 @@
 // ssbo binding points
 # define BUTTERFLY_INDICES   0
 # define SCENE_MODEL_MATRIX  1
+# define SCENE_MATERIAL      2
 
 // texture resolution
 # define CLOUD_RESOLUTION             128
@@ -139,6 +140,7 @@
 # define SCENE_OBJECT_PREFILTER_ENV   2
 # define SCENE_OBJECT_PRECOMPUTED_GGX 3
 # define SCENE_OBJECT_SKY             4
+# define SCENE_OBJECT_DIFFUSE         5
 
 // texturedQuad.frag
 # define SCREEN_QUAD_TEX 1

@@ -164,10 +164,11 @@ private:
 
     // shader buffers
     std::unique_ptr<ShaderBuffer> mModelMatsBuffer;
+    std::unique_ptr<ShaderBuffer> mMaterialBuffer;
 
     // ocean geometry
     VertexBuffer mWaterGrid;
-    std::vector<std::unique_ptr<VertexBuffer>> mModels;
+    std::vector<std::unique_ptr<VertexBuffer>> mDrawCalls;
 
     // noise 
     NoiseParams mWorleyNoiseParams;

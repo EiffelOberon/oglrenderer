@@ -184,7 +184,7 @@ Renderer::Renderer()
     mHosekSkyModel = std::make_unique<Hosek>(glm::vec3(mSkyParams.mSunSetting.x, mSkyParams.mSunSetting.y, mSkyParams.mSunSetting.z), 512);
 
     // precompute fresnel
-    mPrecomputedFresnelTexture = std::make_unique<Texture>(FRESNEL_RESOLUTION, FRESNEL_RESOLUTION, GL_LINEAR, false, 32, false, true, nullptr);
+    mPrecomputedFresnelTexture = std::make_unique<Texture>(FRESNEL_RESOLUTION, FRESNEL_RESOLUTION, GL_LINEAR, false, 32, false, true, false, nullptr);
     mShaders[PRECOMP_FRESNEL_SHADER]->use();
     mPrecomputedFresnelTexture->bindImageTexture(PRECOMPUTE_FRESNEL_TEX, GL_WRITE_ONLY);
     mShaders[PRECOMP_FRESNEL_SHADER]->dispatch(true, FRESNEL_RESOLUTION / PRECOMPUTE_FRESNEL_LOCAL_SIZE, FRESNEL_RESOLUTION / PRECOMPUTE_FRESNEL_LOCAL_SIZE, 1);
@@ -251,7 +251,7 @@ bool Renderer::loadTexture(
         return false;
     }
     
-    tex = std::make_unique<Texture>((int)width, (int)height, mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST, mipmap, 8, false, alpha, (void*)bits);
+    tex = std::make_unique<Texture>((int)width, (int)height, mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST, mipmap, 8, false, alpha, true, (void*)bits);
     tex->generateMipmap();
     FreeImage_Unload(dib);
     return true;
@@ -398,9 +398,9 @@ bool Renderer::loadModel(
         const uint32_t matId = it->first;
         const uint32_t vertexCount = it->second;
 
-        const uint32_t idx = mModels.size();
-        mModels.push_back(std::make_unique<VertexBuffer>());
-        mModels.at(idx)->update(
+        const uint32_t idx = mDrawCalls.size();
+        mDrawCalls.push_back(std::make_unique<VertexBuffer>());
+        mDrawCalls.at(idx)->update(
             sizeof(Vertex) * vertexList[matId].size(),
             sizeof(uint32_t) * indexList[matId].size(),
             vertexList[matId].data(),
@@ -412,6 +412,9 @@ bool Renderer::loadModel(
     // push model matrices to buffer
     mModelMatsBuffer = std::make_unique<ShaderBuffer>(mModelMats.size() * sizeof(glm::mat4));
     mModelMatsBuffer->upload(mModelMats.data());
+
+    mMaterialBuffer = std::make_unique<ShaderBuffer>(mMaterials.size() * sizeof(Material));
+    mMaterialBuffer->upload(mMaterials.data());
     return true;
 }
 
@@ -914,17 +917,25 @@ void Renderer::render()
     mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(SCENE_OBJECT_SHADER);
     mShaders[SCENE_OBJECT_SHADER]->use();
     mModelMatsBuffer->bind(SCENE_MODEL_MATRIX);
+    mMaterialBuffer->bind(SCENE_MATERIAL);
     mIrradianceCubemap->bindTexture(SCENE_OBJECT_IRRADIANCE, 0);
     mPrefilterCubemap->bindTexture(SCENE_OBJECT_PREFILTER_ENV, 0);
     mPrecomputedFresnelTexture->bindTexture(SCENE_OBJECT_PRECOMPUTED_GGX);
     mFinalSkyCubemap->bindTexture(SCENE_OBJECT_SKY, 0);
-    for (int i = 0; i < mModels.size(); ++i)
+    for (int i = 0; i < mDrawCalls.size(); ++i)
     {
         // set model matrix index
         mSceneObjectParams.mIndices.x = i;
         updateUniform(SCENE_OBJECT_PARAMS, mSceneObjectParams);
+        mRenderParams.mScreenSettings.w = i;
+        updateUniform(RENDERER_PARAMS, offsetof(RendererParams, mScreenSettings), sizeof(glm::ivec4), mRenderParams.mScreenSettings);
 
-        mModels[i]->draw();
+        if (mMaterials[i]->mTexture1.x != INVALID_TEX_ID)
+        {
+            mTextures[mMaterials[i]->mTexture1.x]->bindTexture(SCENE_OBJECT_DIFFUSE);
+        }
+
+        mDrawCalls[i]->draw();
     }
     mShaders[SCENE_OBJECT_SHADER]->disable();
     mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(SCENE_OBJECT_SHADER);

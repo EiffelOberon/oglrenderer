@@ -68,7 +68,7 @@ struct RendererParams
     vec4 mCloudMapping;
     // x = absorption, y, z, w = empty;
     vec4 mCloudAbsorption;
-    // x = horizontal width, y = vertical width, z = frame count, w = empty
+    // x = horizontal width, y = vertical width, z = frame count, w = mDrawCall index
     ivec4 mScreenSettings;
     // x = max steps, y = shadow max steps, z = empty, w = empty;
     ivec4 mSteps;

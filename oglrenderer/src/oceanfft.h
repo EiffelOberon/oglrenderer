@@ -30,7 +30,7 @@ public:
         , mOceanHDzSpectrumTexture(N, N, GL_NEAREST, false, 32, false)
         , mOceanNoiseTexture(N, N, GL_NEAREST, false, 32, false)
         , mPingPongTexture(N, N, GL_NEAREST, false, 32, false)
-        , mButterFlyTexture((int)(log(float(N)) / log(2.0f)), N, GL_NEAREST, false, 32, false, true, nullptr)
+        , mButterFlyTexture((int)(log(float(N)) / log(2.0f)), N, GL_NEAREST, false, 32, false, true, false, nullptr)
         , mButterflyIndicesBuffer(N * sizeof(int))
     {
         // upload random numbers

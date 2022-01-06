@@ -25,19 +25,26 @@ layout(std430, binding = RENDERER_PARAMS) uniform RendererParamsUniform
 {
     RendererParams renderParams;
 };
-
+layout(std430, binding = SCENE_MATERIAL) buffer MaterialsBuffer
+{
+    Material materials[];
+};
 
 layout(binding = SCENE_OBJECT_IRRADIANCE) uniform samplerCube irradianceTex;
 layout(binding = SCENE_OBJECT_PREFILTER_ENV) uniform samplerCube prefilterTex;
 layout(binding = SCENE_OBJECT_PRECOMPUTED_GGX) uniform sampler2D precomputedGGXTex;
 layout(binding = SCENE_OBJECT_SKY) uniform samplerCube skyTex;
+layout(binding = SCENE_OBJECT_DIFFUSE) uniform sampler2D diffuseTex;
 
 layout(location = 0) out vec4 c;
 
 void main()
 {	
 	// diffuse irradiance
-    vec3 indirectDiffuse = texture(irradianceTex, normal).xyz;
+	vec3 albedo = materials[renderParams.mScreenSettings.w].mTexture1.x == INVALID_TEX_ID ? 
+				  vec3(1.0f) :
+				  pow(texture(diffuseTex, uv).xyz, vec3(2.2f));
+    vec3 indirectDiffuse = albedo * texture(irradianceTex, normal).xyz;
 	
 	// direct diffuse
 	const vec3 viewDir = normalize(camParams.mEye.xyz - position);
@@ -46,7 +53,7 @@ void main()
 	const vec3 sunColor = (skyParams.mPrecomputeSettings.y == NISHITA_SKY) ? 
 						  texture(skyTex, sunDir).xyz : 
 						  vec3(1.0f);
-	vec3 directDiffuse = sunColor * max(0.0f, dot(normal, sunDir));
+	vec3 directDiffuse = sunColor * albedo * max(0.0f, dot(normal, sunDir));
 
 	// get PBR input parameters
 	const float roughness = clamp(skyParams.mPrecomputeGGXSettings.y, 0.0f, 0.99f);
@@ -61,7 +68,7 @@ void main()
 	float f0 = (ior - 1.0f) / (ior + 1.0f);
 	f0 *= f0;
 	f0 = mix(f0, 1.0f, metallic);
-	const vec3 indirectSpecular = L * (f0 * ggx.x + ggx.y);
+	const vec3 indirectSpecular = L * (f0 * ggx.x + ggx.y) * mix(vec3(1.0f), albedo, metallic);
 	
 	// add them up
 	c = vec4(mix(indirectDiffuse, vec3(0.0f), metallic) + indirectSpecular, 1.0f);

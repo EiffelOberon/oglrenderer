@@ -16,6 +16,7 @@ public:
         const int      bitsPerChannel,
         const bool     greyScale,
         const bool     hasAlpha = true,
+        const bool     useBGR   = false,
         const void*    data     = nullptr)
         : mWidth(width)
         , mHeight(height)
@@ -34,12 +35,58 @@ public:
 
         switch (bitsPerChannel)
         {
-        case 8:  mInternalFormat = greyScale ? GL_R8 : (hasAlpha ? GL_RGBA8 : GL_RGB8); break;
-        case 32: mInternalFormat = greyScale ? GL_R32F : (hasAlpha ? GL_RGBA32F : GL_RGB32F); break;
-        default: assert(false);
+            case 8: 
+            {
+                if (greyScale)
+                {
+                    mInternalFormat = GL_R8;
+                }
+                else if (hasAlpha)
+                {
+                    mInternalFormat = GL_RGBA8;
+                }
+                else
+                {
+                    mInternalFormat = GL_RGB8;
+                }
+                break;
+            }
+            case 32: 
+            {
+                if (greyScale)
+                {
+                    mInternalFormat = GL_R32F;
+                }
+                else if (hasAlpha)
+                {
+                    mInternalFormat = GL_RGBA32F;
+                }
+                else
+                {
+                    mInternalFormat = GL_RGB32F;
+                }
+                break;
+            }
+            default:
+            {
+                assert(false);
+            }
         }
 
-        glTexImage2D(GL_TEXTURE_2D, 0, mInternalFormat, width, height, 0, greyScale ? GL_R : (hasAlpha ? GL_RGBA : GL_RGB), bitsPerChannel == 32 ? GL_FLOAT : GL_UNSIGNED_BYTE, data);
+        GLuint format;
+        if (greyScale)
+        {
+            format = GL_R;
+        }
+        else if (hasAlpha)
+        {
+            format = useBGR ? GL_BGRA : GL_RGBA;
+        }
+        else
+        {
+            format = useBGR ? GL_BGR : GL_RGB;
+        }
+        glTexImage2D(GL_TEXTURE_2D, 0, mInternalFormat, width, height, 0, format, bitsPerChannel == 32 ? GL_FLOAT : GL_UNSIGNED_BYTE, data);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
