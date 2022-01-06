@@ -419,15 +419,15 @@ bool Renderer::loadModel(
             vertexList[matId].data(),
             indexList[matId].data());
 
-        mModelMats.push_back(glm::mat4(1.0f));
+        mDrawCallMatrices.push_back(glm::mat4(1.0f));
 
         // calculate total triangle count
         mDrawCallTriangleCount += mDrawCalls[idx]->triangleCount();
     }
 
     // push model matrices to buffer
-    mModelMatsBuffer = std::make_unique<ShaderBuffer>(mModelMats.size() * sizeof(glm::mat4));
-    mModelMatsBuffer->upload(mModelMats.data());
+    mModelMatsBuffer = std::make_unique<ShaderBuffer>(mDrawCallMatrices.size() * sizeof(glm::mat4));
+    mModelMatsBuffer->upload(mDrawCallMatrices.data());
 
     mMaterialBuffer = std::make_unique<ShaderBuffer>(mMaterials.size() * sizeof(Material));
     mMaterialBuffer->upload(mMaterials.data());
@@ -1422,26 +1422,26 @@ void Renderer::renderGUI()
                         ImGui::EndCombo();
                     }
 
-                    if (ImGui::SliderFloat("x", &mModelMats[mEditingMaterialIdx][3][0], -1000.0f, 1000.0f))
+                    if (ImGui::SliderFloat("x", &mDrawCallMatrices[mEditingMaterialIdx][3][0], -1000.0f, 1000.0f))
                     {
                         mModelMatsBuffer->update(
                             sizeof(glm::mat4) * mEditingMaterialIdx,
                             sizeof(glm::mat4),
-                            &mModelMats[mEditingMaterialIdx]);
+                            &mDrawCallMatrices[mEditingMaterialIdx]);
                     }
-                    if (ImGui::SliderFloat("y", &mModelMats[mEditingMaterialIdx][3][1], -1000.0f, 1000.0f))
+                    if (ImGui::SliderFloat("y", &mDrawCallMatrices[mEditingMaterialIdx][3][1], -1000.0f, 1000.0f))
                     {
                         mModelMatsBuffer->update(
                             sizeof(glm::mat4) * mEditingMaterialIdx,
                             sizeof(glm::mat4),
-                            &mModelMats[mEditingMaterialIdx]);
+                            &mDrawCallMatrices[mEditingMaterialIdx]);
                     }
-                    if (ImGui::SliderFloat("z", &mModelMats[mEditingMaterialIdx][3][2], -1000.0f, 1000.0f))
+                    if (ImGui::SliderFloat("z", &mDrawCallMatrices[mEditingMaterialIdx][3][2], -1000.0f, 1000.0f))
                     {
                         mModelMatsBuffer->update(
                             sizeof(glm::mat4) * mEditingMaterialIdx,
                             sizeof(glm::mat4),
-                            &mModelMats[mEditingMaterialIdx]);
+                            &mDrawCallMatrices[mEditingMaterialIdx]);
                     }
                 }
                 ImGui::EndTabItem();

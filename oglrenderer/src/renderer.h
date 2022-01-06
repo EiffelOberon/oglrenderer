@@ -192,7 +192,7 @@ private:
     ViewProjectionMatrix mPrecomputeMatrix;
 
     // model matrices for each mesh (drawcall per material)
-    std::vector<glm::mat4> mModelMats;
+    std::vector<glm::mat4> mDrawCallMatrices;
 
     // variables for recording time
     float mDeltaTime;
