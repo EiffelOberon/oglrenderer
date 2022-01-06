@@ -10,12 +10,13 @@ class ShaderBuffer
 {
 public:
     ShaderBuffer(
-        const size_t sizeInBytes)
+        const size_t   sizeInBytes,
+        const uint32_t usage)
         : mSizeInBytes(sizeInBytes)
     {
         glGenBuffers(1, &mSSBO);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSSBO);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, mSizeInBytes, nullptr, GL_STATIC_DRAW);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, mSizeInBytes, nullptr, usage);
         glClearNamedBufferData(mSSBO, GL_R8UI, GL_RED_INTEGER, GL_UNSIGNED_BYTE, 0);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     }

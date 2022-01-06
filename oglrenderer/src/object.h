@@ -58,7 +58,7 @@ public:
     }
 
 
-    glm::mat4 transform() const
+    glm::mat4& transform()
     {
         return mTransform.mModelMatrix;
     }

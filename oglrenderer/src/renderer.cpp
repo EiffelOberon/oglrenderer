@@ -438,11 +438,7 @@ bool Renderer::loadModel(
 
     updateDrawCalls(mRoot.get());
 
-    // push model matrices to buffer
-    mModelMatsBuffer = std::make_unique<ShaderBuffer>(mDrawCallMatrices.size() * sizeof(glm::mat4));
-    mModelMatsBuffer->upload(mDrawCallMatrices.data());
-
-    mMaterialBuffer = std::make_unique<ShaderBuffer>(mMaterials.size() * sizeof(Material));
+    mMaterialBuffer = std::make_unique<ShaderBuffer>(mMaterials.size() * sizeof(Material), GL_DYNAMIC_DRAW);
     mMaterialBuffer->upload(mMaterials.data());
     return true;
 }
@@ -485,6 +481,12 @@ void Renderer::updateDrawCalls(
     {
         updateDrawCalls(obj->child(i));
     }
+    // push model matrices to buffer
+    if (!mModelMatsBuffer)
+    {
+        mModelMatsBuffer = std::make_unique<ShaderBuffer>(mDrawCallMatrices.size() * sizeof(glm::mat4), GL_STREAM_DRAW);
+    }
+    mModelMatsBuffer->upload(mDrawCallMatrices.data());
 }
 
 
@@ -1079,6 +1081,21 @@ void Renderer::renderGUI()
                     ImGui::Separator();
 
                     ImGui::Text("Object: %s", mEditingObject ? mEditingObject->name() : "-");
+                    if (mEditingObject)
+                    {
+                        if (ImGui::DragFloat("x", &mEditingObject->transform()[3][0], 0.1f))
+                        {
+                            updateDrawCalls(mRoot.get());
+                        }
+                        if (ImGui::DragFloat("y", &mEditingObject->transform()[3][1], 0.1f))
+                        {
+                            updateDrawCalls(mRoot.get());
+                        }
+                        if (ImGui::DragFloat("z", &mEditingObject->transform()[3][2], 0.1f))
+                        {
+                            updateDrawCalls(mRoot.get());
+                        }
+                    }
                 }
                 ImGui::EndTabItem();
             }
