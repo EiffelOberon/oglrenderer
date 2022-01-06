@@ -287,8 +287,8 @@ bool Renderer::loadModel(
     auto& materials = reader.GetMaterials();
 
     // count the number of vertex per material, each material is rendered as a draw call
-    std::unordered_map<uint32_t, uint32_t> mMaterialVertexCount;
-    std::unordered_map<uint32_t, uint32_t> mMaterialVertexOffset;
+    std::map<uint32_t, uint32_t> mMaterialVertexCount;
+    std::map<uint32_t, uint32_t> mMaterialVertexOffset;
     for (size_t s = 0; s < shapes.size(); s++)
     {
         for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++)
@@ -308,9 +308,9 @@ bool Renderer::loadModel(
         }
     }
 
-    std::unordered_map<uint32_t, std::vector<Vertex>> vertexList;
-    std::unordered_map<uint32_t, std::vector<uint32_t>> indexList;
-    for (std::unordered_map<uint32_t, uint32_t>::iterator it = mMaterialVertexCount.begin(); 
+    std::map<uint32_t, std::vector<Vertex>> vertexList;
+    std::map<uint32_t, std::vector<uint32_t>> indexList;
+    for (std::map<uint32_t, uint32_t>::iterator it = mMaterialVertexCount.begin(); 
         it != mMaterialVertexCount.end(); 
         ++it)
     {
@@ -391,7 +391,7 @@ bool Renderer::loadModel(
     }
 
     // push data to the device
-    for (std::unordered_map<uint32_t, uint32_t>::iterator it = mMaterialVertexCount.begin();
+    for (std::map<uint32_t, uint32_t>::iterator it = mMaterialVertexCount.begin();
         it != mMaterialVertexCount.end();
         ++it)
     {
