@@ -1432,12 +1432,60 @@ void Renderer::renderGUI()
                 }
                 ImGui::EndTabItem();
             }
+            if (ImGui::BeginTabItem("Object"))
+            {
+                if (mMaterialNames.size() > 0)
+                {
+                    const char* comboLabel = mMaterialNames[mEditingMaterialIdx].c_str();
+                    if (ImGui::BeginCombo("object", comboLabel))
+                    {
+                        for (int n = 0; n < mMaterialNames.size(); n++)
+                        {
+                            const bool selected = (mEditingMaterialIdx == n);
+                            if (ImGui::Selectable(mMaterialNames[n].c_str(), selected))
+                            {
+                                mEditingMaterialIdx = n;
+                            }
+
+                            // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                            if (selected)
+                            {
+                                ImGui::SetItemDefaultFocus();
+                            }
+                        }
+                        ImGui::EndCombo();
+                    }
+
+                    if (ImGui::SliderFloat("x", &mModelMats[mEditingMaterialIdx][3][0], -1000.0f, 1000.0f))
+                    {
+                        mModelMatsBuffer->update(
+                            sizeof(glm::mat4) * mEditingMaterialIdx,
+                            sizeof(glm::mat4),
+                            &mModelMats[mEditingMaterialIdx]);
+                    }
+                    if (ImGui::SliderFloat("y", &mModelMats[mEditingMaterialIdx][3][1], -1000.0f, 1000.0f))
+                    {
+                        mModelMatsBuffer->update(
+                            sizeof(glm::mat4) * mEditingMaterialIdx,
+                            sizeof(glm::mat4),
+                            &mModelMats[mEditingMaterialIdx]);
+                    }
+                    if (ImGui::SliderFloat("z", &mModelMats[mEditingMaterialIdx][3][2], -1000.0f, 1000.0f))
+                    {
+                        mModelMatsBuffer->update(
+                            sizeof(glm::mat4) * mEditingMaterialIdx,
+                            sizeof(glm::mat4),
+                            &mModelMats[mEditingMaterialIdx]);
+                    }
+                }
+                ImGui::EndTabItem();
+            }
             if (ImGui::BeginTabItem("Material"))
             {
                 if (mMaterialNames.size() > 0)
                 {
                     const char* comboLabel = mMaterialNames[mEditingMaterialIdx].c_str();
-                    if (ImGui::BeginCombo("Material", comboLabel))
+                    if (ImGui::BeginCombo("material", comboLabel))
                     {
                         for (int n = 0; n < mMaterialNames.size(); n++)
                         {

@@ -191,6 +191,8 @@ private:
     ViewProjectionMatrix mViewProjectionMat;
     ViewProjectionMatrix mPreviousViewProjectionMat;
     ViewProjectionMatrix mPrecomputeMatrix;
+
+    // model matrices for each mesh (drawcall per material)
     std::vector<glm::mat4> mModelMats;
 
     // variables for recording time
