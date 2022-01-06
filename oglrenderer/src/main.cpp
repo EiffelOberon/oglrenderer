@@ -9,7 +9,6 @@
 #include "imgui_impl_opengl3.h"
 #include "renderer.h"
 
-
 extern "C" {
 # include "lua.h"
 # include "lauxlib.h"
@@ -250,9 +249,9 @@ int main(
     int     argc, 
     char**  argv)
 {
-    lua_State* L = luaL_newstate();
     try
     {
+        lua_State* L = luaL_newstate();
         luaL_dofile(L, "./script/test.lua");
         luaL_openlibs(L);
         lua_pcall(L, 0, 0, 0);

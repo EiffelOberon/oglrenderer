@@ -27,6 +27,7 @@ Renderer::Renderer()
     , mClipmap(6)
     , mClipmapLevel(0)
     , mEditingMaterialIdx(0)
+    , mEditingObject(nullptr)
     , mDrawCallTriangleCount(0)
     , mWaterTriangleCount(0)
     , mSkyCubemap(nullptr)
@@ -55,6 +56,8 @@ Renderer::Renderer()
     , mMinFps(FLT_MAX)
     , mMaxFps(FLT_MIN)
 {
+    mRoot = std::make_unique<Object>("root");
+
     mTimeQueries.push_back(std::make_unique<TimeQuery>(SHADER_COUNT));
     mTimeQueries.push_back(std::make_unique<TimeQuery>(SHADER_COUNT));
 
@@ -403,6 +406,9 @@ bool Renderer::loadModel(
         }
     }
 
+    const std::string file = fileName.substr(fileName.find_last_of('/') + 1);
+    Object* parent = mRoot->addChild(std::make_unique<Object>(file));
+
     // push data to the device
     for (std::map<uint32_t, uint32_t>::iterator it = mMaterialVertexCount.begin();
         it != mMaterialVertexCount.end();
@@ -412,18 +418,25 @@ bool Renderer::loadModel(
         const uint32_t vertexCount = it->second;
 
         const uint32_t idx = mDrawCalls.size();
-        mDrawCalls.push_back(std::make_unique<VertexBuffer>());
-        mDrawCalls.at(idx)->update(
-            sizeof(Vertex) * vertexList[matId].size(),
-            sizeof(uint32_t) * indexList[matId].size(),
-            vertexList[matId].data(),
-            indexList[matId].data());
 
-        mDrawCallMatrices.push_back(glm::mat4(1.0f));
+        std::unique_ptr<Mesh> mesh = std::make_unique<Mesh>(mMaterialNames[matId]);
+        mesh->update(vertexList[matId], indexList[matId]);
+        parent->addChild(std::move(mesh));
+
+        //mDrawCalls.push_back(std::make_unique<VertexBuffer>());
+        //mDrawCalls.at(idx)->update(
+        //    sizeof(Vertex) * vertexList[matId].size(),
+        //    sizeof(uint32_t) * indexList[matId].size(),
+        //    vertexList[matId].data(),
+        //    indexList[matId].data());
+
+        //mDrawCallMatrices.push_back(glm::mat4(1.0f));
 
         // calculate total triangle count
-        mDrawCallTriangleCount += mDrawCalls[idx]->triangleCount();
+        //mDrawCallTriangleCount += mDrawCalls[idx]->triangleCount();
     }
+
+    updateDrawCalls(mRoot.get());
 
     // push model matrices to buffer
     mModelMatsBuffer = std::make_unique<ShaderBuffer>(mDrawCallMatrices.size() * sizeof(glm::mat4));
@@ -432,6 +445,46 @@ bool Renderer::loadModel(
     mMaterialBuffer = std::make_unique<ShaderBuffer>(mMaterials.size() * sizeof(Material));
     mMaterialBuffer->upload(mMaterials.data());
     return true;
+}
+
+
+void Renderer::updateDrawCalls(
+    Object    *obj)
+{
+    if (!obj)
+    {
+        // should not happen
+        assert(false);
+        return;
+    }
+
+    // reset if root
+    if (obj == mRoot.get())
+    {
+        mDrawCallTriangleCount = 0;
+        mDrawCalls.clear();
+        mDrawCallMatrices.clear();
+    }
+
+    if (obj->isDrawable())
+    {
+        mDrawCalls.push_back(static_cast<Mesh*>(obj));
+
+        Object* parent = obj->parent();
+        glm::mat4 transformMatrix = obj->transform();
+        while (parent)
+        {
+            transformMatrix *= parent->transform();
+            parent = parent->parent();
+        }
+
+        mDrawCallMatrices.push_back(transformMatrix);
+    }
+
+    for (int i = 0; i < obj->childCount(); ++i)
+    {
+        updateDrawCalls(obj->child(i));
+    }
 }
 
 
@@ -1011,6 +1064,24 @@ void Renderer::renderGUI()
         ImGui::Begin("Environment", &mShowSkyWindow);
         if (ImGui::BeginTabBar("Settings", ImGuiTabBarFlags_None))
         {
+            if (ImGui::BeginTabItem("Object"))
+            {
+                if (mMaterialNames.size() > 0)
+                {
+                    static ImGuiTreeNodeFlags baseFlags =
+                        ImGuiTreeNodeFlags_OpenOnArrow |
+                        ImGuiTreeNodeFlags_OpenOnDoubleClick |
+                        ImGuiTreeNodeFlags_SpanAvailWidth;
+
+                    int idx = 0;
+                    drawNodeTreeGUI(idx, mRoot.get());
+
+                    ImGui::Separator();
+
+                    ImGui::Text("Object: %s", mEditingObject ? mEditingObject->name() : "-");
+                }
+                ImGui::EndTabItem();
+            }
             if (ImGui::BeginTabItem("Sky"))
             {
                 const static char* items[] = { "Nishita", "Hosek" };
@@ -1398,54 +1469,6 @@ void Renderer::renderGUI()
                 }
                 ImGui::EndTabItem();
             }
-            if (ImGui::BeginTabItem("Object"))
-            {
-                if (mMaterialNames.size() > 0)
-                {
-                    const char* comboLabel = mMaterialNames[mEditingMaterialIdx].c_str();
-                    if (ImGui::BeginCombo("object", comboLabel))
-                    {
-                        for (int n = 0; n < mMaterialNames.size(); n++)
-                        {
-                            const bool selected = (mEditingMaterialIdx == n);
-                            if (ImGui::Selectable(mMaterialNames[n].c_str(), selected))
-                            {
-                                mEditingMaterialIdx = n;
-                            }
-
-                            // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-                            if (selected)
-                            {
-                                ImGui::SetItemDefaultFocus();
-                            }
-                        }
-                        ImGui::EndCombo();
-                    }
-
-                    if (ImGui::SliderFloat("x", &mDrawCallMatrices[mEditingMaterialIdx][3][0], -1000.0f, 1000.0f))
-                    {
-                        mModelMatsBuffer->update(
-                            sizeof(glm::mat4) * mEditingMaterialIdx,
-                            sizeof(glm::mat4),
-                            &mDrawCallMatrices[mEditingMaterialIdx]);
-                    }
-                    if (ImGui::SliderFloat("y", &mDrawCallMatrices[mEditingMaterialIdx][3][1], -1000.0f, 1000.0f))
-                    {
-                        mModelMatsBuffer->update(
-                            sizeof(glm::mat4) * mEditingMaterialIdx,
-                            sizeof(glm::mat4),
-                            &mDrawCallMatrices[mEditingMaterialIdx]);
-                    }
-                    if (ImGui::SliderFloat("z", &mDrawCallMatrices[mEditingMaterialIdx][3][2], -1000.0f, 1000.0f))
-                    {
-                        mModelMatsBuffer->update(
-                            sizeof(glm::mat4) * mEditingMaterialIdx,
-                            sizeof(glm::mat4),
-                            &mDrawCallMatrices[mEditingMaterialIdx]);
-                    }
-                }
-                ImGui::EndTabItem();
-            }
             if (ImGui::BeginTabItem("Material"))
             {
                 if (mMaterialNames.size() > 0)
@@ -1497,7 +1520,6 @@ void Renderer::renderGUI()
             ImGui::EndTabBar();
         }
 
-
         ImGui::End();
 
     }
@@ -1520,7 +1542,7 @@ void Renderer::renderGUI()
                 {
                     ImGui::PlotLines("FPS", &mFpsRecords[0], IM_ARRAYSIZE(mFpsRecords), 0, 0, 0.0f, 300.0f, ImVec2(0, 80));
                 }
-                ImGui::NewLine();
+                ImGui::Separator();
                 ImGui::Text("Statistics");
                 const uint32_t sceneTriangleCount = mDrawCallTriangleCount;
                 const uint32_t waterTriangleCount = mRenderWater ? mWaterTriangleCount : 0;
@@ -1528,7 +1550,7 @@ void Renderer::renderGUI()
                 ImGui::Text("scene tri-count: %d", sceneTriangleCount);
                 ImGui::Text("water tri-count: %d", waterTriangleCount);
                 ImGui::Text("total tri-count: %d", totalTriangleCount);
-                ImGui::NewLine();
+                ImGui::Separator();
                 ImGui::Text("GPU time");
                 char buf[32];
                 for (int i = 0; i < SHADER_COUNT; ++i)
@@ -1613,6 +1635,68 @@ void Renderer::renderGUI()
 
     bool test = true;
     ImGui::ShowDemoWindow(&test);
+}
+
+
+void Renderer::drawNodeTreeGUI(
+    int    &idx,
+    Object *node)
+{
+    // base flags for tree nodes
+    static ImGuiTreeNodeFlags base_flags =
+        ImGuiTreeNodeFlags_OpenOnArrow |
+        ImGuiTreeNodeFlags_OpenOnDoubleClick |
+        ImGuiTreeNodeFlags_SpanAvailWidth;
+
+    static int selectionMask = (1 << 2);
+    ImGuiTreeNodeFlags nodeFlags = base_flags;
+    if (node == mEditingObject)
+    {
+        nodeFlags |= ImGuiTreeNodeFlags_Selected;
+    }
+
+    if (node->childCount() == 0)
+    {
+        nodeFlags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+        ImGui::TreeNodeEx((void*)(intptr_t)idx, nodeFlags, node->name());
+
+        // check if item is clicked
+        if (ImGui::IsItemClicked())
+        {
+            mEditingObject = node;
+        }
+        ++idx;
+        if (ImGui::BeginDragDropSource())
+        {
+            ImGui::SetDragDropPayload("_TREENODE", NULL, 0);
+            ImGui::Text("This is a drag and drop source");
+            ImGui::EndDragDropSource();
+        }
+    }
+    else
+    {
+        // only render non root components
+        nodeFlags |= (node == mRoot.get() || node->parent() == mRoot.get()) ? ImGuiTreeNodeFlags_DefaultOpen : 0;
+        const bool nodeOpen =  ImGui::TreeNodeEx((void*)(intptr_t)idx, nodeFlags, node->name());
+
+        // check if item is clicked
+        if (ImGui::IsItemClicked())
+        {
+            mEditingObject = node;
+        }
+        ++idx;
+
+        if (nodeOpen)
+        {
+            for (int i = 0; i < node->childCount(); ++i)
+            {
+                Object* child = node->child(i);
+                drawNodeTreeGUI(idx, child);
+            }
+
+            ImGui::TreePop();
+        }
+    }
 }
 
 

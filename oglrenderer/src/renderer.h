@@ -7,11 +7,19 @@
 
 #include "glm/glm.hpp"
 
+extern "C" {
+# include "lua.h"
+# include "lauxlib.h"
+# include "lualib.h"
+}
+#include "LuaBridge.h"
+
 #include "camera.h"
 #include "clipmap.h"
 #include "deviceconstants.h" 
 #include "devicestructs.h"
 #include "hosek.h"
+#include "object.h"
 #include "quad.h"
 #include "rendertexture.h"
 #include "shader.h"
@@ -86,6 +94,9 @@ private:
         }
     }
 
+    void updateDrawCalls(
+        Object     *obj);
+
     bool loadTexture(
         std::unique_ptr<Texture> &tex,
         const bool               mipmap,
@@ -97,6 +108,11 @@ private:
 
     // initialize uniform white noise [0, 1]
     void renderWater(const bool precompute);
+
+
+    void drawNodeTreeGUI(
+        int    &idx,
+        Object *node);
 
     // methods for saving/loading settings
     void saveStates();
@@ -166,8 +182,8 @@ private:
     std::unique_ptr<ShaderBuffer> mMaterialBuffer;
 
     // ocean geometry
-    VertexBuffer mWaterGrid;
-    std::vector<std::unique_ptr<VertexBuffer>> mDrawCalls;
+    VertexBuffer       mWaterGrid;
+    std::vector<Mesh*> mDrawCalls;
 
     // noise 
     NoiseParams mWorleyNoiseParams;
@@ -224,4 +240,8 @@ private:
     std::vector<std::string> mMaterialNames;
     std::vector<Material>    mMaterials;
     std::vector<std::unique_ptr<Texture>> mTextures;
+
+    // nodes
+    std::unique_ptr<Object> mRoot;
+    Object                  *mEditingObject;
 };
