@@ -431,9 +431,6 @@ bool Renderer::loadModel(
         //    indexList[matId].data());
 
         //mDrawCallMatrices.push_back(glm::mat4(1.0f));
-
-        // calculate total triangle count
-        //mDrawCallTriangleCount += mDrawCalls[idx]->triangleCount();
     }
 
     updateDrawCalls(mRoot.get());
@@ -464,7 +461,11 @@ void Renderer::updateDrawCalls(
 
     if (obj->isDrawable())
     {
-        mDrawCalls.push_back(static_cast<Mesh*>(obj));
+        Mesh *mesh = static_cast<Mesh*>(obj);
+        mDrawCalls.push_back(mesh);
+
+        // calculate total triangle count
+        mDrawCallTriangleCount += mesh->triangleCount();
 
         Object* parent = obj->parent();
         glm::mat4 transformMatrix = obj->transform();

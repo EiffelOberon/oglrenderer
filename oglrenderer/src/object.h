@@ -117,6 +117,12 @@ public:
         mVertexBuffer.draw();
     }
 
+
+    uint32_t triangleCount() const
+    {
+        return mVertexBuffer.triangleCount();
+    }
+
 private:
     VertexBuffer mVertexBuffer;
 };
