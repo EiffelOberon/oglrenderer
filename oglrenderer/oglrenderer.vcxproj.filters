@@ -25,6 +25,12 @@
     <Filter Include="tinyobjloader">
       <UniqueIdentifier>{92699e4b-bcf8-4bbe-88df-5e461b2fb26d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="LuaBridge">
+      <UniqueIdentifier>{47e8e13f-52db-40e0-ad2e-259aa1962a9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LuaBridge\detail">
+      <UniqueIdentifier>{6e0ac34f-47c2-4d18-8a20-5371f16a83e1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -181,6 +187,81 @@
     </ClInclude>
     <ClInclude Include="include\tinyobjloader\tiny_obj_loader.h">
       <Filter>tinyobjloader</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\Array.h">
+      <Filter>LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\List.h">
+      <Filter>LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\LuaBridge.h">
+      <Filter>LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\Map.h">
+      <Filter>LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\Optional.h">
+      <Filter>LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\RefCountedObject.h">
+      <Filter>LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\RefCountedPtr.h">
+      <Filter>LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\UnorderedMap.h">
+      <Filter>LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\Vector.h">
+      <Filter>LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\detail\ClassInfo.h">
+      <Filter>LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\detail\Config.h">
+      <Filter>LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\detail\Constructor.h">
+      <Filter>LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\detail\dump.h">
+      <Filter>LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\detail\FuncTraits.h">
+      <Filter>LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\detail\Iterator.h">
+      <Filter>LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\detail\LuaException.h">
+      <Filter>LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\detail\LuaHelpers.h">
+      <Filter>LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\detail\LuaRef.h">
+      <Filter>LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\detail\Namespace.h">
+      <Filter>LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\detail\Security.h">
+      <Filter>LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\detail\Stack.h">
+      <Filter>LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\detail\TypeList.h">
+      <Filter>LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\detail\TypeTraits.h">
+      <Filter>LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\detail\Userdata.h">
+      <Filter>LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LuaBridge\detail\CFunctions.h">
+      <Filter>LuaBridge\detail</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

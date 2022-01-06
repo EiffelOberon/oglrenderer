@@ -9,6 +9,16 @@
 #include "imgui_impl_opengl3.h"
 #include "renderer.h"
 
+
+extern "C" {
+# include "lua.h"
+# include "lauxlib.h"
+# include "lualib.h"
+}
+#include "LuaBridge.h"
+
+using namespace luabridge;
+
 struct MouseState
 {
     int mButton;
@@ -240,6 +250,25 @@ int main(
     int     argc, 
     char**  argv)
 {
+    lua_State* L = luaL_newstate();
+    try
+    {
+        luaL_dofile(L, "./script/test.lua");
+        luaL_openlibs(L);
+        lua_pcall(L, 0, 0, 0);
+        LuaRef s = getGlobal(L, "testString");
+        LuaRef n = getGlobal(L, "number");
+        std::string luaString = s.cast<std::string>();
+        int answer = n.cast<int>();
+        std::cout << luaString << std::endl;
+        std::cout << "And here's our number:" << answer << std::endl;
+    }
+    catch (std::exception& e)
+    {
+        std::cout << "Failed to load lua script" << std::endl;
+        return 1;
+    }
+    
     // init GLUT and create Window
     glutInit(&argc, argv);
     glutInitContextVersion(4, 6);
