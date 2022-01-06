@@ -100,17 +100,19 @@ void main()
 						  texture(environmentTex, skyParams.mSunSetting.xyz).xyz : 
 						  vec3(1.0f);
 	vec3 indirectReflection;
+
+    // clamp nDotV to avoid numerical error
+    const float nDotV = max(dot(n, viewDir), 0.01f);
+    // get PBR input parameters
+    const float roughness = 0.2f;
+    const float ior = 1.3f;
+    const float metallic = 0.0f;
+
+    const vec3 ggx = texture(precomputedGGXTex, vec2(roughness, nDotV)).xyz;
 	if(renderParams.mSettings.z == 0)
 	{
-		// get PBR input parameters
-		const float roughness = 0.2f;
-		const float ior = 1.3f;
-		const float metallic = 0.0f;
-
 		// indirect specular
-		const float nDotV = max(dot(n, viewDir), 0.0f);
 		vec3 L = vec4(textureLod(prefilterTex, rayDir, roughness * float(PREFILTER_MIP_COUNT - 1)).xyz, 1.0f).xyz;
-		vec3 ggx = texture(precomputedGGXTex, vec2(roughness, nDotV)).xyz;
 		
 		// calculate fresnel
 		float f0 = (ior - 1.0f) / (ior + 1.0f);
@@ -123,11 +125,7 @@ void main()
 	else
 	{	
 		indirectReflection = max(texture(environmentTex, rayDir).xyz, 0.0f);
-		
-		const float r0 = pow((1.3f - 1.0f) / (1.3f + 1.0f), 2.0f);
-		const float f = clamp(r0 + (1.0f - r0) * pow(1 - dot(viewDir, n), 5.0f), 0.0f, 1.0f);
-
-		radiance += mix(transmission, oceanParams.mReflection.xyz * indirectReflection, f);
+		radiance += mix(transmission, oceanParams.mReflection.xyz * indirectReflection, ggx.z);
 	}
 
 	if(jacobian < oceanParams.mFoamSettings.y)

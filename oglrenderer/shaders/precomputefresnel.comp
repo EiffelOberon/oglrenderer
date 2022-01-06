@@ -18,7 +18,7 @@ layout(binding = PRECOMPUTE_FRESNEL_TEX, rgba32f) uniform image2D fresnelTex;
 
 void main()
 {
-    const vec2 uv = gl_GlobalInvocationID.xy / 100.0f;
+    const vec2 uv = gl_GlobalInvocationID.xy / float(FRESNEL_RESOLUTION);
 
     const float roughness = uv.x;
     const float roughness2 = roughness * roughness;
@@ -54,7 +54,7 @@ void main()
         // Add the contribution of this sample.
         result.x += (1.0f - Fc) * weight;
         result.y += weight * Fc;
-        result.z += fresnel(1.5f, oDotH);
+        result.z += fresnel(1.33f, oDotH);
     }
 
     // Normalize integrated terms.

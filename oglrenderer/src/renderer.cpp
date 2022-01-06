@@ -202,7 +202,7 @@ Renderer::Renderer()
     assert(result);
 
     // load models
-    std::string inputfile = "./models/ship/Ship_CSCL_Star.obj";
+    std::string inputfile = "./models/sphere100.obj";
     assert(loadModel(inputfile));
     FreeImage_DeInitialise();
 }

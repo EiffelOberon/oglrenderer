@@ -64,7 +64,7 @@ void main()
 
 	// indirect specular
 	const vec3 rayDir = normalize(reflect(-viewDir, normal));
-	const float nDotV = max(dot(normal, viewDir), 0.0f);
+	const float nDotV = max(dot(normal, viewDir), 0.001f);
 	vec3 L = vec4(textureLod(prefilterTex, rayDir, roughness * float(PREFILTER_MIP_COUNT - 1)).xyz, 1.0f).xyz;
 	vec2 ggx = texture(precomputedGGXTex, vec2(roughness, nDotV)).xy;
 	float f0 = (ior - 1.0f) / (ior + 1.0f);

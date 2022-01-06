@@ -59,7 +59,7 @@
 # define ENVIRONMENT_RESOLUTION       128
 # define BLUENOISE_RESOLUTION         512
 # define IRRADIANCE_RESOLUTION        16
-# define FRESNEL_RESOLUTION           64
+# define FRESNEL_RESOLUTION           512
 # define PREFILTER_CUBEMAP_RESOLUTION 128
 
 // ocean resolution

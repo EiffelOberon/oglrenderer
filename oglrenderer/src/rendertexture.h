@@ -164,7 +164,7 @@ public:
 
         if (mipmap)
         {
-            glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+            generateMipmap();
         }
 
         glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
@@ -231,6 +231,17 @@ public:
     void unbind()
     {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+
+    void generateMipmap()
+    {
+        if (mMipmap)
+        {
+            glBindTexture(GL_TEXTURE_CUBE_MAP, mTex[0]);
+            glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+        }
     }
 
 

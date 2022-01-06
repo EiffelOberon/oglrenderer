@@ -21,6 +21,10 @@ layout(std430, binding = OCEAN_PARAMS) uniform OceanParamsUniform
 {
     OceanParams oceanParams;
 };
+layout(std430, binding = RENDERER_PARAMS) uniform RendererParamsUniform
+{
+    RendererParams renderParams;
+};
 
 
 layout(binding = WATER_DISPLACEMENT1_TEX) uniform sampler2D displacement1;
@@ -41,10 +45,17 @@ void main()
     const vec3 d2 = displacementLambda * texture(displacement2, testUV2).xyz;
     const vec3 d3 = displacementLambda * texture(displacement3, testUV3).xyz;
 	vec3 newVertexPos = vertexPos + d1 + d2 + d3;
-	
-	const float distanceToCamera = clamp(length(newVertexPos - camParams.mEye.xyz), 0.4f, oceanParams.mTransmission.w) / oceanParams.mTransmission.w;
-	newVertexPos = mix(newVertexPos, vertexPos, distanceToCamera);
-
+    if (renderParams.mSettings.z == 0)
+    {
+        const float distanceToCamera = clamp(length(newVertexPos - camParams.mEye.xyz), 0.4f, oceanParams.mTransmission.w) / oceanParams.mTransmission.w;
+        newVertexPos = mix(newVertexPos, vertexPos, distanceToCamera);
+    }
+    else
+    {
+        // reduce displacement at far field for probe precomputation to avoid artifacts
+        const float distanceToCamera = clamp(length(newVertexPos - camParams.mEye.xyz), 0.4f, 100.0f) / 100.0f;
+        newVertexPos = mix(newVertexPos, vertexPos, distanceToCamera);
+    }
 	gl_Position =  viewProjectionMat.mProjectionMatrix * viewProjectionMat.mViewMatrix * vec4(newVertexPos, 1.0);
 	
 	position = newVertexPos;
