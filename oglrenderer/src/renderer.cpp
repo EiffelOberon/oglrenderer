@@ -27,6 +27,8 @@ Renderer::Renderer()
     , mClipmap(6)
     , mClipmapLevel(0)
     , mEditingMaterialIdx(0)
+    , mDrawCallTriangleCount(0)
+    , mWaterTriangleCount(0)
     , mSkyCubemap(nullptr)
     , mFinalSkyCubemap(nullptr)
     , mIrradianceCubemap(nullptr)
@@ -167,6 +169,7 @@ Renderer::Renderer()
     // compute water geometry
     //updateWaterGrid();
     mClipmap.generateGeometry();
+    mWaterTriangleCount = mClipmap.triangleCount();
 
     // compute camera and projection matrix for normal camera
     glm::mat4 projMatrix = glm::perspective(glm::radians(60.0f), 1600.0f / 900.0f, 0.1f, 10000.0f);
@@ -417,6 +420,9 @@ bool Renderer::loadModel(
             indexList[matId].data());
 
         mModelMats.push_back(glm::mat4(1.0f));
+
+        // calculate total triangle count
+        mDrawCallTriangleCount += mDrawCalls[idx]->triangleCount();
     }
 
     // push model matrices to buffer
@@ -467,46 +473,6 @@ void Renderer::updateCameraZoom(
     glm::mat4 viewMatrix = mCamera.getViewMatrix();
     mViewProjectionMat.mViewMatrix = viewMatrix;
     updateUniform(MVP_MATRIX, mViewProjectionMat);
-}
-
-
-void Renderer::updateWaterGrid()
-{
-    std::vector<Vertex> vertices;
-    std::vector<uint32_t> indices;
-
-    int count = 0;
-    // patch count along each axis (square)
-    int columnCount = (pow(2,9)) - 1; 
-    float dimension = (pow(2,11)) - 1;
-    float offset = dimension / columnCount;
-    for (int row = 0; row < columnCount; ++row)
-    {
-        for (int column = 0; column < columnCount; ++column)
-        {
-            Vertex v;
-            v.mPosition = glm::vec3(column * offset - dimension * 0.5f, 0.0f, row * offset - dimension * 0.5f);
-            v.mNormal = glm::vec3(0, 1, 0);
-            v.mUV = glm::vec2(column / float(columnCount - 1), row / float(columnCount - 1));
-            vertices.push_back(v);
-        }
-    }
-
-    for (int row = 0; row < (columnCount-1); ++row)
-    {
-        for (int column = 0; column < (columnCount-1); ++column)
-        {
-            indices.push_back(row * columnCount + column);
-            indices.push_back(row * columnCount + (column + 1));
-            indices.push_back((row + 1) * columnCount + column);
-
-            indices.push_back((row + 1) * columnCount + column);
-            indices.push_back(row * columnCount + (column + 1));
-            indices.push_back((row + 1) * columnCount + (column + 1));
-        }
-    }
-
-    mWaterGrid.update(vertices.size() * sizeof(Vertex), indices.size() * sizeof(uint32_t), vertices.data(), indices.data());
 }
 
 
@@ -1554,10 +1520,16 @@ void Renderer::renderGUI()
                 {
                     ImGui::PlotLines("FPS", &mFpsRecords[0], IM_ARRAYSIZE(mFpsRecords), 0, 0, 0.0f, 300.0f, ImVec2(0, 80));
                 }
-
-
+                ImGui::NewLine();
+                ImGui::Text("Statistics");
+                const uint32_t sceneTriangleCount = mDrawCallTriangleCount;
+                const uint32_t waterTriangleCount = mRenderWater ? mWaterTriangleCount : 0;
+                const uint32_t totalTriangleCount = sceneTriangleCount + waterTriangleCount;
+                ImGui::Text("scene tri-count: %d", sceneTriangleCount);
+                ImGui::Text("water tri-count: %d", waterTriangleCount);
+                ImGui::Text("total tri-count: %d", totalTriangleCount);
+                ImGui::NewLine();
                 ImGui::Text("GPU time");
-
                 char buf[32];
                 for (int i = 0; i < SHADER_COUNT; ++i)
                 {

@@ -18,7 +18,7 @@ class VertexBuffer
 {
 public:
     VertexBuffer()
-        : mTriangleCount(0)
+        : mVertexCount(0)
         , mIBO(0)
         , mVAO(0)
         , mVBO(0)
@@ -64,25 +64,30 @@ public:
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexDataSizeInBytes, indexData, GL_STATIC_DRAW);
         glBindVertexArray(0);
 
-        mTriangleCount = indexDataSizeInBytes / sizeof(uint32_t);
+        mVertexCount = indexDataSizeInBytes / sizeof(uint32_t);
     }
 
 
     void draw()
     {
-        if (mTriangleCount > 0)
+        if (mVertexCount > 0)
         {
             glBindVertexArray(mVAO);
-            glDrawElements(GL_TRIANGLES, mTriangleCount, GL_UNSIGNED_INT, 0);
+            glDrawElements(GL_TRIANGLES, mVertexCount, GL_UNSIGNED_INT, 0);
             glBindVertexArray(0);
         }
     }
 
+
+    uint32_t triangleCount() const
+    {
+        return mVertexCount / 3;
+    }
 
 private: 
     GLuint mIBO;
     GLuint mVBO;
     GLuint mVAO;
 
-    uint32_t mTriangleCount;
+    uint32_t mVertexCount;
 };

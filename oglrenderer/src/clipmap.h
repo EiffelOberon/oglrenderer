@@ -217,6 +217,12 @@ public:
         mGrid.draw();
     }
 
+
+    uint32_t triangleCount() const
+    {
+        return mGrid.triangleCount();
+    }
+
 private:
 
     void generateHorizontalStitchingTriangles(
@@ -394,6 +400,17 @@ public:
         {
             mClipmapPatches[i]->draw();
         }
+    }
+
+    
+    uint32_t triangleCount() const
+    {
+        uint32_t count = 0;
+        for (int i = 0; i < mClipmapPatches.size(); ++i)
+        {
+            count += mClipmapPatches[i]->triangleCount();
+        }
+        return count;
     }
 
 

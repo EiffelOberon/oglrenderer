@@ -96,7 +96,6 @@ private:
         const std::string& fileName);
 
     // initialize uniform white noise [0, 1]
-    void updateWaterGrid();
     void renderWater(const bool precompute);
 
     // methods for saving/loading settings
@@ -205,6 +204,10 @@ private:
     uint32_t mFrameCount;
     std::chrono::steady_clock::time_point mRenderStartTime;
     std::chrono::steady_clock::time_point mRenderEndTime;
+
+    // statistics 
+    uint32_t mDrawCallTriangleCount;
+    uint32_t mWaterTriangleCount;
 
     // all uniform buffers
     std::map<uint32_t, std::unique_ptr<UniformBuffer>> mUniforms;
