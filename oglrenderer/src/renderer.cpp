@@ -26,6 +26,7 @@ Renderer::Renderer()
     , mQuad(GL_TRIANGLE_STRIP, 4)
     , mClipmap(6)
     , mClipmapLevel(0)
+    , mEditingMaterialIdx(0)
     , mSkyCubemap(nullptr)
     , mFinalSkyCubemap(nullptr)
     , mIrradianceCubemap(nullptr)
@@ -324,18 +325,18 @@ bool Renderer::loadModel(
     // modify the material list instance
     const uint32_t materialIdx = mMaterials.size();
     mMaterials.resize(mMaterials.size() + materials.size());
+    mMaterialNames.resize(mMaterialNames.size() + materials.size());
     for (uint32_t i = 0; i < materials.size(); ++i)
     {
-        mMaterials.at(i + materialIdx) = std::make_unique<Material>();
-        mMaterials.at(i + materialIdx)->mTexture1 = glm::ivec4(INVALID_TEX_ID, INVALID_TEX_ID, INVALID_TEX_ID, INVALID_TEX_ID);
-
+        mMaterials[i + materialIdx].mTexture1 = glm::ivec4(INVALID_TEX_ID, INVALID_TEX_ID, INVALID_TEX_ID, INVALID_TEX_ID);
+        mMaterialNames[i + materialIdx] = materials[i].name;
         std::unique_ptr<Texture> diffuseTex;
         if (materials[i].diffuse_texname != "" && 
             loadTexture(diffuseTex, true, false, materials[i].diffuse_texname))
         {
             const uint32_t texIdx = mTextures.size();
             mTextures.push_back(std::move(diffuseTex));
-            mMaterials.at(i + materialIdx)->mTexture1.x = texIdx;
+            mMaterials[i + materialIdx].mTexture1.x = texIdx;
         }
 
         // TODO
@@ -343,6 +344,15 @@ bool Renderer::loadModel(
         assert(materials[i].roughness_texname == "");
         assert(materials[i].metallic_texname == "");
         assert(materials[i].alpha_texname == "");
+
+        // colors
+        mMaterials[i + materialIdx].mDiffuse = glm::vec4(materials[i].diffuse[0], materials[i].diffuse[1], materials[i].diffuse[2], 1.0f);
+        mMaterials[i + materialIdx].mSpecular = glm::vec4(materials[i].specular[0], materials[i].specular[1], materials[i].specular[2], 1.0f);
+
+        // fixed floating point values if textures are not used
+        mMaterials[i + materialIdx].mShadingParams.x = materials[i].roughness;
+        mMaterials[i + materialIdx].mShadingParams.y = materials[i].metallic;
+        mMaterials[i + materialIdx].mShadingParams.z = materials[i].ior;
     }
 
     // Loop over shapes
@@ -930,9 +940,9 @@ void Renderer::render()
         mRenderParams.mScreenSettings.w = i;
         updateUniform(RENDERER_PARAMS, offsetof(RendererParams, mScreenSettings), sizeof(glm::ivec4), mRenderParams.mScreenSettings);
 
-        if (mMaterials[i]->mTexture1.x != INVALID_TEX_ID)
+        if (mMaterials[i].mTexture1.x != INVALID_TEX_ID)
         {
-            mTextures[mMaterials[i]->mTexture1.x]->bindTexture(SCENE_OBJECT_DIFFUSE);
+            mTextures[mMaterials[i].mTexture1.x]->bindTexture(SCENE_OBJECT_DIFFUSE);
         }
 
         mDrawCalls[i]->draw();
@@ -1424,17 +1434,49 @@ void Renderer::renderGUI()
             }
             if (ImGui::BeginTabItem("Material"))
             {
-                if (ImGui::SliderFloat("roughness", &mSkyParams.mPrecomputeGGXSettings.y, 0.01f, 1.0f))
+                if (mMaterialNames.size() > 0)
                 {
-                    updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeGGXSettings), sizeof(glm::vec4), mSkyParams.mPrecomputeGGXSettings);
-                }
-                if (ImGui::SliderFloat("ior", &mSkyParams.mPrecomputeGGXSettings.z, 1.0f, 10.0f))
-                {
-                    updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeGGXSettings), sizeof(glm::vec4), mSkyParams.mPrecomputeGGXSettings);
-                }
-                if (ImGui::SliderFloat("metallic", &mSkyParams.mPrecomputeGGXSettings.w, 0.0f, 1.0f))
-                {
-                    updateUniform(SKY_PARAMS, offsetof(SkyParams, mPrecomputeGGXSettings), sizeof(glm::vec4), mSkyParams.mPrecomputeGGXSettings);
+                    const char* comboLabel = mMaterialNames[mEditingMaterialIdx].c_str();
+                    if (ImGui::BeginCombo("Material", comboLabel))
+                    {
+                        for (int n = 0; n < mMaterialNames.size(); n++)
+                        {
+                            const bool selected = (mEditingMaterialIdx == n);
+                            if (ImGui::Selectable(mMaterialNames[n].c_str(), selected))
+                            {
+                                mEditingMaterialIdx = n;
+                            }
+
+                            // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                            if (selected)
+                            {
+                                ImGui::SetItemDefaultFocus();
+                            }
+                        }
+                        ImGui::EndCombo();
+                    }
+
+                    if (ImGui::SliderFloat("roughness", &mMaterials[mEditingMaterialIdx].mShadingParams.x, 0.01f, 1.0f))
+                    {
+                        mMaterialBuffer->update(
+                            sizeof(Material) * mEditingMaterialIdx + offsetof(Material, mShadingParams), 
+                            sizeof(glm::vec4), 
+                            &mMaterials[mEditingMaterialIdx].mShadingParams);
+                    }
+                    if (ImGui::SliderFloat("ior", &mMaterials[mEditingMaterialIdx].mShadingParams.z, 1.0f, 10.0f))
+                    {
+                        mMaterialBuffer->update(
+                            sizeof(Material) * mEditingMaterialIdx + offsetof(Material, mShadingParams),
+                            sizeof(glm::vec4),
+                            &mMaterials[mEditingMaterialIdx].mShadingParams);
+                    }
+                    if (ImGui::SliderFloat("metallic", &mMaterials[mEditingMaterialIdx].mShadingParams.y, 0.0f, 1.0f))
+                    {
+                        mMaterialBuffer->update(
+                            sizeof(Material) * mEditingMaterialIdx + offsetof(Material, mShadingParams),
+                            sizeof(glm::vec4),
+                            &mMaterials[mEditingMaterialIdx].mShadingParams);
+                    }
                 }
                 ImGui::EndTabItem();
             }

@@ -215,6 +215,8 @@ private:
     int mClipmapLevel;
 
     // generic textures
-    std::vector<std::unique_ptr<Material>> mMaterials;
+    uint32_t                 mEditingMaterialIdx;
+    std::vector<std::string> mMaterialNames;
+    std::vector<Material>    mMaterials;
     std::vector<std::unique_ptr<Texture>> mTextures;
 };

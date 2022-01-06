@@ -24,6 +24,10 @@ struct Material
 {
     // x: diffuse y: specular z: roughness w: metallic
     ivec4 mTexture1;
+    vec4 mDiffuse;
+    vec4 mSpecular;
+    // x: roughness, y: metallic, z: ior
+    vec4 mShadingParams;
 };
 
 

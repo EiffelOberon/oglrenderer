@@ -43,6 +43,17 @@ public:
     }
 
 
+    void update(
+        const uint32_t offset,
+        const uint32_t sizeInBytes,
+        const void     *data)
+    {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSSBO);
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, sizeInBytes, data);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    }
+
+
     void download(
         void*  data,
         size_t sizeInBytes = 0)

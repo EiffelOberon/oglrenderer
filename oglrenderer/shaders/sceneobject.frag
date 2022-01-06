@@ -41,7 +41,8 @@ layout(location = 0) out vec4 c;
 void main()
 {	
 	// diffuse irradiance
-	vec3 albedo = materials[renderParams.mScreenSettings.w].mTexture1.x == INVALID_TEX_ID ? 
+	const int matId = renderParams.mScreenSettings.w;
+	vec3 albedo = materials[matId].mTexture1.x == INVALID_TEX_ID ? 
 				  vec3(1.0f) :
 				  pow(texture(diffuseTex, uv).xyz, vec3(2.2f));
     vec3 indirectDiffuse = albedo * texture(irradianceTex, normal).xyz;
@@ -56,9 +57,10 @@ void main()
 	vec3 directDiffuse = sunColor * albedo * max(0.0f, dot(normal, sunDir));
 
 	// get PBR input parameters
-	const float roughness = clamp(skyParams.mPrecomputeGGXSettings.y, 0.0f, 0.99f);
-	const float ior = skyParams.mPrecomputeGGXSettings.z;
-	const float metallic = skyParams.mPrecomputeGGXSettings.w;
+	const vec4 shadingParams = materials[matId].mShadingParams;
+	const float roughness = clamp(shadingParams.x, 0.0f, 0.99f);
+	const float ior = shadingParams.z;
+	const float metallic = shadingParams.y;
 
 	// indirect specular
 	const vec3 rayDir = normalize(reflect(-viewDir, normal));
