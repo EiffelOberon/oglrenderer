@@ -202,7 +202,7 @@ Renderer::Renderer()
     assert(result);
 
     // load models
-    std::string inputfile = "./models/sphere100.obj";
+    std::string inputfile = "./models/box.obj";
     assert(loadModel(inputfile));
     FreeImage_DeInitialise();
 }
@@ -720,7 +720,7 @@ void Renderer::preRender()
         mShaders[PRECOMP_ENV_SHADER]->disable();
 
         // 2. render water
-        mPrecomputeCamParams.mEye = glm::vec4(0, 50, 0, 1);
+        mPrecomputeCamParams.mEye = glm::vec4(PRECOMPUTE_CAM_POS_X, PRECOMPUTE_CAM_POS_Y, PRECOMPUTE_CAM_POS_Z, 1);
         mPrecomputeCamParams.mUp = glm::vec4(0, -1, 0, 0);
         switch (mSkyParams.mPrecomputeSettings.x)
         {

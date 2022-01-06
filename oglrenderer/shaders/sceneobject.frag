@@ -50,7 +50,6 @@ void main()
 	// direct diffuse
 	const vec3 viewDir = normalize(camParams.mEye.xyz - position);
 	const vec3 sunDir = normalize(skyParams.mSunSetting.xyz);
-	
 	const vec3 sunColor = (skyParams.mPrecomputeSettings.y == NISHITA_SKY) ? 
 						  texture(skyTex, sunDir).xyz : 
 						  vec3(1.0f);
@@ -64,13 +63,16 @@ void main()
 
 	// indirect specular
 	const vec3 rayDir = normalize(reflect(-viewDir, normal));
-	const float nDotV = max(dot(normal, viewDir), 0.001f);
-	vec3 L = vec4(textureLod(prefilterTex, rayDir, roughness * float(PREFILTER_MIP_COUNT - 1)).xyz, 1.0f).xyz;
+	const float nDotV = max(dot(normal, viewDir), 0.0f);
+
+    // calculate box corrected ray dir for cubemap
+    const vec3 correctedRayDir = normalize((position + rayDir * 10000.0f) - vec3(PRECOMPUTE_CAM_POS_X, PRECOMPUTE_CAM_POS_Y, PRECOMPUTE_CAM_POS_Z));
+	vec3 L = vec4(textureLod(prefilterTex, correctedRayDir, roughness * float(PREFILTER_MIP_COUNT - 1)).xyz, 1.0f).xyz;
 	vec2 ggx = texture(precomputedGGXTex, vec2(roughness, nDotV)).xy;
 	float f0 = (ior - 1.0f) / (ior + 1.0f);
 	f0 *= f0;
 	f0 = mix(f0, 1.0f, metallic);
-	const vec3 indirectSpecular = L * (f0 * ggx.x + ggx.y) * mix(vec3(1.0f), albedo, metallic);
+    const vec3 indirectSpecular = L * (f0 * ggx.x + ggx.y)* mix(vec3(1.0f), albedo, metallic);
 	
 	// add them up
 	c = vec4(mix(indirectDiffuse, vec3(0.0f), metallic) + indirectSpecular, 1.0f);

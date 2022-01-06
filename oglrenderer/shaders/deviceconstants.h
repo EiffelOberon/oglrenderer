@@ -10,6 +10,11 @@
 # define QUERY_DOUBLE_BUFFER_COUNT 2
 # define PREFILTER_MIP_COUNT       5
 
+// precompute camera position
+# define PRECOMPUTE_CAM_POS_X 0
+# define PRECOMPUTE_CAM_POS_Y 50
+# define PRECOMPUTE_CAM_POS_Z 0
+
 // shader program Id
 # define BUTTERFLY_SHADER             0
 # define INVERSION_SHADER             1

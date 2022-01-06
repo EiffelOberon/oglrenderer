@@ -43,18 +43,21 @@ void main()
         float oDotH = clamp(dot(wo, wh), 0.0f, 1.0);
 
         // Compute the Fresnel term.
-        float Fc = pow(1.0f - oDotH, 5.0f);
+        if (nDotL > 0.0f)
+        {
+            float Fc = pow(1.0f - oDotH, 5.0f);
 
-        // Compute the sample weight, combining the geometric term, BRDF denominator, and PDF.
-        // https://hal.inria.fr/hal-00996995v2/document, Algorithm 2
-        const float g1 = G1(cosTheta, alpha);
-        const float g2 = G2(nDotL, cosTheta, alpha);
-        float weight = g1 == 0.0f ? 0.0f : g2 / g1;
+            // Compute the sample weight, combining the geometric term, BRDF denominator, and PDF.
+            // https://hal.inria.fr/hal-00996995v2/document, Algorithm 2
+            const float g1 = G1(cosTheta, alpha);
+            const float g2 = G2(nDotL, cosTheta, alpha);
+            float weight = g1 == 0.0f ? 0.0f : g2 / g1;
 
-        // Add the contribution of this sample.
-        result.x += (1.0f - Fc) * weight;
-        result.y += weight * Fc;
-        result.z += fresnel(1.33f, oDotH);
+            // Add the contribution of this sample.
+            result.x += (1.0f - Fc) * weight;
+            result.y += weight * Fc;
+            result.z += fresnel(1.33f, oDotH);
+        }
     }
 
     // Normalize integrated terms.
