@@ -18,8 +18,10 @@ extern "C" {
 #include "clipmap.h"
 #include "deviceconstants.h" 
 #include "devicestructs.h"
+#include "guirenderer.h"
 #include "hosek.h"
 #include "object.h"
+#include "params.h"
 #include "quad.h"
 #include "rendertexture.h"
 #include "shader.h"
@@ -39,6 +41,8 @@ public:
     void updateCamera(const int deltaX, 
                       const int deltaY);
     void updateCameraZoom(const int dir);
+    void updateDrawCalls(Object* obj);
+    void resetEnvironment();
     void preRender();
     void render();
     void postRender();
@@ -93,10 +97,6 @@ private:
             assert(false);
         }
     }
-
-    void updateDrawCalls(
-        Object     *obj);
-
     bool loadTexture(
         std::unique_ptr<Texture> &tex,
         const bool               mipmap,
@@ -108,7 +108,6 @@ private:
 
     // initialize uniform white noise [0, 1]
     void renderWater(const bool precompute);
-
 
     void drawNodeTreeGUI(
         int    &idx,
@@ -139,7 +138,6 @@ private:
     // update boolean
     bool          mUpdateSky;
     bool          mUpdateIrradiance;
-    bool          mOceanWireframe;
 
     // bit flags to represent what sides of the cube are updated
     uint32_t      mIrradianceSideUpdated;
@@ -168,14 +166,12 @@ private:
 
     std::unique_ptr<Texture> mPrecomputedFresnelTexture;
 
+    // camera 
+    Camera  mCamera;
     // states
-    Camera mCamera;
-    CameraParams mCamParams;
-    CameraParams mPrecomputeCamParams;
-    RendererParams mRenderParams;
-    SkyParams mSkyParams;
-    OceanParams mOceanParams;
-    SceneObjectParams mSceneObjectParams;
+    Params mParams;
+
+    GUIRenderer mGUIRenderer;
 
     // shader buffers
     std::unique_ptr<ShaderBuffer> mModelMatsBuffer;
@@ -185,22 +181,10 @@ private:
     VertexBuffer       mWaterGrid;
     std::vector<Mesh*> mDrawCalls;
 
-    // noise 
-    NoiseParams mWorleyNoiseParams;
-    NoiseParams mPerlinNoiseParams;
-
     // ocean fft
     std::unique_ptr<OceanFFT> mOceanFFTHighRes;
     std::unique_ptr<OceanFFT> mOceanFFTMidRes;
     std::unique_ptr<OceanFFT> mOceanFFTLowRes;
-
-    // gui
-    bool mShowPropertiesWindow;
-    bool mShowSkyWindow;
-    bool mShowBuffersWindow;
-
-    // booleans for rendering
-    bool mRenderWater;
 
     // MVP matrix
     ViewProjectionMatrix mViewProjectionMat;
@@ -236,12 +220,10 @@ private:
     int mClipmapLevel;
 
     // generic textures
-    uint32_t                 mEditingMaterialIdx;
     std::vector<std::string> mMaterialNames;
     std::vector<Material>    mMaterials;
     std::vector<std::unique_ptr<Texture>> mTextures;
 
     // nodes
     std::unique_ptr<Object> mRoot;
-    Object                  *mEditingObject;
 };

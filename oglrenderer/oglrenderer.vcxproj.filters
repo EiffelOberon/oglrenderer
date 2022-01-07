@@ -66,6 +66,9 @@
     <ClCompile Include="include\HosekSky\ArHosekSkyModel.cpp">
       <Filter>Hosek</Filter>
     </ClCompile>
+    <ClCompile Include="src\guirenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\shader.h">
@@ -264,6 +267,12 @@
       <Filter>LuaBridge\detail</Filter>
     </ClInclude>
     <ClInclude Include="src\object.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\params.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\guirenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
