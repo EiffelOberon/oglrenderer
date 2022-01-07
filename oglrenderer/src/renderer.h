@@ -226,4 +226,7 @@ private:
 
     // nodes
     std::unique_ptr<Object> mRoot;
+
+    // lua test
+    lua_State *mLuaState;
 };

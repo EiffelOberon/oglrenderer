@@ -170,12 +170,25 @@ Renderer::Renderer()
     // load models
     //std::string inputfile = "./models/box.obj";
     //assert(loadModel(inputfile));
+
+
+    // lua initialization
+    mLuaState = luaL_newstate();
+    luaL_openlibs(mLuaState);
+    luabridge::getGlobalNamespace(mLuaState)
+        .beginClass<Renderer>("renderer")
+        .addFunction("loadModel", (bool (Renderer::*)(std::string))& Renderer::loadModel)
+        .endClass();
+    luabridge::push(mLuaState, this);
+    lua_setglobal(mLuaState, "renderer");
+
+    //luaL_dofile(mLuaState, "./script/test.lua");
+
     FreeImage_DeInitialise();
 }
 
 Renderer::~Renderer()
 {
-
 }
 
 
