@@ -406,10 +406,9 @@ bool Renderer::loadModel(
         }
     }
 
+    // create meshes that holds vertex buffers
     const std::string file = fileName.substr(fileName.find_last_of('/') + 1);
     Object* parent = mRoot->addChild(std::make_unique<Object>(file));
-
-    // push data to the device
     for (std::map<uint32_t, uint32_t>::iterator it = mMaterialVertexCount.begin();
         it != mMaterialVertexCount.end();
         ++it)
@@ -417,24 +416,16 @@ bool Renderer::loadModel(
         const uint32_t matId = it->first;
         const uint32_t vertexCount = it->second;
 
-        const uint32_t idx = mDrawCalls.size();
-
+        // insert mesh into the node tree
         std::unique_ptr<Mesh> mesh = std::make_unique<Mesh>(mMaterialNames[matId]);
         mesh->update(vertexList[matId], indexList[matId]);
         parent->addChild(std::move(mesh));
-
-        //mDrawCalls.push_back(std::make_unique<VertexBuffer>());
-        //mDrawCalls.at(idx)->update(
-        //    sizeof(Vertex) * vertexList[matId].size(),
-        //    sizeof(uint32_t) * indexList[matId].size(),
-        //    vertexList[matId].data(),
-        //    indexList[matId].data());
-
-        //mDrawCallMatrices.push_back(glm::mat4(1.0f));
     }
 
+    // update draw calls list
     updateDrawCalls(mRoot.get());
 
+    // upload material buffer to the GPU
     mMaterialBuffer = std::make_unique<ShaderBuffer>(mMaterials.size() * sizeof(Material), GL_DYNAMIC_DRAW);
     mMaterialBuffer->upload(mMaterials.data());
     return true;
@@ -1084,6 +1075,7 @@ void Renderer::renderGUI()
                     ImGui::Text("Object: %s", mEditingObject ? mEditingObject->name() : "-");
                     if (mEditingObject)
                     {
+                        ImGui::Text("Position");
                         if (ImGui::DragFloat("x", &mEditingObject->transform()[3][0], 0.1f))
                         {
                             updateDrawCalls(mRoot.get());
