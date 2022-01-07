@@ -249,24 +249,41 @@ int main(
     int     argc, 
     char**  argv)
 {
+    lua_State* L = luaL_newstate();
     try
     {
-        lua_State* L = luaL_newstate();
         luaL_openlibs(L);
         luaL_dofile(L, "./script/test.lua");
-        //lua_pcall(L, 0, 0, 0);
-        LuaRef s = getGlobal(L, "testString");
-        LuaRef n = getGlobal(L, "number");
-        std::string luaString = s.cast<std::string>();
-        int answer = n.cast<int>();
-        std::cout << luaString << std::endl;
-        std::cout << "And here's our number:" << answer << std::endl;
+        lua_getglobal(L, "f");
+        lua_pushnumber(L, 0.5f);
+        lua_pushnumber(L, 0.2f);
+
+        //LuaRef s = getGlobal(L, "testString");
+        //LuaRef n = getGlobal(L, "number");
+        //std::string luaString = s.cast<std::string>();
+        //int answer = n.cast<int>();
+        //std::cout << luaString << std::endl;
+        //std::cout << "And here's our number:" << answer << std::endl;
+
+        if (lua_pcall(L, 2, 1, 0) == 0)
+        {
+            // retrieve result
+            if (lua_isnumber(L, -1))
+            {
+                float result = lua_tonumber(L, -1);
+                std::cout << "f = " << std::to_string(result) << std::endl;
+            }
+            // pop returned value
+            lua_pop(L, 1);
+        }
+        //std::string luaString = s.cast<std::string>();
     }
     catch (std::exception& e)
     {
         std::cout << "Failed to load lua script" << std::endl;
         return 1;
     }
+    lua_close(L);
     
     // init GLUT and create Window
     glutInit(&argc, argv);
