@@ -168,8 +168,8 @@ Renderer::Renderer()
     assert(result);
 
     // load models
-    std::string inputfile = "./models/box.obj";
-    assert(loadModel(inputfile));
+    //std::string inputfile = "./models/box.obj";
+    //assert(loadModel(inputfile));
     FreeImage_DeInitialise();
 }
 
@@ -908,29 +908,32 @@ void Renderer::render()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->start(SCENE_OBJECT_SHADER);
-    mShaders[SCENE_OBJECT_SHADER]->use();
-    mModelMatsBuffer->bind(SCENE_MODEL_MATRIX);
-    mMaterialBuffer->bind(SCENE_MATERIAL);
-    mIrradianceCubemap->bindTexture(SCENE_OBJECT_IRRADIANCE, 0);
-    mPrefilterCubemap->bindTexture(SCENE_OBJECT_PREFILTER_ENV, 0);
-    mPrecomputedFresnelTexture->bindTexture(SCENE_OBJECT_PRECOMPUTED_GGX);
-    mFinalSkyCubemap->bindTexture(SCENE_OBJECT_SKY, 0);
-    for (int i = 0; i < mDrawCalls.size(); ++i)
+    if (mDrawCalls.size() > 0)
     {
-        // set model matrix index
-        mParams.mSceneObjectParams.mIndices.x = i;
-        updateUniform(SCENE_OBJECT_PARAMS, mParams.mSceneObjectParams);
-        mParams.mRenderParams.mScreenSettings.w = i;
-        updateUniform(RENDERER_PARAMS, offsetof(RendererParams, mScreenSettings), sizeof(glm::ivec4), mParams.mRenderParams.mScreenSettings);
-
-        if (mMaterials[i].mTexture1.x != INVALID_TEX_ID)
+        mShaders[SCENE_OBJECT_SHADER]->use();
+        mModelMatsBuffer->bind(SCENE_MODEL_MATRIX);
+        mMaterialBuffer->bind(SCENE_MATERIAL);
+        mIrradianceCubemap->bindTexture(SCENE_OBJECT_IRRADIANCE, 0);
+        mPrefilterCubemap->bindTexture(SCENE_OBJECT_PREFILTER_ENV, 0);
+        mPrecomputedFresnelTexture->bindTexture(SCENE_OBJECT_PRECOMPUTED_GGX);
+        mFinalSkyCubemap->bindTexture(SCENE_OBJECT_SKY, 0);
+        for (int i = 0; i < mDrawCalls.size(); ++i)
         {
-            mTextures[mMaterials[i].mTexture1.x]->bindTexture(SCENE_OBJECT_DIFFUSE);
-        }
+            // set model matrix index
+            mParams.mSceneObjectParams.mIndices.x = i;
+            updateUniform(SCENE_OBJECT_PARAMS, mParams.mSceneObjectParams);
+            mParams.mRenderParams.mScreenSettings.w = i;
+            updateUniform(RENDERER_PARAMS, offsetof(RendererParams, mScreenSettings), sizeof(glm::ivec4), mParams.mRenderParams.mScreenSettings);
 
-        mDrawCalls[i]->draw();
+            if (mMaterials[i].mTexture1.x != INVALID_TEX_ID)
+            {
+                mTextures[mMaterials[i].mTexture1.x]->bindTexture(SCENE_OBJECT_DIFFUSE);
+            }
+
+            mDrawCalls[i]->draw();
+        }
+        mShaders[SCENE_OBJECT_SHADER]->disable();
     }
-    mShaders[SCENE_OBJECT_SHADER]->disable();
     mTimeQueries.at(mFrameCount % QUERY_DOUBLE_BUFFER_COUNT)->end(SCENE_OBJECT_SHADER);
 
     glDisable(GL_DEPTH_TEST);
