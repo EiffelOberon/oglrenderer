@@ -23,4 +23,3 @@
 ./shaderc/glslc.exe ./shaders/sceneobject.vert -o ./spv/sceneobjvert.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 ./shaderc/glslc.exe ./shaders/sceneobject.frag -o ./spv/sceneobjfrag.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
 ./shaderc/glslc.exe ./shaders/prefilterenvironment.frag -o ./spv/prefilterenvironmentfrag.spv --target-env=opengl -std=450core -I "./" -I "./shaders"
-
