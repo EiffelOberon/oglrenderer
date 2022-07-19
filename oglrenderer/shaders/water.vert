@@ -36,9 +36,10 @@ layout(location = 2) out vec2 uv;
 
 void main()
 {
-	const vec2 testUV1 = vertexPos.xz / OCEAN_DIMENSIONS_1;
-	const vec2 testUV2 = vertexPos.xz / OCEAN_DIMENSIONS_2;
-	const vec2 testUV3 = vertexPos.xz / OCEAN_DIMENSIONS_3;
+	const vec2 wave = oceanParams.mWaveSettings.zw * oceanParams.mWaveSettings.y;
+	const vec2 testUV1 = (vertexPos.xz + wave * renderParams.mSettings.x) / OCEAN_DIMENSIONS_1;
+	const vec2 testUV2 = (vertexPos.xz + wave * renderParams.mSettings.x) / OCEAN_DIMENSIONS_2;
+	const vec2 testUV3 = (vertexPos.xz + wave * renderParams.mSettings.x) / OCEAN_DIMENSIONS_3;
 
 	const vec3 displacementLambda = vec3(oceanParams.mReflection.w, oceanParams.mWaveSettings.x, oceanParams.mReflection.w);
     const vec3 d1 = displacementLambda * texture(displacement1, testUV1).xyz;

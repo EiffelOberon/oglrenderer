@@ -40,10 +40,11 @@ layout(binding = WATER_PRECOMPUTED_GGX) uniform sampler2D precomputedGGXTex;
 layout(location = 0) out vec4 c;
 
 void main()
-{	
-	const vec2 testUV1 = uv / OCEAN_DIMENSIONS_1;
-	const vec2 testUV2 = uv / OCEAN_DIMENSIONS_2;
-	const vec2 testUV3 = uv / OCEAN_DIMENSIONS_3;
+{
+	const vec2 wave = oceanParams.mWaveSettings.zw * oceanParams.mWaveSettings.y;
+	const vec2 testUV1 = (uv + wave * renderParams.mSettings.x) / OCEAN_DIMENSIONS_1;
+	const vec2 testUV2 = (uv + wave * renderParams.mSettings.x) / OCEAN_DIMENSIONS_2;
+	const vec2 testUV3 = (uv + wave * renderParams.mSettings.x) / OCEAN_DIMENSIONS_3;
 
 	// calculate normal per pixel
 	const vec3 displacementLambda = vec3(oceanParams.mReflection.w, oceanParams.mWaveSettings.x, oceanParams.mReflection.w);
@@ -109,28 +110,28 @@ void main()
     const float metallic = 0.0f;
 
     const vec3 ggx = texture(precomputedGGXTex, vec2(roughness, nDotV)).xyz;
-	if(renderParams.mSettings.z == 0)
-	{
-		// indirect specular
-		vec3 L = vec4(textureLod(prefilterTex, rayDir, roughness * float(PREFILTER_MIP_COUNT - 1)).xyz, 1.0f).xyz;
-		
-		// calculate fresnel
-		float f0 = (ior - 1.0f) / (ior + 1.0f);
-		f0 *= f0;
-		f0 = mix(f0, 1.0f, metallic);
-		indirectReflection = L;
-
-		radiance += mix(transmission, oceanParams.mReflection.xyz * indirectReflection * (f0 * ggx.x + ggx.y), ggx.z);
-	}
-	else
+	//if(renderParams.mSettings.z == 0)
+	//{
+	//	// indirect specular
+	//	vec3 L = vec4(textureLod(prefilterTex, rayDir, roughness * float(PREFILTER_MIP_COUNT - 1)).xyz, 1.0f).xyz;
+	//	
+	//	// calculate fresnel
+	//	float f0 = (ior - 1.0f) / (ior + 1.0f);
+	//	f0 *= f0;
+	//	f0 = mix(f0, 1.0f, metallic);
+	//	indirectReflection = L;
+	//
+	//	radiance += mix(transmission, oceanParams.mReflection.xyz * indirectReflection * (f0 * ggx.x + ggx.y), ggx.z);
+	//}
+	//else
 	{	
-		indirectReflection = max(texture(environmentTex, rayDir).xyz, 0.0f);
-		radiance += mix(transmission, oceanParams.mReflection.xyz * indirectReflection, ggx.z);
+		//indirectReflection = max(texture(environmentTex, rayDir).xyz, 0.0f);
+		radiance += mix(transmission, oceanParams.mReflection.xyz * max(texture(environmentTex, rayDir).xyz, 0.0f), ggx.z);
 	}
 
 	if(jacobian < oceanParams.mFoamSettings.y)
 	{
-		const float foam = pow(texture(foamTex, uv / oceanParams.mFoamSettings.x).x, 2.2f);
+		const float foam = pow(texture(foamTex, testUV1 / oceanParams.mFoamSettings.x).x, 2.2f);
 		radiance = vec3(mix(radiance, vec3((foam * oceanParams.mReflection.w) * luminance(texture(irradianceTex, n).xyz)), foam));
 	}
 
